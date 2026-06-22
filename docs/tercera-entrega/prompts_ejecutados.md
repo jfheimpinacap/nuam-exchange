@@ -87,3 +87,13 @@
 - Limitaciones Cloud: si no existe SDK .NET o SQL Server local, restore/build/test y validaciones con base quedan pendientes para ejecución local posterior al merge.
 - Validaciones locales obligatorias posteriores al merge: `dotnet restore`, `dotnet build`, `dotnet test`, configurar JWT local, ejecutar bootstrap local, probar login correcto e incorrecto, `/api/auth/me`, `/api/auth/permissions` y revisar auditoría.
 - Confirmación: no se tocó Plesk, SQL Server remoto ni producción.
+
+## Prompt 010 — Corrección global de xUnit en pruebas de autenticación
+
+- Fecha real: 2026-06-22.
+- Objetivo: corregir la compilación de las pruebas de autenticación agregadas en Prompt 009.
+- Causa: `AuthenticationTests.cs` no resolvía los símbolos de xUnit (`FactAttribute`, `Fact` y `Assert`) durante la compilación local con .NET 8.
+- Corrección aplicada: se agregó `GlobalUsings.cs` en el proyecto `NuamExchange.Api.Tests` con `global using Xunit;` para disponibilizar xUnit de forma mantenible a todas las pruebas.
+- Paquetes: se mantuvieron las referencias existentes a `Microsoft.NET.Test.Sdk`, `xunit`, `xunit.runner.visualstudio` y `Microsoft.AspNetCore.Mvc.Testing`; no se agregaron paquetes duplicados.
+- Limitación Cloud: no hay SDK .NET disponible para ejecutar `dotnet restore`, `dotnet build` ni `dotnet test` en Codex Cloud.
+- Validación local posterior obligatoria: ejecutar restore, build y test completos de la solución después del merge de Prompt 010.
