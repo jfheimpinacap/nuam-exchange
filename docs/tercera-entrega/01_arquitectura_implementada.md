@@ -1,30 +1,13 @@
-# 01 — Arquitectura implementada
+# 01. Arquitectura implementada
 
-## Estructura
+## Implementado en Prompt 006
 
-- `frontend/`: aplicación React + TypeScript + Vite.
-- `backend-dotnet/src/NuamExchange.Api/`: ASP.NET Core Web API y servidor de archivos estáticos.
-- `backend-dotnet/src/NuamExchange.Application/`: capa de aplicación preparada.
-- `backend-dotnet/src/NuamExchange.Domain/`: capa de dominio preparada.
-- `backend-dotnet/src/NuamExchange.Infrastructure/`: capa de infraestructura preparada.
-- `backend-dotnet/tests/NuamExchange.Api.Tests/`: pruebas xUnit de integración.
+Se incorporó el modelo de dominio persistente en `NuamExchange.Domain`, separado de detalles de Entity Framework Core. Las entidades se ubican en `Entities/`, usan nombres técnicos en inglés y mantienen navegaciones y nulabilidad coherentes para representar usuarios, roles, permisos, calificaciones tributarias, cargas masivas, validaciones, reportes, auditoría y respaldos.
 
-## Flujo esperado
+Se incorporó `NuamExchange.Infrastructure` como capa de persistencia. La clase `NuamExchangeDbContext` expone los `DbSet` del modelo y aplica configuraciones Fluent API mediante `ApplyConfigurationsFromAssembly`. Las configuraciones mapean nombres físicos SQL Server en español, tipos de datos, claves primarias, claves foráneas, defaults, restricciones `CHECK`, relaciones e índices.
 
-Navegador → frontend React → API ASP.NET Core → SQL Server.
+La API registra Infrastructure mediante `AddInfrastructure`. El `DbContext` solo se registra cuando existe una cadena no vacía `ConnectionStrings:NuamTributariaDb`; por lo tanto, el arranque de la API y `/health` no dependen de SQL Server cuando la cadena está vacía.
 
-## Implementado en Prompt 002
+## Pendiente
 
-- Solución .NET 8 y proyectos base.
-- Endpoint público `GET /health`.
-- Prueba de integración preparada para `/health`.
-- Frontend temporal sin módulos de negocio.
-- Documentación progresiva.
-
-## Pendiente en prompts posteriores
-
-- Autenticación, JWT, sesiones, roles y permisos.
-- Entity Framework Core y SQL Server.
-- Modelo tributario, entidades, migraciones y restricciones.
-- Cargas X Factor y X Monto.
-- Reportes, auditoría, archivos y despliegue.
+Queda pendiente confirmar la instancia local de SQL Server, configurar una cadena de conexión de desarrollo fuera de los archivos con secretos, generar la migración inicial y crear localmente la base `NuamTributariaDB`. En Prompt 006 no se creó base real, no se ejecutó `database update` y no se generaron migraciones.
