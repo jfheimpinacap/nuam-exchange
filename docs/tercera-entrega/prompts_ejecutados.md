@@ -63,3 +63,12 @@
 - Limitación Cloud: si no existe SDK .NET disponible, no se puede compilar ni generar migraciones en Cloud; las validaciones locales quedan como obligatorias posteriores al merge.
 - Validaciones locales obligatorias posteriores al merge: restore, build, test, inicio de API en Development, `/health`, `/swagger` y arranque sin SQL Server configurado.
 - Confirmación: no se creó base de datos real, no se ejecutó `database update` y no se generaron migraciones.
+
+## Prompt 007 — Preparación de migraciones locales SQL Server y DbContext de diseño
+
+- Fecha real: 2026-06-22.
+- Objetivo: preparar el `DbContext` de diseño y la herramienta local `dotnet-ef` para generar migraciones EF Core de SQL Server posteriormente desde un computador local.
+- Alcance realizado: se agregó manifiesto local de herramientas con `dotnet-ef` 8.0.11, paquete de diseño EF Core en la API, factory de diseño `NuamExchangeDbContextFactory`, ejemplo seguro de `appsettings.Development.example.json` y documentación de preparación local.
+- Limitación Cloud: no se ejecuta `dotnet-ef`, no se generan migraciones y no se crea `NuamTributariaDB` en Codex Cloud.
+- Validaciones locales pendientes: `dotnet restore`, `dotnet build`, `dotnet test`, `dotnet tool restore`, creación local de `appsettings.Development.json`, generación controlada de la migración inicial, revisión de archivos generados y aplicación posterior solo con confirmación explícita.
+- Confirmación: no se creó base de datos real, no se ejecutó `database update` y no se generaron migraciones.

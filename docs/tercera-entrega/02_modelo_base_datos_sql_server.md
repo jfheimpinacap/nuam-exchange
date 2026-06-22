@@ -30,3 +30,9 @@ Incluyen índices únicos para rol, permiso, email y plantilla por tipo-versión
 ## Eliminaciones en cascada
 
 No se configuraron eliminaciones en cascada. Todas las relaciones usan `NoAction` para proteger historia, auditoría, validaciones y trazabilidad tributaria, evitando borrar registros dependientes de forma implícita.
+
+## Preparación para migraciones EF Core
+
+Prompt 007 deja el modelo EF Core preparado para generar migraciones de forma local con la herramienta versionada `dotnet-ef` 8.0.11. La generación se realizará posteriormente desde el computador de desarrollo, una vez configurada la cadena local segura.
+
+La base `NuamTributariaDB` aún no existe y no fue creada durante esta preparación. La cadena de conexión local no se versiona: cada persona debe crear su propio `appsettings.Development.json` ignorado por Git a partir del ejemplo seguro disponible en la API.
