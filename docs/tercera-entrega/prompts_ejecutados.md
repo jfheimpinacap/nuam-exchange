@@ -12,6 +12,15 @@
 - Resultado: implementación de base técnica inicial.
 - Alcance: solución .NET 8, frontend React + TypeScript + Vite, endpoint `/health`, prueba de integración preparada, configuración segura y documentación progresiva.
 
+## Prompt 003 — Corrección de pruebas base y compilación local .NET
+
+- Fecha: 2026-06-22.
+- Objetivo: corregir la compilación de la prueba de integración de `GET /health`.
+- Causa detectada: tipos de xUnit no resueltos durante compilación local (`IClassFixture<>`, `FactAttribute` y `Fact`) en `HealthEndpointTests.cs`.
+- Corrección aplicada: se revisó el proyecto de pruebas, la solución y la clase `Program`; se agregó la directiva explícita `using Xunit;` en la prueba de integración.
+- Limitación Cloud: no hay SDK .NET disponible para ejecutar `dotnet restore`, `dotnet build` ni `dotnet test` en Codex Cloud.
+- Validación local pendiente posterior al merge: restore, build, test, ejecución local de `/health` y verificación de Swagger.
+
 ## Limitaciones de Cloud registradas
 
 - Puede no existir SQL Server local.
