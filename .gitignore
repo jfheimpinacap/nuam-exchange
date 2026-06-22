@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# .NET build outputs
+bin/
+obj/
+TestResults/
+coverage/
+
+# Frontend build outputs
+dist/
+backend-dotnet/src/NuamExchange.Api/wwwroot/
+
+# Environment and secrets
+.env
+.env.*
+!frontend/.env.example
+appsettings.Development.json
+appsettings.Production.json
+*.user
+*.suo
+*.rsuser
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+secrets.*
+*.secret
+
+# Logs
+logs/
+*.log
+
+# Publish and deployment artifacts
+*.pubxml
+*.pubxml.user
+*.zip
+*.tar
+*.tar.gz
+publish/
+deploy/
+deployment/
+
+# Temporary files
+.tmp/
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
