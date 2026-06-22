@@ -41,3 +41,15 @@ Prompt 007 agrega la preparación para migraciones locales, pero no genera migra
 - Acceso autenticado a `/api/auth/me`.
 - Acceso autenticado a `/api/auth/permissions`.
 - Registro de auditoría para login exitoso, login fallido y bootstrap.
+
+## Actualización Prompt 010: corrección global de xUnit en pruebas de autenticación
+
+Después del merge de Prompt 009, la validación local inicial con .NET 8 falló al compilar el proyecto de pruebas porque `AuthenticationTests.cs` no resolvía los símbolos de xUnit (`FactAttribute`, `Fact` y aserciones como `Assert`). El resultado posterior de `dotnet test --no-build` no se considera evidencia válida para estas pruebas, porque pudo usar un DLL generado antes del fallo de compilación.
+
+La corrección de Prompt 010 agrega un `GlobalUsings.cs` en el proyecto `NuamExchange.Api.Tests` con `global using Xunit;`, dejando disponible xUnit para todas las clases de prueba del proyecto, incluidas las pruebas de autenticación y la prueba existente del endpoint `/health`.
+
+Restore, build y ejecución completa de pruebas quedan pendientes de validación local posterior al merge de Prompt 010:
+
+- `dotnet restore .\NuamExchange.sln`.
+- `dotnet build .\NuamExchange.sln --no-restore`.
+- `dotnet test .\NuamExchange.sln --no-build`.
