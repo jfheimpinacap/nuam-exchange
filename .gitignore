@@ -54,3 +54,4 @@ temp/
 Thumbs.db
 .vscode/
 .idea/
+frontend/tsconfig.tsbuildinfo
