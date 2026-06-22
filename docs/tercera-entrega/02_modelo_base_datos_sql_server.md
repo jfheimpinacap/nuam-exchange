@@ -36,3 +36,11 @@ No se configuraron eliminaciones en cascada. Todas las relaciones usan `NoAction
 Prompt 007 deja el modelo EF Core preparado para generar migraciones de forma local con la herramienta versionada `dotnet-ef` 8.0.11. La generación se realizará posteriormente desde el computador de desarrollo, una vez configurada la cadena local segura.
 
 La base `NuamTributariaDB` aún no existe y no fue creada durante esta preparación. La cadena de conexión local no se versiona: cada persona debe crear su propio `appsettings.Development.json` ignorado por Git a partir del ejemplo seguro disponible en la API.
+
+## Actualización Prompt 009: autenticación sobre modelo existente
+
+- La migración `InitialCreate` fue generada desde EF Core y versionada como punto de partida del modelo relacional.
+- La base local de desarrollo `NuamTributariaDB_Dev` fue creada con las 14 tablas del modelo oficial de la entrega.
+- La base original `NuamTributariaDB` se conserva como referencia y no fue modificada.
+- Las tablas existentes de roles, permisos y auditoría se utilizarán para la autenticación, autorización y trazabilidad de accesos.
+- No se modificó el modelo lógico, no se agregaron tablas nuevas y no se generaron migraciones adicionales para esta fase.

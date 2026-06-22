@@ -24,3 +24,20 @@ Prompt 007 agrega la preparación para migraciones locales, pero no genera migra
 - Revisar los archivos generados antes de aplicar cualquier cambio en SQL Server.
 - Crear localmente la base `NuamTributariaDB` solo cuando corresponda.
 - Verificar tablas, claves, restricciones e índices después de aplicar la migración en el entorno local autorizado.
+
+## Actualización Prompt 009: pruebas de seguridad
+
+### Pruebas unitarias agregadas
+
+- BCrypt: generación de hash, diferencia contra password original, verificación correcta y rechazo de password incorrecto.
+- JWT: creación de token no vacío, claims `sub`, `email` y rol, expiración futura y ausencia de password hash.
+
+### Validaciones manuales futuras posteriores al merge
+
+- Bootstrap de administrador local en Development.
+- Login correcto.
+- Login incorrecto con respuesta genérica.
+- Expiración de token.
+- Acceso autenticado a `/api/auth/me`.
+- Acceso autenticado a `/api/auth/permissions`.
+- Registro de auditoría para login exitoso, login fallido y bootstrap.
