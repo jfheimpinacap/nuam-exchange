@@ -40,3 +40,13 @@ La prueba queda pendiente de validación local posterior al merge con .NET SDK 8
 - Frontend: `npm run build` falló por configuración TypeScript obsoleta: `moduleResolution` resolvía como `node10` a partir de la configuración `"Node"`.
 - Corrección abordada en Prompt 004: actualización de la resolución de módulos TypeScript para Vite moderno y separación del componente principal desde el archivo de montaje React.
 - Build y lint final quedan pendientes de validación local posterior al merge de Prompt 004 si Codex Cloud no puede instalar o usar dependencias npm por restricciones externas del entorno.
+
+## Registro Prompt 005 — Corrección de tipado Vite/CSS y artefactos TypeScript
+
+- Fecha: 2026-06-22.
+- Validación local posterior a Prompt 004: ejecutada en Windows.
+- Frontend: `npm run lint` finalizó correctamente, sin advertencias ni errores.
+- Frontend: `npm run build` falló por falta de tipado para la importación lateral de `./styles.css` en `src/main.tsx` (`TS2882: Cannot find module or type declarations for side-effect import`).
+- Artefacto detectado durante validación local: `frontend/tsconfig.tsbuildinfo`, correspondiente a caché de TypeScript y no apto para versionamiento.
+- Corrección abordada en Prompt 005: incorporación de la referencia estándar de tipos Vite para reconocer importaciones CSS y exclusión Git de artefactos `*.tsbuildinfo`.
+- Build final queda pendiente de validación local posterior al merge de Prompt 005 si Codex Cloud no puede instalar o usar dependencias npm por restricciones externas del entorno.
