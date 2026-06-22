@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>NuamExchange.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NuamExchange.Application\NuamExchange.Application.csproj" />
+    <ProjectReference Include="..\NuamExchange.Domain\NuamExchange.Domain.csproj" />
+  </ItemGroup>
+</Project>
