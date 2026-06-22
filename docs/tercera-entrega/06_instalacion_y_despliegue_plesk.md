@@ -1,5 +1,7 @@
-# 06 — Instalación y despliegue Plesk
+# 06. Instalación y despliegue Plesk
 
-La URL pública futura será `https://nuam-exchange.jem-nexus.cl`.
+Prompt 006 no modificó Plesk, Wirenet ni el subdominio público. SQL Server productivo aún no ha sido configurado.
 
-En esta entrega no se tocó Plesk, subdominio, SQL Server remoto ni producción. El despliegue queda pendiente para una etapa posterior.
+La futura cadena de conexión productiva `ConnectionStrings:NuamTributariaDb` deberá configurarse fuera del repositorio mediante variables de entorno, configuración segura del hosting o mecanismo equivalente. No deben versionarse usuarios, contraseñas, IPs reales ni certificados.
+
+La creación de base, migraciones y despliegue productivo se abordarán en prompts posteriores.

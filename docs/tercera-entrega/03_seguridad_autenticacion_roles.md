@@ -1,13 +1,7 @@
-# 03 — Seguridad, autenticación y roles
+# 03. Seguridad, autenticación y roles
 
-Los siguientes controles quedan documentados como alcance futuro y aún no están implementados:
+Prompt 006 dejó modeladas de forma persistente las entidades `Role`, `Permission`, `RolePermission` y `ApplicationUser`, junto con sus tablas `Rol`, `Permiso`, `RolPermiso` y `Usuario`. Esto prepara la base para roles y permisos, pero no implementa autenticación funcional.
 
-- BCrypt para almacenamiento seguro de contraseñas.
-- JWT para autenticación de API.
-- Expiración y revocación de sesión.
-- Roles y permisos.
-- Auditoría de acciones relevantes.
-- Bloqueo temporal por intentos fallidos.
-- Validación de archivos cargados.
+Aún están pendientes password hashing real, flujos de inicio de sesión, emisión y validación de JWT, políticas de autorización, control de acceso por endpoint y administración funcional de permisos.
 
-Esta entrega no implementa autenticación, autorización, usuarios ni sesiones.
+`AuditLog` ya existe como entidad persistente y tabla `Auditoria`, pero todavía no registra eventos reales desde la aplicación. La auditoría funcional se implementará en una etapa posterior.
