@@ -11,3 +11,9 @@ La creación de base, migraciones y despliegue productivo se abordarán en promp
 Las credenciales productivas de SQL Server se configurarán únicamente en Plesk o en una configuración segura equivalente del servidor. Nunca deben quedar en `appsettings.json`, archivos de ejemplo, commits ni documentación pública.
 
 La instancia SQL Server productiva no ha sido utilizada aún. Prompt 007 solo prepara el flujo local de migraciones y no toca Plesk, Wirenet, subdominios, hosting ni producción.
+
+## Consideraciones de seguridad JWT para despliegue
+
+- La `Jwt:SigningKey` productiva se configurará solo fuera del repositorio mediante configuración segura del ambiente de hosting.
+- El endpoint `/api/setup/bootstrap-admin` no debe operar fuera del entorno `Development`; en otros entornos responde como no encontrado.
+- No se deben usar cuentas, claves JWT ni contraseñas de desarrollo en producción.

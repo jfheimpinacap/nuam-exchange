@@ -1,7 +1,22 @@
-# 03. Seguridad, autenticación y roles
+# Seguridad, autenticación y roles
 
-Prompt 006 dejó modeladas de forma persistente las entidades `Role`, `Permission`, `RolePermission` y `ApplicationUser`, junto con sus tablas `Rol`, `Permiso`, `RolPermiso` y `Usuario`. Esto prepara la base para roles y permisos, pero no implementa autenticación funcional.
+## Implementado en Prompt 009
 
-Aún están pendientes password hashing real, flujos de inicio de sesión, emisión y validación de JWT, políticas de autorización, control de acceso por endpoint y administración funcional de permisos.
+- Hash seguro de contraseñas con BCrypt para creación y validación de credenciales.
+- Autenticación JWT con tokens Bearer.
+- Expiración configurable mediante la sección `Jwt:AccessTokenMinutes`.
+- Validación de issuer, audience, firma y expiración, con `ClockSkew` explícito en cero.
+- Claims mínimos de usuario y rol, sin incluir hash de contraseña ni permisos detallados dentro del token.
+- Roles base: `Administrador`, `Analista Tributario` y `Supervisor`.
+- Permisos base y relaciones rol-permiso preparados mediante seed idempotente ejecutado solo desde bootstrap de Development.
+- Auditoría de login exitoso y fallido en la tabla `Auditoria`, sin registrar contraseñas ni hashes.
+- Endpoint de bootstrap exclusivo de Development para crear el primer administrador local cuando no existen usuarios.
+- Comportamiento seguro si JWT no está configurado: la API inicia, `/health` continúa disponible y los endpoints de autenticación no emiten tokens.
 
-`AuditLog` ya existe como entidad persistente y tabla `Auditoria`, pero todavía no registra eventos reales desde la aplicación. La auditoría funcional se implementará en una etapa posterior.
+## Pendiente
+
+- Control UI por permisos.
+- Bloqueo temporal por intentos fallidos.
+- Gestión administrativa completa de usuarios.
+- Auditoría de operaciones de negocio.
+- Seguridad de cargas de archivos.

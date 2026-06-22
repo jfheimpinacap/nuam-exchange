@@ -72,3 +72,18 @@
 - Limitación Cloud: no se ejecuta `dotnet-ef`, no se generan migraciones y no se crea `NuamTributariaDB` en Codex Cloud.
 - Validaciones locales pendientes: `dotnet restore`, `dotnet build`, `dotnet test`, `dotnet tool restore`, creación local de `appsettings.Development.json`, generación controlada de la migración inicial, revisión de archivos generados y aplicación posterior solo con confirmación explícita.
 - Confirmación: no se creó base de datos real, no se ejecutó `database update` y no se generaron migraciones.
+
+## Prompt 008 — Migración inicial EF Core
+
+- Fecha: 2026-06-22.
+- Alcance: migración inicial `InitialCreate` generada localmente desde EF Core y aplicada solo a la base local `NuamTributariaDB_Dev`.
+- Confirmación: la base original `NuamTributariaDB` se mantuvo como referencia y no fue modificada.
+- Limitaciones Cloud: no se asumió acceso a SQL Server desde Codex Cloud.
+
+## Prompt 009 — Autenticación JWT, roles, permisos y bootstrap local seguro
+
+- Fecha: 2026-06-22.
+- Alcance: BCrypt, JWT configurable, endpoints `/api/auth/login`, `/api/auth/me`, `/api/auth/permissions`, seed idempotente de roles/permisos y bootstrap Development para primer administrador.
+- Limitaciones Cloud: si no existe SDK .NET o SQL Server local, restore/build/test y validaciones con base quedan pendientes para ejecución local posterior al merge.
+- Validaciones locales obligatorias posteriores al merge: `dotnet restore`, `dotnet build`, `dotnet test`, configurar JWT local, ejecutar bootstrap local, probar login correcto e incorrecto, `/api/auth/me`, `/api/auth/permissions` y revisar auditoría.
+- Confirmación: no se tocó Plesk, SQL Server remoto ni producción.
