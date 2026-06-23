@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace NuamExchange.Api.Contracts.Administration;
 
@@ -27,8 +28,13 @@ public sealed class ResetAdminUserPasswordRequest
 
 public sealed class CreateAdminRoleRequest
 {
+    [JsonPropertyName("name")]
     [Required, MaxLength(80)] public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
     [MaxLength(250)] public string? Description { get; set; }
+
+    [JsonPropertyName("permissionIds")]
     [Required] public IReadOnlyCollection<int>? PermissionIds { get; set; }
 }
 

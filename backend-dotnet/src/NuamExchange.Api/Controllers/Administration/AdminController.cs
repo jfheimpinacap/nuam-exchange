@@ -57,6 +57,11 @@ public sealed class AdminController(IServiceProvider services) : ControllerBase
         => await ExecuteAsync(async service => ToActionResult(await service.GetRoleAsync(id, cancellationToken)));
 
     [HttpPost("roles")]
+    [ProducesResponseType(typeof(AdminRoleDetailResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateRole([FromBody] CreateAdminRoleRequest request, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var administratorId)) return Unauthorized();

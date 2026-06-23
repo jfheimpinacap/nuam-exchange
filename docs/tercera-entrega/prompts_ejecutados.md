@@ -146,3 +146,12 @@ Validaciones locales obligatorias posteriores al merge:
 - **Modelo de datos:** sin migraciones, sin nuevas tablas, sin cambios en entidades ni Fluent API.
 - **Limitaciones de Codex Cloud:** si `dotnet` no está disponible, restore/build/test quedan como validación local obligatoria posterior al merge.
 - **Validaciones locales posteriores al merge:** restaurar, compilar, ejecutar pruebas, levantar API con JWT local, verificar endpoints administrativos y revisar auditoría.
+
+## Prompt 013 — Corrección de binding JSON en creación de roles
+
+- **Fecha real:** 2026-06-23.
+- **Objetivo:** corregir y proteger con pruebas el binding JSON de `POST /api/admin/roles` para aceptar el contrato publicado de creación de roles con `description` string opcional o `null`.
+- **Contrato HTTP:** creación válida de rol personalizado responde `201 Created`, retorna el DTO seguro del rol creado y documenta respuestas `400`, `401`, `403` y `409` en Swagger.
+- **Modelo de datos:** sin migraciones, sin cambios de modelo, sin entidades nuevas y sin cambios en Fluent API.
+- **Frontend:** sin cambios.
+- **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, levantar API en `Development`, autenticar como Administrador, crear rol con permisos 7 y 8, consultar detalle del rol y revisar Auditoria para `ROLE_CREATED`.
