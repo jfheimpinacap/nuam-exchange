@@ -136,3 +136,13 @@ Validaciones locales obligatorias posteriores al merge:
 - actualizar estado de usuario;
 - restablecer contraseña;
 - revisar Auditoria.
+
+## Prompt 012 — Gestión controlada de roles y asignación de permisos
+
+- **Fecha real:** 2026-06-23.
+- **Alcance:** administración backend de roles personalizados y asignación controlada de permisos existentes.
+- **Endpoints creados o extendidos:** `GET /api/admin/roles`, `GET /api/admin/roles/{id}`, `POST /api/admin/roles`, `PUT /api/admin/roles/{id}`, `PUT /api/admin/roles/{id}/permissions` y `GET /api/admin/permissions`.
+- **Roles base protegidos:** `Administrador`, `Analista Tributario` y `Supervisor` no pueden modificarse, desactivarse ni recibir cambios de permisos por los nuevos endpoints.
+- **Modelo de datos:** sin migraciones, sin nuevas tablas, sin cambios en entidades ni Fluent API.
+- **Limitaciones de Codex Cloud:** si `dotnet` no está disponible, restore/build/test quedan como validación local obligatoria posterior al merge.
+- **Validaciones locales posteriores al merge:** restaurar, compilar, ejecutar pruebas, levantar API con JWT local, verificar endpoints administrativos y revisar auditoría.

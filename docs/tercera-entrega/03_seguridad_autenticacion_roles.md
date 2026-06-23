@@ -30,3 +30,27 @@ La política de contraseñas fue extraída para reutilizarse en bootstrap, creac
 La administración permite gestionar el estado activo/inactivo sin borrado físico, restablecer contraseñas de forma segura y consultar roles/permisos disponibles. Además, se incorporan protecciones para impedir que el Administrador autenticado se desactive o cambie su propio rol, y para evitar desactivar o degradar al último Administrador activo.
 
 Pendiente: autorización dinámica basada en permisos persistidos en base de datos.
+
+## Prompt 012 — Roles personalizados y permisos controlados
+
+Se incorporó la administración controlada de roles personalizados bajo `/api/admin`, protegida por la política `AdministratorOnly`.
+
+### Roles base protegidos
+
+Los roles `Administrador`, `Analista Tributario` y `Supervisor` permanecen como roles base oficiales. No pueden ser renombrados, desactivados ni recibir cambios de permisos mediante la nueva administración de roles.
+
+### Administración personalizada
+
+Los administradores pueden crear y actualizar roles personalizados, siempre que el nombre sea único, no reservado y cumpla las reglas de longitud. La desactivación se bloquea cuando existen usuarios activos asignados al rol.
+
+### Asignación controlada de permisos
+
+La asignación de permisos reemplaza de forma completa las relaciones del rol personalizado usando solo permisos existentes. No se crean permisos nuevos ni se modifica el catálogo.
+
+### Auditoría
+
+Las acciones exitosas sobre roles registran auditoría con `ROLE_CREATED`, `ROLE_UPDATED` y `ROLE_PERMISSIONS_UPDATED`, sin almacenar tokens, contraseñas, hashes ni secretos.
+
+### Pendiente
+
+Queda pendiente implementar autorización dinámica basada directamente en permisos efectivos.
