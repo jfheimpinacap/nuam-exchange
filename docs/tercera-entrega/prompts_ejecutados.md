@@ -155,3 +155,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Modelo de datos:** sin migraciones, sin cambios de modelo, sin entidades nuevas y sin cambios en Fluent API.
 - **Frontend:** sin cambios.
 - **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, levantar API en `Development`, autenticar como Administrador, crear rol con permisos 7 y 8, consultar detalle del rol y revisar Auditoria para `ROLE_CREATED`.
+
+## Prompt 014 — 2026-06-23 — API de consulta de Calificaciones Tributarias
+
+- Alcance: consulta de solo lectura para Calificaciones Tributarias.
+- Endpoints creados: `GET /api/tax-classifications`, `GET /api/tax-classifications/{id}` y `GET /api/tax-classifications/filter-options`.
+- Política de acceso: `TaxClassificationRead`, limitada a `Administrador`, `Analista Tributario` y `Supervisor`.
+- Sin migraciones.
+- Sin cambios de modelo físico ni Fluent API.
+- Sin cambios de frontend.
+- Limitaciones de Codex Cloud: las validaciones de SDK .NET dependen de disponibilidad del entorno; no se debe declarar éxito si el SDK no está disponible.
+- Validaciones locales posteriores obligatorias: `dotnet restore .\NuamExchange.sln`, `dotnet build .\NuamExchange.sln --no-restore`, `dotnet test .\NuamExchange.sln --no-build`, iniciar API en Development y validar respuestas 200, 400, 401, 403, 404 y listado/opciones vacías cuando no existan registros.

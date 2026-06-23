@@ -44,3 +44,11 @@ La base `NuamTributariaDB` aún no existe y no fue creada durante esta preparaci
 - La base original `NuamTributariaDB` se conserva como referencia y no fue modificada.
 - Las tablas existentes de roles, permisos y auditoría se utilizarán para la autenticación, autorización y trazabilidad de accesos.
 - No se modificó el modelo lógico, no se agregaron tablas nuevas y no se generaron migraciones adicionales para esta fase.
+
+## Contrato de consulta de CalificacionTributaria — Prompt 014
+
+La API de consulta `/api/tax-classifications` se construyó sobre la entidad oficial `TaxClassification`, mapeada a `CalificacionTributaria`. El contrato expone únicamente campos existentes del modelo físico: `Id`, `CreatorUserId`, `Market`, `InstrumentCode`, `InstrumentName`, `ClassificationType`, `Description`, `UpdatePercentage`, `AppliedFactor`, `ReferenceAmount`, `Currency`, `TaxPeriod`, `ValidFrom`, `ValidTo`, `Status`, `CreatedAt` y `UpdatedAt`.
+
+Los filtros disponibles derivan del modelo oficial existente: `market` usa `Market`, `exercise` usa `TaxPeriod`, `status` usa `Status` y `search` consulta campos de texto reales (`InstrumentCode`, `InstrumentName`, `Description`, `ClassificationType`). El filtro funcional `origin` de mockups no se expone porque no existe una columna o propiedad equivalente en `TaxClassification`.
+
+No se modificó el modelo físico, no se agregaron columnas, no se cambiaron tipos, no se alteró Fluent API y no se creó migración. Las respuestas y opciones de filtro derivan exclusivamente del modelo oficial existente y de valores persistidos en la base de datos.

@@ -7,10 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using NuamExchange.Application.Administration;
 using NuamExchange.Application.Security;
+using NuamExchange.Application.TaxClassifications;
 using NuamExchange.Infrastructure.Administration;
 using NuamExchange.Infrastructure.Authentication;
 using NuamExchange.Infrastructure.Persistence;
 using NuamExchange.Infrastructure.Seeding;
+using NuamExchange.Infrastructure.TaxClassifications;
 
 namespace NuamExchange.Infrastructure.DependencyInjection;
 
@@ -31,6 +33,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRoleManagementPolicy, DefaultRoleManagementPolicy>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IAdministrationService, AdministrationService>();
+        services.AddSingleton<ITaxClassificationQueryValidator, TaxClassificationQueryValidator>();
+        services.AddScoped<ITaxClassificationQueryService, TaxClassificationQueryService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
         services.AddScoped<ISecuritySeedService, SecuritySeedService>();
 
@@ -64,6 +68,7 @@ public static class ServiceCollectionExtensions
             options.AddPolicy("AdministratorOnly", policy => policy.RequireRole(SecuritySeedService.AdministratorRole));
             options.AddPolicy("TaxAnalystOrAdministrator", policy => policy.RequireRole(SecuritySeedService.TaxAnalystRole, SecuritySeedService.AdministratorRole));
             options.AddPolicy("SupervisorOrAdministrator", policy => policy.RequireRole(SecuritySeedService.SupervisorRole, SecuritySeedService.AdministratorRole));
+            options.AddPolicy("TaxClassificationRead", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole, SecuritySeedService.SupervisorRole));
         });
 
         return services;
