@@ -37,7 +37,7 @@ Retorna el detalle de un rol.
 
 ### POST `/api/admin/roles`
 
-Crea un rol personalizado activo con permisos existentes.
+Crea un rol personalizado activo con permisos existentes. Desde Prompt 013, el contrato queda reforzado para aceptar `description` como string opcional o `null`, corrigiendo un problema de binding JSON detectado en validación local posterior a Prompt 012.
 
 ```json
 {
@@ -47,7 +47,7 @@ Crea un rol personalizado activo con permisos existentes.
 }
 ```
 
-Responde `201` con el detalle del rol creado.
+Responde `201 Created` con encabezado `Location` hacia `GET /api/admin/roles/{id}` y con el detalle seguro del rol creado.
 
 ### PUT `/api/admin/roles/{id}`
 
@@ -94,7 +94,7 @@ Consulta de solo lectura del catálogo de permisos, ordenado por código. Este p
 
 - `name` obligatorio, trimmeado, máximo 80 caracteres y único ignorando mayúsculas/minúsculas.
 - `name` no puede ser `Administrador`, `Analista Tributario` ni `Supervisor`.
-- `description` opcional y máximo 250 caracteres.
+- `description` opcional, puede ser string o `null`, y máximo 250 caracteres cuando se informa.
 - `permissionIds` obligatorio, con al menos un permiso, sin duplicados y con IDs existentes.
 
 ## Política de no borrado físico

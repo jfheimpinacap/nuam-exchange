@@ -68,6 +68,12 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 8. Intentar desactivar el último Administrador activo y verificar `409 Conflict`.
 9. Revisar Auditoria para eventos `USER_CREATED`, `USER_UPDATED` y `USER_PASSWORD_RESET` sin contraseñas, hashes ni tokens.
 
+## Evidencia de corrección — Prompt 013
+
+- Fallo local heredado de Prompt 012: un JSON válido para `POST /api/admin/roles` con `name`, `description` string y `permissionIds` `[7, 8]` fue rechazado con `400` por deserialización de `description`.
+- Corrección Prompt 013: se reforzó el contrato HTTP/Swagger de creación de roles y se agregaron pruebas de deserialización del DTO para `description` con texto y `null`, sin depender de SQL Server.
+- Validación local obligatoria posterior al merge: iniciar la API en `Development`, autenticarse como Administrador, crear un rol personalizado real con permisos 7 y 8, confirmar `HTTP 201 Created`, consultar el detalle del rol creado y revisar Auditoria para `ROLE_CREATED`.
+
 ## Validaciones manuales futuras — Prompt 012
 
 - Administrador consulta detalle de rol con `GET /api/admin/roles/{id}`.
