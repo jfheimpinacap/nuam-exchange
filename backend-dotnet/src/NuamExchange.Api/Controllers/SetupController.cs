@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NuamExchange.Api.Contracts.Setup;
+using NuamExchange.Application.Security;
 using NuamExchange.Domain.Entities;
 using NuamExchange.Infrastructure.Authentication;
 using NuamExchange.Infrastructure.Persistence;
@@ -12,7 +13,7 @@ namespace NuamExchange.Api.Controllers;
 
 [ApiController]
 [Route("api/setup")]
-public sealed class SetupController(IServiceProvider services, IWebHostEnvironment environment, IPasswordHasher passwordHasher) : ControllerBase
+public sealed class SetupController(IServiceProvider services, IWebHostEnvironment environment, IPasswordHasher passwordHasher, IPasswordPolicy passwordPolicy) : ControllerBase
 {
     [HttpPost("bootstrap-admin")]
     [AllowAnonymous]
@@ -21,6 +22,11 @@ public sealed class SetupController(IServiceProvider services, IWebHostEnvironme
         if (!environment.IsDevelopment())
         {
             return NotFound();
+        }
+
+        if (!passwordPolicy.IsValid(request.Password))
+        {
+            return BadRequest(new { message = "La contraseña no cumple los requisitos mínimos de seguridad." });
         }
 
         var dbContext = services.GetService<NuamExchangeDbContext>();
