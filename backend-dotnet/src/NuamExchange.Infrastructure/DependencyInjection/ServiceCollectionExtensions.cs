@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddSingleton<JwtConfigurationState>();
         services.AddSingleton<IPasswordPolicy, DefaultPasswordPolicy>();
+        services.AddSingleton<IRoleManagementPolicy, DefaultRoleManagementPolicy>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IAdministrationService, AdministrationService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();

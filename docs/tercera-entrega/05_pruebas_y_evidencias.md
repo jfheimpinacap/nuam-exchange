@@ -67,3 +67,15 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 7. Restablecer contraseña mediante `POST /api/admin/users/{id}/reset-password`.
 8. Intentar desactivar el último Administrador activo y verificar `409 Conflict`.
 9. Revisar Auditoria para eventos `USER_CREATED`, `USER_UPDATED` y `USER_PASSWORD_RESET` sin contraseñas, hashes ni tokens.
+
+## Validaciones manuales futuras — Prompt 012
+
+- Administrador consulta detalle de rol con `GET /api/admin/roles/{id}`.
+- Administrador crea rol personalizado con `POST /api/admin/roles`.
+- Administrador asigna permisos con `PUT /api/admin/roles/{id}/permissions`.
+- Rol personalizado aparece en `GET /api/admin/roles`.
+- Intento de modificar `Administrador` responde `409`.
+- Intento de desactivar rol con usuarios activos responde `409`.
+- Usuario `Analista Tributario` intenta crear rol y recibe `403`.
+- Cambios de permisos se reflejan en `GET /api/auth/permissions`.
+- Tabla `Auditoria` registra `ROLE_CREATED`, `ROLE_UPDATED` y `ROLE_PERMISSIONS_UPDATED`.

@@ -52,6 +52,35 @@ public sealed class AdminController(IServiceProvider services) : ControllerBase
     public async Task<IActionResult> GetRoles(CancellationToken cancellationToken)
         => await ExecuteAsync(async service => Ok(await service.GetRolesAsync(cancellationToken)));
 
+    [HttpGet("roles/{id:int}")]
+    public async Task<IActionResult> GetRole(int id, CancellationToken cancellationToken)
+        => await ExecuteAsync(async service => ToActionResult(await service.GetRoleAsync(id, cancellationToken)));
+
+    [HttpPost("roles")]
+    public async Task<IActionResult> CreateRole([FromBody] CreateAdminRoleRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var administratorId)) return Unauthorized();
+        return await ExecuteAsync(async service =>
+        {
+            var result = await service.CreateRoleAsync(new CreateRoleCommand(request.Name, request.Description, request.PermissionIds), administratorId, OriginIp(), cancellationToken);
+            return result.Succeeded ? CreatedAtAction(nameof(GetRole), new { id = result.Value!.Id }, result.Value) : Error(result.StatusCode, result.Message!);
+        });
+    }
+
+    [HttpPut("roles/{id:int}")]
+    public async Task<IActionResult> UpdateRole(int id, [FromBody] UpdateAdminRoleRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var administratorId)) return Unauthorized();
+        return await ExecuteAsync(async service => ToActionResult(await service.UpdateRoleAsync(id, new UpdateRoleCommand(request.Name, request.Description, request.IsActive), administratorId, OriginIp(), cancellationToken)));
+    }
+
+    [HttpPut("roles/{id:int}/permissions")]
+    public async Task<IActionResult> UpdateRolePermissions(int id, [FromBody] UpdateAdminRolePermissionsRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var administratorId)) return Unauthorized();
+        return await ExecuteAsync(async service => ToActionResult(await service.UpdateRolePermissionsAsync(id, new UpdateRolePermissionsCommand(request.PermissionIds), administratorId, OriginIp(), cancellationToken)));
+    }
+
     [HttpGet("permissions")]
     public async Task<IActionResult> GetPermissions(CancellationToken cancellationToken)
         => await ExecuteAsync(async service => Ok(await service.GetPermissionsAsync(cancellationToken)));
