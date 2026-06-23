@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using NuamExchange.Application.Administration;
+using NuamExchange.Application.Security;
+using NuamExchange.Infrastructure.Administration;
 using NuamExchange.Infrastructure.Authentication;
 using NuamExchange.Infrastructure.Persistence;
 using NuamExchange.Infrastructure.Seeding;
@@ -24,7 +27,9 @@ public static class ServiceCollectionExtensions
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddSingleton<JwtConfigurationState>();
+        services.AddSingleton<IPasswordPolicy, DefaultPasswordPolicy>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+        services.AddScoped<IAdministrationService, AdministrationService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
         services.AddScoped<ISecuritySeedService, SecuritySeedService>();
 

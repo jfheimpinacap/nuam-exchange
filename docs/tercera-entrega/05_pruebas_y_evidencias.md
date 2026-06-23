@@ -53,3 +53,17 @@ Restore, build y ejecución completa de pruebas quedan pendientes de validación
 - `dotnet restore .\NuamExchange.sln`.
 - `dotnet build .\NuamExchange.sln --no-restore`.
 - `dotnet test .\NuamExchange.sln --no-build`.
+
+## Pruebas manuales futuras: administración de usuarios
+
+Posterior al merge, validar con base local de desarrollo y configuración JWT local:
+
+1. Administrador consulta `GET /api/admin/users` y recibe listado paginado.
+2. Administrador crea un usuario con rol Analista Tributario mediante `POST /api/admin/users`.
+3. Analista Tributario intenta acceder a `GET /api/admin/users` y recibe `403 Forbidden`.
+4. Crear usuario con correo duplicado y verificar `409 Conflict`.
+5. Crear usuario con password inseguro y verificar rechazo seguro.
+6. Cambiar estado activo/inactivo de un usuario mediante `PUT /api/admin/users/{id}`.
+7. Restablecer contraseña mediante `POST /api/admin/users/{id}/reset-password`.
+8. Intentar desactivar el último Administrador activo y verificar `409 Conflict`.
+9. Revisar Auditoria para eventos `USER_CREATED`, `USER_UPDATED` y `USER_PASSWORD_RESET` sin contraseñas, hashes ni tokens.

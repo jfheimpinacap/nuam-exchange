@@ -97,3 +97,42 @@
 - Paquetes: se mantuvieron las referencias existentes a `Microsoft.NET.Test.Sdk`, `xunit`, `xunit.runner.visualstudio` y `Microsoft.AspNetCore.Mvc.Testing`; no se agregaron paquetes duplicados.
 - Limitación Cloud: no hay SDK .NET disponible para ejecutar `dotnet restore`, `dotnet build` ni `dotnet test` en Codex Cloud.
 - Validación local posterior obligatoria: ejecutar restore, build y test completos de la solución después del merge de Prompt 010.
+
+## Prompt 011 — Gestión administrativa segura de usuarios y consulta de roles/permisos
+
+Fecha real de ejecución: 2026-06-23.
+
+Alcance implementado:
+
+- Backend de administración bajo `/api/admin` protegido por `AdministratorOnly`.
+- Endpoints creados: `GET /users`, `GET /users/{id}`, `POST /users`, `PUT /users/{id}`, `POST /users/{id}/reset-password`, `GET /roles`, `GET /permissions`.
+- DTOs tipados para requests/responses administrativos.
+- Política reutilizable de contraseñas aplicada a bootstrap, creación de usuarios y reset de contraseña.
+- Auditoría segura para `USER_CREATED`, `USER_UPDATED` y `USER_PASSWORD_RESET`.
+- Protecciones para evitar desactivar/degradar al último Administrador activo.
+
+Restricciones respetadas:
+
+- Sin migraciones.
+- Sin modificaciones al modelo de entidades ni Fluent API.
+- Sin cambios en frontend.
+- Sin ejecución de `dotnet ef database update`.
+- Sin modificación de bases de datos, Plesk, hosting ni SQL Server remoto.
+
+Limitaciones de Codex Cloud:
+
+- El entorno no dispone de `dotnet`, por lo que restore, build y test quedan como validación local posterior obligatoria.
+
+Validaciones locales obligatorias posteriores al merge:
+
+- `dotnet restore .\NuamExchange.sln`
+- `dotnet build .\NuamExchange.sln --no-restore`
+- `dotnet test .\NuamExchange.sln --no-build`
+- iniciar API con configuración JWT local;
+- crear un usuario Analista Tributario;
+- consultar listado de usuarios;
+- iniciar sesión como Analista;
+- comprobar HTTP 403 al acceder a `/api/admin/users`;
+- actualizar estado de usuario;
+- restablecer contraseña;
+- revisar Auditoria.

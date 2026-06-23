@@ -10,7 +10,7 @@ public sealed class BootstrapAdminRequest
     [Required, EmailAddress, MaxLength(180)]
     public string Email { get; set; } = string.Empty;
 
-    [Required, MinLength(12), RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).+$", ErrorMessage = "Password debe contener mayúscula, minúscula, número y símbolo.")]
+    [Required]
     public string Password { get; set; } = string.Empty;
 
     [MaxLength(120)]
