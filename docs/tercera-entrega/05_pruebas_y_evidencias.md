@@ -85,3 +85,16 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 - Usuario `Analista Tributario` intenta crear rol y recibe `403`.
 - Cambios de permisos se reflejan en `GET /api/auth/permissions`.
 - Tabla `Auditoria` registra `ROLE_CREATED`, `ROLE_UPDATED` y `ROLE_PERMISSIONS_UPDATED`.
+
+## Pruebas manuales futuras — Prompt 014
+
+- Usuario `Administrador` consulta `GET /api/tax-classifications` y recibe `200`.
+- Usuario `Analista Tributario` consulta `GET /api/tax-classifications` y recibe `200`.
+- Usuario `Supervisor` consulta `GET /api/tax-classifications` y recibe `200`.
+- Usuario sin token consulta `GET /api/tax-classifications` y recibe `401`.
+- Usuario con rol no autorizado consulta `GET /api/tax-classifications` y recibe `403`.
+- Consulta con filtro válido por `market`, `exercise`, `status` o `search` responde sin errores.
+- Consulta con paginación válida (`page` y `pageSize`) responde metadatos consistentes.
+- Consulta con parámetro de ordenamiento inválido responde `400`.
+- Consulta de detalle inexistente en `GET /api/tax-classifications/{id}` responde `404`.
+- Base sin registros devuelve listado vacío y opciones vacías.
