@@ -10,6 +10,7 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
     private const string InitialStatus = "VIGENTE";
     private const string InitialHistoryChangeType = "CREACION";
     private const string UpdateHistoryChangeType = "MODIFICACION";
+    private const string CopyAuditAction = "TAX_CLASSIFICATION_COPIED";
 
     public async Task<TaxClassificationDetailDto> CreateAsync(ValidatedCreateTaxClassificationCommand command, CancellationToken cancellationToken = default)
     {
@@ -111,4 +112,63 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
 
         return new TaxClassificationDetailDto(entity.Id, entity.CreatorUserId, entity.Market, entity.InstrumentCode, entity.InstrumentName, entity.ClassificationType, entity.Description, entity.UpdatePercentage, entity.AppliedFactor, entity.ReferenceAmount, entity.Currency, entity.TaxPeriod, entity.ValidFrom, entity.ValidTo, entity.Status, entity.CreatedAt, entity.UpdatedAt);
     }
+
+    public async Task<TaxClassificationDetailDto?> CopyAsync(CopyTaxClassificationCommand command, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var source = await dbContext.TaxClassifications
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == command.SourceId, cancellationToken);
+        if (source is null) return null;
+
+        var now = DateTime.UtcNow;
+        var copy = new TaxClassification
+        {
+            CreatorUserId = command.ActorUserId,
+            Market = source.Market,
+            InstrumentCode = source.InstrumentCode,
+            InstrumentName = source.InstrumentName,
+            ClassificationType = source.ClassificationType,
+            Description = source.Description,
+            UpdatePercentage = source.UpdatePercentage,
+            AppliedFactor = source.AppliedFactor,
+            ReferenceAmount = source.ReferenceAmount,
+            Currency = source.Currency,
+            TaxPeriod = source.TaxPeriod,
+            ValidFrom = source.ValidFrom,
+            ValidTo = source.ValidTo,
+            Status = InitialStatus,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        dbContext.TaxClassifications.Add(copy);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        dbContext.ClassificationHistories.Add(new ClassificationHistory
+        {
+            TaxClassificationId = copy.Id,
+            UserId = command.ActorUserId,
+            ChangeType = InitialHistoryChangeType,
+            Observation = $"Calificación creada como copia de la calificación tributaria ID {source.Id}.",
+            ChangedAt = now
+        });
+
+        dbContext.AuditLogs.Add(new AuditLog
+        {
+            UserId = command.ActorUserId,
+            AffectedEntity = "CalificacionTributaria",
+            AffectedRecordId = copy.Id,
+            Action = CopyAuditAction,
+            Detail = $"Calificación tributaria {copy.Id} creada como copia de la calificación tributaria {source.Id}.",
+            OriginIp = command.OriginIp,
+            ActionAt = now
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return new TaxClassificationDetailDto(copy.Id, copy.CreatorUserId, copy.Market, copy.InstrumentCode, copy.InstrumentName, copy.ClassificationType, copy.Description, copy.UpdatePercentage, copy.AppliedFactor, copy.ReferenceAmount, copy.Currency, copy.TaxPeriod, copy.ValidFrom, copy.ValidTo, copy.Status, copy.CreatedAt, copy.UpdatedAt);
+    }
+
 }

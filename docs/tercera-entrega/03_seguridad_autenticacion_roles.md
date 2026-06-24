@@ -66,3 +66,8 @@ Queda pendiente implementar autorización dinámica basada directamente en permi
 - `Administrador` y `Analista Tributario` pueden editar calificaciones tributarias mediante `PUT /api/tax-classifications/{id}` con la política `TaxClassificationWrite`.
 - `Supervisor` conserva acceso de lectura mediante `TaxClassificationRead`, incluido `GET /api/tax-classifications/{id}/history`.
 - `Supervisor` no puede editar calificaciones tributarias y debe recibir `403 Forbidden` en el endpoint `PUT`.
+
+## Copia de calificaciones tributarias
+
+- `Administrador` y `Analista Tributario` pueden copiar calificaciones tributarias mediante `POST /api/tax-classifications/{id}/copy` con la política `TaxClassificationWrite`.
+- `Supervisor` conserva permisos de lectura e historial mediante `TaxClassificationRead`, pero no puede copiar calificaciones tributarias porque no pertenece a `TaxClassificationWrite`.

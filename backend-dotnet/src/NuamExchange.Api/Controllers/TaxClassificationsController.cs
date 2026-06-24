@@ -83,6 +83,25 @@ public sealed class TaxClassificationsController(IServiceProvider services, ITax
         });
     }
 
+
+    [HttpPost("{id:int}/copy")]
+    [Authorize(Policy = "TaxClassificationWrite")]
+    [ProducesResponseType(typeof(TaxClassificationDetailDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Copy(int id, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized(new { message = "No fue posible identificar al usuario autenticado." });
+
+        return await ExecuteCommandAsync(async service =>
+        {
+            var copied = await service.CopyAsync(new CopyTaxClassificationCommand(id, userId, HttpContext.Connection.RemoteIpAddress?.ToString()), cancellationToken);
+            return copied is null ? NotFound(new { message = "La calificación tributaria no existe." }) : CreatedAtAction(nameof(GetById), new { id = copied.Id }, copied);
+        });
+    }
+
     [HttpGet("{id:int}/history")]
     [ProducesResponseType(typeof(IReadOnlyCollection<TaxClassificationHistoryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

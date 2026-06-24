@@ -43,8 +43,11 @@ public interface ICreateTaxClassificationValidator
     CreateTaxClassificationValidationResult Validate(CreateTaxClassificationCommand command);
 }
 
+public sealed record CopyTaxClassificationCommand(int SourceId, int ActorUserId, string? OriginIp);
+
 public interface ITaxClassificationCommandService
 {
     Task<TaxClassificationDetailDto> CreateAsync(ValidatedCreateTaxClassificationCommand command, CancellationToken cancellationToken = default);
     Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default);
+    Task<TaxClassificationDetailDto?> CopyAsync(CopyTaxClassificationCommand command, CancellationToken cancellationToken = default);
 }
