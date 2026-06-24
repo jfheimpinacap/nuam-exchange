@@ -245,3 +245,22 @@ Casos agregados para validar endpoints de solo lectura con EF Core InMemory y si
 | Errores | Carga sin errores | `200 OK` con colección vacía |
 | Errores | Id inexistente | `404 Not Found` |
 | Integridad | Consultas de listado, resumen, detalles y errores | No modifican `UploadFile`, `BulkUploadDetail`, `BulkUploadError` ni `TaxClassification` |
+
+## Actualización Prompt 026 — Corrección de consultas y pruebas de Cargas Masivas
+
+Se corrigió la causa real de las fallas de validación local posteriores a Prompt 025: el fixture de `BulkLoadQueryTests` configuraba EF Core InMemory con `Guid.NewGuid().ToString()` dentro del callback de `AddDbContext`, por lo que el contexto usado para sembrar datos y el contexto usado por la API podían resolver nombres distintos de base InMemory. Como consecuencia, las consultas de listado, resumen, detalles y errores se ejecutaban contra una base vacía, produciendo listado sin items, `404 Not Found` para una carga existente y respuestas no compatibles con las assertions esperadas.
+
+La corrección captura un único nombre de base InMemory por factory de prueba y lo reutiliza tanto para el seed como para los contextos de consulta. Además, se reforzaron las pruebas para confirmar explícitamente:
+
+- carga existente con filtros reales devuelve `200 OK` e `items` no nulo;
+- carga inexistente conserva `404 Not Found`;
+- detalles y errores devuelven `PagedResult` con `items` no nulo;
+- cargas sin detalles ni errores devuelven colecciones vacías no nulas;
+- detalles y errores permanecen aislados por `UploadFileId`;
+- paginación conserva `totalCount` y `totalPages`;
+- no se exponen `FilePath`, `FileHash` ni rutas físicas;
+- las consultas siguen siendo de solo lectura sobre `UploadFile`, `BulkUploadDetail`, `BulkUploadError` y `TaxClassification`.
+
+También se corrigió la advertencia xUnit2012 sustituyendo la assertion basada en `Assert.False(...Any(...))` por `Assert.DoesNotContain(...)`, sin desactivar analyzers ni debilitar la intención de validar ausencia de cambios rastreados.
+
+No se modificaron entidades, Fluent API, migraciones, snapshot, modelo físico, frontend, JWT, roles, permisos ni políticas. No se usó SQL Server real ni credenciales reales.

@@ -83,10 +83,14 @@ public sealed class BulkLoadQueryTests
     {
         using var factory = CreateFactory(SecuritySeedService.AdministratorRole);
         var client = factory.CreateClient();
-        var details = await (await client.GetAsync("/api/bulk-loads/1/details?page=1&pageSize=1")).Content.ReadFromJsonAsync<PagedResult<BulkLoadDetailDto>>();
-        var errors = await (await client.GetAsync("/api/bulk-loads/1/errors?page=1&pageSize=1")).Content.ReadFromJsonAsync<PagedResult<BulkLoadErrorDto>>();
-        Assert.NotNull(details); Assert.Single(details!.Items); Assert.Equal(2, details.TotalCount); Assert.All(details.Items, x => Assert.Equal(1, x.UploadFileId));
-        Assert.NotNull(errors); Assert.Single(errors!.Items); Assert.Equal(1, errors.TotalCount); Assert.All(errors.Items, x => Assert.Equal(1, x.UploadFileId));
+        var detailsResponse = await client.GetAsync("/api/bulk-loads/1/details?page=1&pageSize=1");
+        var errorsResponse = await client.GetAsync("/api/bulk-loads/1/errors?page=1&pageSize=1");
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, errorsResponse.StatusCode);
+        var details = await detailsResponse.Content.ReadFromJsonAsync<PagedResult<BulkLoadDetailDto>>();
+        var errors = await errorsResponse.Content.ReadFromJsonAsync<PagedResult<BulkLoadErrorDto>>();
+        Assert.NotNull(details); Assert.NotNull(details!.Items); Assert.Single(details.Items); Assert.Equal(2, details.TotalCount); Assert.Equal(2, details.TotalPages); Assert.All(details.Items, x => Assert.Equal(1, x.UploadFileId));
+        Assert.NotNull(errors); Assert.NotNull(errors!.Items); Assert.Single(errors.Items); Assert.Equal(1, errors.TotalCount); Assert.Equal(1, errors.TotalPages); Assert.All(errors.Items, x => Assert.Equal(1, x.UploadFileId));
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/bulk-loads/999/details")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/bulk-loads/999/errors")).StatusCode);
     }
@@ -96,14 +100,20 @@ public sealed class BulkLoadQueryTests
     {
         using var factory = CreateFactory(SecuritySeedService.AdministratorRole, seed: false);
         var client = factory.CreateClient();
-        var list = await (await client.GetAsync("/api/bulk-loads")).Content.ReadFromJsonAsync<PagedResult<BulkLoadSummaryDto>>();
-        Assert.Empty(list!.Items);
+        var listResponse = await client.GetAsync("/api/bulk-loads");
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<BulkLoadSummaryDto>>();
+        Assert.NotNull(list); Assert.NotNull(list!.Items); Assert.Empty(list.Items);
 
         await SeedSingleUploadWithoutChildren(factory.Services);
-        var details = await (await client.GetAsync("/api/bulk-loads/10/details")).Content.ReadFromJsonAsync<PagedResult<BulkLoadDetailDto>>();
-        var errors = await (await client.GetAsync("/api/bulk-loads/10/errors")).Content.ReadFromJsonAsync<PagedResult<BulkLoadErrorDto>>();
-        Assert.Empty(details!.Items);
-        Assert.Empty(errors!.Items);
+        var detailsResponse = await client.GetAsync("/api/bulk-loads/10/details");
+        var errorsResponse = await client.GetAsync("/api/bulk-loads/10/errors");
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, errorsResponse.StatusCode);
+        var details = await detailsResponse.Content.ReadFromJsonAsync<PagedResult<BulkLoadDetailDto>>();
+        var errors = await errorsResponse.Content.ReadFromJsonAsync<PagedResult<BulkLoadErrorDto>>();
+        Assert.NotNull(details); Assert.NotNull(details!.Items); Assert.Empty(details.Items);
+        Assert.NotNull(errors); Assert.NotNull(errors!.Items); Assert.Empty(errors.Items);
     }
 
     [Fact]
@@ -116,7 +126,7 @@ public sealed class BulkLoadQueryTests
         await service.GetByIdAsync(1);
         await service.GetDetailsAsync(1, new ValidatedBulkLoadDetailQuery(1, 20, null, null, null, null));
         await service.GetErrorsAsync(1, new ValidatedBulkLoadErrorQuery(1, 20, null, null, null));
-        Assert.False(db.ChangeTracker.Entries().Any(e => e.State is EntityState.Modified or EntityState.Added or EntityState.Deleted));
+        Assert.DoesNotContain(db.ChangeTracker.Entries(), e => e.State is EntityState.Modified or EntityState.Added or EntityState.Deleted);
         Assert.Equal(3, await db.UploadFiles.CountAsync());
         Assert.Equal(3, await db.BulkUploadDetails.CountAsync());
         Assert.Equal(2, await db.BulkUploadErrors.CountAsync());
@@ -128,7 +138,8 @@ public sealed class BulkLoadQueryTests
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<NuamExchangeDbContext>(); services.RemoveAll<DbContextOptions<NuamExchangeDbContext>>();
-            services.AddDbContext<NuamExchangeDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()).ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
+            var databaseName = Guid.NewGuid().ToString();
+            services.AddDbContext<NuamExchangeDbContext>(o => o.UseInMemoryDatabase(databaseName).ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
             services.RemoveAll<IBulkLoadQueryService>(); services.AddScoped<IBulkLoadQueryService, BulkLoadQueryService>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme; options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme; }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(TestAuthenticationHandler.AuthenticationScheme, o => { o.ClaimsIssuer = authenticated ? role : "__unauthenticated__"; });
             if (seed) { using var sp = services.BuildServiceProvider(); using var scope = sp.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<NuamExchangeDbContext>(); Seed(db); db.SaveChanges(); }
