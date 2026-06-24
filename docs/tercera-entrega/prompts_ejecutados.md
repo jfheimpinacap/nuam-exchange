@@ -276,3 +276,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades de dominio, Fluent API ni snapshot.
 - **Sin frontend:** no se modificó la aplicación cliente.
 - **Validación local posterior obligatoria:** ejecutar restore, build, test, levantar API en Development y validar manualmente una fila válida más una inexistente sobre base local.
+
+## Prompt 024 — Corrección de fakes de pruebas tras Carga Masiva X Monto
+
+- **Fecha real:** 2026-06-24.
+- **Corrección CS0535:** se actualizaron los fakes manuales de pruebas que implementan `ITaxClassificationCommandService` y habían quedado incompletos tras incorporar `BulkLoadXAmountAsync`.
+- **Fakes de pruebas actualizados:** copia, binding JSON de endpoint y validación supervisora implementan explícitamente el nuevo miembro con `NotSupportedException` porque no participan en pruebas de Carga Masiva X Monto.
+- **Cobertura preservada:** se mantuvieron las pruebas previas de consulta, creación, edición/historial, copia, validación supervisora, binding JSON, Carga Masiva X Factor y Carga Masiva X Monto sin debilitar assertions ni eliminar casos.
+- **Sin migraciones:** no se crearon ni modificaron migraciones.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
+- **Sin frontend:** no se modificó la aplicación cliente.
+- **Validación local posterior obligatoria:** ejecutar restore, build y test de la solución backend recompilada; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la validación manual de Carga Masiva X Monto.

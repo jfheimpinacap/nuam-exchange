@@ -212,3 +212,11 @@ No se modificaron migraciones, entidades, Fluent API, snapshot, modelo físico, 
 | Historial | Registrar modificación permitida | Fila aplicada | Consultar `ClassificationHistory` | `MODIFICACION`, `ReferenceAmount` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
 | Auditoría | Registrar acción de monto | Fila aplicada | Consultar `AuditLog` | `TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
 | Transacción | Rollback ante error inesperado | Falla de infraestructura simulable | Ejecutar servicio | Sin persistencia parcial | Cubierto por transacción del servicio y pendiente de validación local ampliada | Alta | Codex | Revisión estática + pruebas |
+
+## Actualización Prompt 024 — Corrección de fakes tras Carga Masiva X Monto
+
+Se corrigieron implementaciones fake de pruebas que quedaron desactualizadas al extender `ITaxClassificationCommandService` con `BulkLoadXAmountAsync` para Carga Masiva X Monto.
+
+La actualización cubre los dobles manuales usados por pruebas de copia, binding JSON de endpoints y validación supervisora. En esos fakes el método de X Monto se implementa con `NotSupportedException`, de forma explícita y segura, porque esos fixtures no ejercitan el endpoint ni el servicio de Carga Masiva X Monto. Los fakes específicos de Carga Masiva X Factor y Carga Masiva X Monto ya exponen comportamientos coherentes con sus contratos respectivos.
+
+No se eliminaron pruebas ni se redujo cobertura. No se modificaron migraciones, entidades, Fluent API, snapshot, modelo físico, frontend, roles, permisos, JWT ni políticas. La validación local posterior obligatoria sigue siendo restaurar, compilar y ejecutar pruebas sobre binarios recompilados antes de continuar con la prueba manual de Carga Masiva X Monto.
