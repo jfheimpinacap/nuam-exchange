@@ -95,3 +95,11 @@ Queda pendiente implementar autorización dinámica basada directamente en permi
 - Administrador y Analista Tributario pueden ejecutar la carga masiva X Monto.
 - Supervisor conserva lectura, historial y validación supervisora, pero no puede ejecutar la carga masiva X Monto y recibe `403 Forbidden`.
 - Sin JWT válido la API responde `401 Unauthorized`.
+
+## Consulta de cargas masivas
+
+Los endpoints `GET /api/bulk-loads`, `GET /api/bulk-loads/{id}`, `GET /api/bulk-loads/{id}/details` y `GET /api/bulk-loads/{id}/errors` usan la política `TaxClassificationRead`.
+
+Pueden consultar cargas masivas los roles `Administrador`, `Analista Tributario` y `Supervisor`. La consulta es de solo lectura y no cambia usuarios, roles, permisos, JWT ni bootstrap.
+
+Las cargas `POST /api/tax-classifications/bulk-loads/x-factor` y `POST /api/tax-classifications/bulk-loads/x-amount` siguen usando `TaxClassificationWrite`; por tanto, el Supervisor puede consultar trazabilidad, pero no ejecutar cargas masivas.

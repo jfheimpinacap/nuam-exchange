@@ -287,3 +287,17 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
 - **Sin frontend:** no se modificó la aplicación cliente.
 - **Validación local posterior obligatoria:** ejecutar restore, build y test de la solución backend recompilada; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la validación manual de Carga Masiva X Monto.
+
+## Prompt 025 — Consulta de Cargas Masivas, Detalles y Errores
+
+- **Fecha real:** 2026-06-24.
+- **Endpoints creados:** `GET /api/bulk-loads`, `GET /api/bulk-loads/{id}`, `GET /api/bulk-loads/{id}/details`, `GET /api/bulk-loads/{id}/errors`.
+- **Política aplicada:** `TaxClassificationRead` para `Administrador`, `Analista Tributario` y `Supervisor`.
+- **Alcance:** consultas de solo lectura sobre `UploadFile`, `UploadTemplate`, `BulkUploadDetail` y `BulkUploadError`.
+- **Paginación:** `page` y `pageSize` con límite máximo seguro de 100.
+- **Filtros:** tipo y estado de carga reales; estado, campo, calificación y fila en detalles; severidad, columna y fila en errores.
+- **Ordenamiento:** lista blanca segura para historial de cargas; detalles y errores con orden fijo por fila.
+- **Seguridad:** se excluyen rutas físicas, hashes, contenido bruto completo de archivos, stack traces, connection strings, claims JWT y credenciales.
+- **Base de datos:** sin migraciones, sin cambios físicos, sin nuevas tablas, columnas, índices ni relaciones.
+- **Frontend:** sin cambios.
+- **Validación local posterior obligatoria:** restaurar, compilar, probar, iniciar API en Development, autenticarse con Administrador real y verificar listado, resumen, detalles, errores, aislamiento entre cargas, `404` para id inexistente y ausencia de modificaciones en datos tributarios o registros de carga.

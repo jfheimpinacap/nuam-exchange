@@ -76,3 +76,13 @@ La Carga Masiva X Monto reutiliza el modelo físico existente sin migraciones ni
 `BulkUploadDetail` / `DetalleCargaMasiva` soporta la carga por medio de `campo_afectado = ReferenceAmount`, `valor_monto` (`decimal(18,4)`), `valor_texto_original`, `numero_fila` y estados existentes `APLICADA` o `CON_ERROR`. La FK opcional a `CalificacionTributaria` se informa solo en filas con coincidencia única aplicada.
 
 `BulkUploadError` / `ErrorCargaMasiva` registra filas rechazadas por archivo, número de fila, columna cuando corresponde (`referenceAmount`) y severidad `ERROR`. La calificación tributaria usa el campo físico `monto_referencia` (`decimal(18,4)`, nullable) con CHECK no negativo, y la carga solo modifica ese campo y `actualizado_en` cuando la fila es válida.
+
+## Consulta de trazabilidad de cargas masivas
+
+La consulta de cargas masivas se apoya en el modelo físico existente sin introducir cambios de esquema. `UploadFile` / `ArchivoCarga` representa el encabezado funcional de una carga, referencia una `UploadTemplate` / `PlantillaCarga` mediante `plantilla_id` y concentra tipo, archivo original, extensión, estado, contadores y fecha de carga.
+
+`BulkUploadDetail` / `DetalleCargaMasiva` se relaciona con `UploadFile` por `archivo_carga_id` y registra cada fila procesada con `numero_fila`, `campo_afectado`, valor de factor o monto según corresponda, estado de fila y, cuando existe coincidencia, `calificacion_id` hacia `TaxClassification` / `CalificacionTributaria`.
+
+`BulkUploadError` / `ErrorCargaMasiva` se relaciona con `UploadFile` por `archivo_carga_id` y conserva errores seguros por fila, columna, descripción y severidad. No existe relación física directa entre error y detalle; la correlación disponible se realiza por carga y número de fila.
+
+Los endpoints de consulta usan proyecciones `AsNoTracking`, filtran siempre por `archivo_carga_id` para detalles y errores, y no actualizan encabezados, detalles, errores ni calificaciones tributarias. Esta sección describe uso de trazabilidad existente y no representa migraciones, columnas, índices, constraints ni relaciones nuevas.
