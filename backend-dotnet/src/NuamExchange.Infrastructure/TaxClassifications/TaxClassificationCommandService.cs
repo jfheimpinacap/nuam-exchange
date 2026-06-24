@@ -14,6 +14,7 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
     private const string CopyAuditAction = "TAX_CLASSIFICATION_COPIED";
     private const string ValidationAuditAction = "TAX_CLASSIFICATION_VALIDATED";
     private const string BulkFactorAuditAction = "TAX_CLASSIFICATION_FACTOR_BULK_UPDATED";
+    private const string BulkAmountAuditAction = "TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED";
 
     public async Task<TaxClassificationDetailDto> CreateAsync(ValidatedCreateTaxClassificationCommand command, CancellationToken cancellationToken = default)
     {
@@ -349,6 +350,123 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
         return new BulkLoadXFactorResult(upload.Id, upload.TotalRecords, upload.ValidRecords, upload.ErrorRecords, updatedIds, errors);
     }
 
+
+    public async Task<BulkLoadXAmountResult> BulkLoadXAmountAsync(BulkLoadXAmountCommand command, CancellationToken cancellationToken = default)
+    {
+        var lines = command.CsvContent.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+        var rows = lines.Skip(1).Select((line, index) => new { Line = line, RowNumber = index + 2 }).Where(x => !string.IsNullOrWhiteSpace(x.Line)).ToList();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var now = DateTime.UtcNow;
+        var template = await dbContext.UploadTemplates.FirstOrDefaultAsync(x => x.UploadType == "X_MONTO" && x.TemplateVersion == "1.0", cancellationToken);
+        if (template is null)
+        {
+            template = new UploadTemplate
+            {
+                UploadType = "X_MONTO",
+                TemplateName = "Carga Masiva X Monto CSV",
+                Description = "Plantilla lógica para carga masiva X Monto mediante CSV.",
+                RequiredColumns = "market;instrumentCode;taxPeriod;referenceAmount",
+                AllowedFormat = "CSV",
+                TemplateVersion = "1.0",
+                IsActive = true,
+                CreatedAt = now
+            };
+            dbContext.UploadTemplates.Add(template);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var upload = new UploadFile
+        {
+            UserId = command.ActorUserId,
+            UploadTemplateId = template.Id,
+            UploadType = "X_MONTO",
+            FileName = Truncate(command.FileName, 255),
+            Extension = "CSV",
+            FilePath = string.Empty,
+            FileSizeBytes = command.FileSizeBytes,
+            UploadStatus = "EN_VALIDACION",
+            UploadedAt = now
+        };
+        dbContext.UploadFiles.Add(upload);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var errors = new List<BulkLoadXAmountErrorDto>();
+        var updatedIds = new List<int>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var row in rows)
+        {
+            var columns = row.Line.Split(';');
+            var original = Truncate(row.Line, 500);
+            if (columns.Length != 4)
+            {
+                AddAmountFailed(upload.Id, row.RowNumber, null, null, original, "STRUCTURE", "La fila debe contener exactamente 4 columnas separadas por punto y coma.", errors, now);
+                continue;
+            }
+
+            var market = columns[0].Trim();
+            var instrumentCode = columns[1].Trim();
+            var taxPeriodText = columns[2].Trim();
+            var amountText = columns[3].Trim();
+            var key = $"{market}\u001f{instrumentCode}\u001f{taxPeriodText}";
+
+            if (string.IsNullOrWhiteSpace(market) || string.IsNullOrWhiteSpace(instrumentCode) || string.IsNullOrWhiteSpace(taxPeriodText) || string.IsNullOrWhiteSpace(amountText))
+            {
+                AddAmountFailed(upload.Id, row.RowNumber, null, null, original, "REQUIRED_FIELD", "market, instrumentCode, taxPeriod y referenceAmount son obligatorios.", errors, now);
+                continue;
+            }
+            if (!int.TryParse(taxPeriodText, NumberStyles.None, CultureInfo.InvariantCulture, out var taxPeriod))
+            {
+                AddAmountFailed(upload.Id, row.RowNumber, null, null, original, "INVALID_TAX_PERIOD", "taxPeriod debe ser un número entero válido.", errors, now);
+                continue;
+            }
+            if (seen.Contains(key))
+            {
+                AddAmountFailed(upload.Id, row.RowNumber, null, null, original, "DUPLICATE_ROW", "La identidad market + instrumentCode + taxPeriod ya fue procesada correctamente en el archivo.", errors, now);
+                continue;
+            }
+            if (!TryParseAmount(amountText, out var parsedAmount) || parsedAmount < 0 || parsedAmount >= 100000000000000m || decimal.Round(parsedAmount, 4) != parsedAmount)
+            {
+                AddAmountFailed(upload.Id, row.RowNumber, null, null, original, "INVALID_REFERENCE_AMOUNT", "referenceAmount debe ser decimal válido, no negativo y compatible con decimal(18,4).", errors, now);
+                continue;
+            }
+
+            var amount = parsedAmount;
+            var matches = await dbContext.TaxClassifications.Where(x => x.Market == market && x.InstrumentCode == instrumentCode && x.TaxPeriod == taxPeriod).Take(2).ToListAsync(cancellationToken);
+            if (matches.Count == 0)
+            {
+                AddAmountFailed(upload.Id, row.RowNumber, null, amount, original, "NOT_FOUND", "No existe una calificación tributaria para market + instrumentCode + taxPeriod.", errors, now);
+                continue;
+            }
+            if (matches.Count > 1)
+            {
+                AddAmountFailed(upload.Id, row.RowNumber, null, amount, original, "AMBIGUOUS_MATCH", "Existe más de una calificación tributaria para market + instrumentCode + taxPeriod.", errors, now);
+                continue;
+            }
+
+            seen.Add(key);
+
+            var entity = matches[0];
+            var previous = entity.ReferenceAmount;
+            entity.ReferenceAmount = amount;
+            entity.UpdatedAt = now;
+            dbContext.BulkUploadDetails.Add(new BulkUploadDetail { UploadFileId = upload.Id, TaxClassificationId = entity.Id, RowNumber = row.RowNumber, AffectedField = "ReferenceAmount", AmountValue = amount, OriginalTextValue = original, RowStatus = "APLICADA", Observation = "Monto de referencia actualizado por Carga Masiva X Monto.", CreatedAt = now });
+            dbContext.ClassificationHistories.Add(new ClassificationHistory { TaxClassificationId = entity.Id, UserId = command.ActorUserId, ChangeType = "MODIFICACION", ModifiedField = "ReferenceAmount", PreviousValue = FormatAmount(previous), NewValue = FormatAmount(amount), Observation = "Modificación proveniente de Carga Masiva X Monto.", ChangedAt = now });
+            dbContext.AuditLogs.Add(new AuditLog { UserId = command.ActorUserId, AffectedEntity = "CalificacionTributaria", AffectedRecordId = entity.Id, Action = BulkAmountAuditAction, Detail = $"Calificación tributaria {entity.Id} actualizada por Carga Masiva X Monto.", PreviousValue = FormatAmount(previous), NewValue = FormatAmount(amount), OriginIp = command.OriginIp, ActionAt = now });
+            updatedIds.Add(entity.Id);
+        }
+
+        upload.TotalRecords = rows.Count;
+        upload.ValidRecords = updatedIds.Count;
+        upload.ErrorRecords = errors.Count;
+        upload.UploadStatus = errors.Count == 0 ? "PROCESADO" : "PROCESADO_CON_ERRORES";
+        upload.Observation = errors.Count == 0 ? "Carga Masiva X Monto procesada correctamente." : "Carga Masiva X Monto procesada con errores de fila.";
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return new BulkLoadXAmountResult(upload.Id, upload.TotalRecords, upload.ValidRecords, upload.ErrorRecords, updatedIds, errors);
+    }
+
     private static (string NewStatus, string HistoryChangeType)? ResolveTransition(string currentStatus, string decision)
         => (currentStatus, decision) switch
         {
@@ -366,6 +484,21 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
         dbContext.BulkUploadErrors.Add(new BulkUploadError { UploadFileId = uploadId, RowNumber = rowNumber, ColumnName = code == "INVALID_APPLIED_FACTOR" ? "appliedFactor" : null, ErrorDescription = Truncate(message, 800), Severity = "ERROR", CreatedAt = now });
     }
 
+    private void AddAmountFailed(int uploadId, int rowNumber, int? taxClassificationId, decimal? amount, string? original, string code, string message, List<BulkLoadXAmountErrorDto> errors, DateTime now)
+    {
+        errors.Add(new BulkLoadXAmountErrorDto(rowNumber, code, message));
+        dbContext.BulkUploadDetails.Add(new BulkUploadDetail { UploadFileId = uploadId, TaxClassificationId = taxClassificationId, RowNumber = rowNumber, AffectedField = "ReferenceAmount", AmountValue = amount, OriginalTextValue = original, RowStatus = "CON_ERROR", Observation = Truncate(message, 700), CreatedAt = now });
+        dbContext.BulkUploadErrors.Add(new BulkUploadError { UploadFileId = uploadId, RowNumber = rowNumber, ColumnName = code == "INVALID_REFERENCE_AMOUNT" ? "referenceAmount" : null, ErrorDescription = Truncate(message, 800), Severity = "ERROR", CreatedAt = now });
+    }
+
+    private static bool TryParseAmount(string text, out decimal value)
+    {
+        if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var invariant)) { value = invariant; return true; }
+        if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.GetCultureInfo("es-CL"), out var cl)) { value = cl; return true; }
+        value = default;
+        return false;
+    }
+
     private static bool TryParseFactor(string text, out decimal value)
     {
         if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var invariant)) { value = invariant; return true; }
@@ -375,5 +508,6 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
     }
 
     private static string? FormatDecimal(decimal? value) => value?.ToString("0.########", CultureInfo.InvariantCulture);
+    private static string? FormatAmount(decimal? value) => value?.ToString("0.####", CultureInfo.InvariantCulture);
     private static string Truncate(string value, int maxLength) => value.Length <= maxLength ? value : value[..maxLength];
 }

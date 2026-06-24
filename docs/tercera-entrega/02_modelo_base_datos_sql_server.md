@@ -68,3 +68,11 @@ La Carga Masiva X Factor reutiliza el modelo físico existente sin migraciones n
 `BulkUploadError` / `ErrorCargaMasiva` también depende de `ArchivoCarga` mediante `archivo_carga_id`; las filas rechazadas registran `numero_fila`, columna cuando aplica, descripción segura y severidad `ERROR`. El modelo existente no contiene FK directa de error a detalle, por lo que la correlación comprobable se realiza por `archivo_carga_id` y `numero_fila`.
 
 Estas entidades permiten demostrar qué archivo fue recibido, qué filas fueron aplicadas o rechazadas y qué errores ocurrieron, sin afirmar ni requerir cambios físicos de base de datos.
+
+## Soporte de Carga Masiva X Monto sin cambios físicos
+
+La Carga Masiva X Monto reutiliza el modelo físico existente sin migraciones ni cambios de columnas. `UploadTemplate` / `PlantillaCarga` y `UploadFile` / `ArchivoCarga` ya admiten `tipo_carga = X_MONTO` mediante los CHECK existentes, por lo que la implementación registra una plantilla lógica CSV versión `1.0` y archivos con `extension = CSV`.
+
+`BulkUploadDetail` / `DetalleCargaMasiva` soporta la carga por medio de `campo_afectado = ReferenceAmount`, `valor_monto` (`decimal(18,4)`), `valor_texto_original`, `numero_fila` y estados existentes `APLICADA` o `CON_ERROR`. La FK opcional a `CalificacionTributaria` se informa solo en filas con coincidencia única aplicada.
+
+`BulkUploadError` / `ErrorCargaMasiva` registra filas rechazadas por archivo, número de fila, columna cuando corresponde (`referenceAmount`) y severidad `ERROR`. La calificación tributaria usa el campo físico `monto_referencia` (`decimal(18,4)`, nullable) con CHECK no negativo, y la carga solo modifica ese campo y `actualizado_en` cuando la fila es válida.

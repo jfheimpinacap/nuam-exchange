@@ -52,4 +52,5 @@ public interface ITaxClassificationCommandService
     Task<TaxClassificationDetailDto?> CopyAsync(CopyTaxClassificationCommand command, CancellationToken cancellationToken = default);
     Task<SupervisorValidationResult> SupervisorValidationAsync(ValidatedSupervisorValidationTaxClassificationCommand command, CancellationToken cancellationToken = default);
     Task<BulkLoadXFactorResult> BulkLoadXFactorAsync(BulkLoadXFactorCommand command, CancellationToken cancellationToken = default);
+    Task<BulkLoadXAmountResult> BulkLoadXAmountAsync(BulkLoadXAmountCommand command, CancellationToken cancellationToken = default);
 }

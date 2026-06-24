@@ -193,3 +193,22 @@ La cobertura automatizada conserva la verificación fuerte de los factores aplic
 - fila válida posterior a una fila inválida con la misma identidad, confirmando que una fila inválida no consume la identidad procesable.
 
 No se modificaron migraciones, entidades, Fluent API, snapshot, modelo físico, frontend, roles, permisos, JWT ni políticas. La validación local posterior obligatoria sigue siendo restaurar, compilar y ejecutar pruebas sobre el binario recompilado antes de continuar con la prueba manual de Carga Masiva X Factor.
+
+## Casos agregados — Prompt 023 Carga Masiva X Monto
+
+| Módulo | Objetivo | Datos de entrada | Pasos | Resultado esperado | Resultado obtenido | Prioridad | Responsable | Evidencia |
+|---|---|---|---|---|---|---|---|---|
+| API Carga X Monto | Administrador/Analista carga CSV válido | JWT con rol permitido, multipart `file` CSV UTF-8 | POST a `/api/tax-classifications/bulk-loads/x-amount` | `200 OK` con conteos | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| API Carga X Monto | Supervisor no ejecuta carga | JWT Supervisor | POST multipart | `403 Forbidden` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| API Carga X Monto | Sin JWT no ejecuta carga | Sin autenticación | POST multipart | `401 Unauthorized` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| API Carga X Monto | Rechazar archivo faltante/vacío/no CSV/header inválido/JSON | Multipart vacío, CSV vacío, TXT, encabezado incorrecto, JSON | POST al endpoint | `400 Bad Request` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Servicio Carga X Monto | Fila válida actualiza `ReferenceAmount` | `BOLSA;NUAM-1;2026;1.2500` | Ejecutar servicio con EF InMemory | Solo cambia monto y `UpdatedAt` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Servicio Carga X Monto | Monto inválido | `referenceAmount=bad` o exceso de escala/precisión | Ejecutar servicio | Error `INVALID_REFERENCE_AMOUNT`, sin cambios tributarios | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Servicio Carga X Monto | Coincidencia inexistente | Identidad sin calificación | Ejecutar servicio | Error `NOT_FOUND`, sin creación | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Servicio Carga X Monto | Coincidencia ambigua | Dos calificaciones con misma identidad | Ejecutar servicio | Error `AMBIGUOUS_MATCH`, sin cambios | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Servicio Carga X Monto | Duplicado posterior a fila válida | Misma identidad dos veces | Ejecutar servicio | Segunda fila `DUPLICATE_ROW` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Servicio Carga X Monto | Fila válida posterior a fila inválida | Misma identidad con monto inválido y luego válido | Ejecutar servicio | Fila válida se procesa como primera aplicada | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Servicio Carga X Monto | Preservación de campos | Calificación con `Status`, `AppliedFactor`, creador y fechas | Ejecutar carga válida | Campos preservados salvo `ReferenceAmount` y `UpdatedAt` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Historial | Registrar modificación permitida | Fila aplicada | Consultar `ClassificationHistory` | `MODIFICACION`, `ReferenceAmount` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Auditoría | Registrar acción de monto | Fila aplicada | Consultar `AuditLog` | `TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXAmountTests` |
+| Transacción | Rollback ante error inesperado | Falla de infraestructura simulable | Ejecutar servicio | Sin persistencia parcial | Cubierto por transacción del servicio y pendiente de validación local ampliada | Alta | Codex | Revisión estática + pruebas |

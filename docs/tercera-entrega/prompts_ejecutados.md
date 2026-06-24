@@ -261,3 +261,18 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
 - **Sin frontend:** no se modificó la aplicación frontend.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore .\NuamExchange.sln`, `dotnet build .\NuamExchange.sln --no-restore` y `dotnet test .\NuamExchange.sln --no-build` sobre código recompilado; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la prueba manual de Carga Masiva X Factor.
+
+## Prompt 023 — Carga Masiva X Monto de Calificaciones Tributarias
+
+- **Fecha real:** 2026-06-24.
+- **Endpoint:** `POST /api/tax-classifications/bulk-loads/x-amount`.
+- **Política:** `TaxClassificationWrite`.
+- **Formato CSV:** UTF-8 con o sin BOM, delimitado por punto y coma, encabezado `market;instrumentCode;taxPeriod;referenceAmount`.
+- **Campo actualizado:** solo `ReferenceAmount` / `monto_referencia` y `UpdatedAt` en calificaciones existentes con coincidencia única.
+- **Entidades de carga usadas:** `UploadTemplate`, `UploadFile`, `BulkUploadDetail` y `BulkUploadError` existentes con tipo real `X_MONTO`.
+- **Historial:** `ClassificationHistory` con `ChangeType = MODIFICACION` y `ModifiedField = ReferenceAmount`.
+- **Auditoría:** `AuditLog` con acción `TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED`.
+- **Sin migraciones:** no se crearon migraciones nuevas.
+- **Sin cambios de modelo:** no se modificaron entidades de dominio, Fluent API ni snapshot.
+- **Sin frontend:** no se modificó la aplicación cliente.
+- **Validación local posterior obligatoria:** ejecutar restore, build, test, levantar API en Development y validar manualmente una fila válida más una inexistente sobre base local.

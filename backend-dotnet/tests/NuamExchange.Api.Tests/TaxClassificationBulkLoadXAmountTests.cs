@@ -21,7 +21,7 @@ using NuamExchange.Infrastructure.TaxClassifications;
 
 namespace NuamExchange.Api.Tests;
 
-public sealed class TaxClassificationBulkLoadXFactorTests
+public sealed class TaxClassificationBulkLoadXAmountTests
 {
     [Theory]
     [InlineData(SecuritySeedService.AdministratorRole)]
@@ -30,12 +30,12 @@ public sealed class TaxClassificationBulkLoadXFactorTests
     {
         using var factory = CreateFactory(role);
         using var client = factory.CreateClient();
-        using var form = CreateCsvForm("market;instrumentCode;taxPeriod;appliedFactor\nBOLSA;NUAM;2026;1.25\n");
+        using var form = CreateCsvForm("market;instrumentCode;taxPeriod;referenceAmount\nBOLSA;NUAM;2026;1.25\n");
 
-        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", form);
+        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", form);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<BulkLoadXFactorResult>();
+        var result = await response.Content.ReadFromJsonAsync<BulkLoadXAmountResult>();
         Assert.NotNull(result);
         Assert.Equal(1, result!.TotalRows);
         Assert.Equal(1, result.SuccessfulRows);
@@ -47,9 +47,9 @@ public sealed class TaxClassificationBulkLoadXFactorTests
     {
         using var factory = CreateFactory(SecuritySeedService.SupervisorRole);
         using var client = factory.CreateClient();
-        using var form = CreateCsvForm("market;instrumentCode;taxPeriod;appliedFactor\nBOLSA;NUAM;2026;1.25\n");
+        using var form = CreateCsvForm("market;instrumentCode;taxPeriod;referenceAmount\nBOLSA;NUAM;2026;1.25\n");
 
-        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", form);
+        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", form);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -59,9 +59,9 @@ public sealed class TaxClassificationBulkLoadXFactorTests
     {
         using var factory = CreateFactory(SecuritySeedService.AdministratorRole, authenticated: false);
         using var client = factory.CreateClient();
-        using var form = CreateCsvForm("market;instrumentCode;taxPeriod;appliedFactor\nBOLSA;NUAM;2026;1.25\n");
+        using var form = CreateCsvForm("market;instrumentCode;taxPeriod;referenceAmount\nBOLSA;NUAM;2026;1.25\n");
 
-        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", form);
+        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", form);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -73,7 +73,7 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         using var client = factory.CreateClient();
         using var form = new MultipartFormDataContent();
 
-        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", form);
+        using var response = await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", form);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -85,20 +85,20 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         using var client = factory.CreateClient();
 
         using var empty = CreateCsvForm(string.Empty);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", empty)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", empty)).StatusCode);
 
-        using var nonCsv = CreateForm("file", "data", "x-factor.txt", "text/plain");
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", nonCsv)).StatusCode);
+        using var nonCsv = CreateForm("file", "data", "x-amount.txt", "text/plain");
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", nonCsv)).StatusCode);
 
-        using var badHeader = CreateCsvForm("mercado;codigo;periodo;factor\nBOLSA;NUAM;2026;1.25\n");
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", badHeader)).StatusCode);
+        using var badHeader = CreateCsvForm("mercado;codigo;periodo;amount\nBOLSA;NUAM;2026;1.25\n");
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", badHeader)).StatusCode);
 
-        using var json = JsonContent.Create(new { file = "market;instrumentCode;taxPeriod;appliedFactor" });
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", json)).StatusCode);
+        using var json = JsonContent.Create(new { file = "market;instrumentCode;taxPeriod;referenceAmount" });
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/api/tax-classifications/bulk-loads/x-amount", json)).StatusCode);
     }
 
     [Fact]
-    public async Task BulkLoadService_UpdatesOnlyFactorAndTraceabilityForValidRowsAndErrorsForInvalidRows()
+    public async Task BulkLoadService_UpdatesOnlyAmountAndTraceabilityForValidRowsAndErrorsForInvalidRows()
     {
         var options = CreateOptions();
         await using var dbContext = new NuamExchangeDbContext(options);
@@ -111,8 +111,8 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         await dbContext.SaveChangesAsync();
 
         var service = new TaxClassificationCommandService(dbContext);
-        var csv = "market;instrumentCode;taxPeriod;appliedFactor\nBOLSA;NUAM-1;2026;1.25000000\nBOLSA;NOPE;2026;4.0\nBOLSA;DUP;2026;5.0\nBOLSA;BAD-FIRST;2026;bad\nBOLSA;NUAM-1;2026;6.0\nBOLSA;BAD-FIRST;2026;7.50000000\n";
-        var result = await service.BulkLoadXFactorAsync(new BulkLoadXFactorCommand(99, "x-factor.csv", Encoding.UTF8.GetByteCount(csv), csv, "127.0.0.1"));
+        var csv = "market;instrumentCode;taxPeriod;referenceAmount\nBOLSA;NUAM-1;2026;1.2500\nBOLSA;NOPE;2026;4.0\nBOLSA;DUP;2026;5.0\nBOLSA;BAD-FIRST;2026;bad\nBOLSA;NUAM-1;2026;6.0\nBOLSA;BAD-FIRST;2026;7.5000\n";
+        var result = await service.BulkLoadXAmountAsync(new BulkLoadXAmountCommand(99, "x-amount.csv", Encoding.UTF8.GetByteCount(csv), csv, "127.0.0.1"));
 
         Assert.Equal(6, result.TotalRows);
         Assert.Equal(2, result.SuccessfulRows);
@@ -121,41 +121,43 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         Assert.Contains(4, result.UpdatedTaxClassificationIds);
         Assert.Contains(result.Errors, x => x.RowNumber == 3 && x.Code == "NOT_FOUND");
         Assert.Contains(result.Errors, x => x.RowNumber == 4 && x.Code == "AMBIGUOUS_MATCH");
-        Assert.Contains(result.Errors, x => x.RowNumber == 5 && x.Code == "INVALID_APPLIED_FACTOR");
+        Assert.Contains(result.Errors, x => x.RowNumber == 5 && x.Code == "INVALID_REFERENCE_AMOUNT");
         Assert.Contains(result.Errors, x => x.RowNumber == 6 && x.Code == "DUPLICATE_ROW");
 
         var updated = await dbContext.TaxClassifications.SingleAsync(x => x.Id == 1);
-        Assert.Equal(1.25m, updated.AppliedFactor);
+        Assert.Equal(1.25m, updated.ReferenceAmount);
         Assert.True(updated.UpdatedAt > created);
         Assert.Equal("VIGENTE", updated.Status);
         Assert.Equal(10, updated.CreatorUserId);
         Assert.Equal(created, updated.CreatedAt);
         Assert.Equal("BOLSA", updated.Market);
         Assert.Equal("NUAM-1", updated.InstrumentCode);
+        Assert.Equal(9m, updated.AppliedFactor);
 
         var invalidThenValid = await dbContext.TaxClassifications.SingleAsync(x => x.Id == 4);
-        Assert.Equal(7.5m, invalidThenValid.AppliedFactor);
+        Assert.Equal(7.5m, invalidThenValid.ReferenceAmount);
         Assert.True(invalidThenValid.UpdatedAt > created);
 
         var ambiguousRows = await dbContext.TaxClassifications.Where(x => x.InstrumentCode == "DUP").ToListAsync();
         Assert.All(ambiguousRows, x =>
         {
             Assert.Equal(created, x.UpdatedAt);
-            Assert.Contains<decimal?>(x.AppliedFactor, new decimal?[] { 2m, 3m });
+            Assert.Contains<decimal?>(x.ReferenceAmount, new decimal?[] { 2m, 3m });
         });
 
         Assert.Equal(4, await dbContext.TaxClassifications.CountAsync());
-        Assert.Single(dbContext.UploadFiles);
+        var upload = Assert.Single(dbContext.UploadFiles);
+        Assert.Equal("X_MONTO", upload.UploadType);
         Assert.Equal(6, await dbContext.BulkUploadDetails.CountAsync());
         Assert.Equal(4, await dbContext.BulkUploadErrors.CountAsync());
         Assert.Equal(2, await dbContext.ClassificationHistories.CountAsync());
         Assert.All(await dbContext.ClassificationHistories.ToListAsync(), history =>
         {
             Assert.Equal("MODIFICACION", history.ChangeType);
-            Assert.Equal("AppliedFactor", history.ModifiedField);
+            Assert.Equal("ReferenceAmount", history.ModifiedField);
         });
         Assert.Equal(2, await dbContext.AuditLogs.CountAsync());
-        Assert.All(await dbContext.AuditLogs.ToListAsync(), audit => Assert.Equal("TAX_CLASSIFICATION_FACTOR_BULK_UPDATED", audit.Action));
+        Assert.All(await dbContext.AuditLogs.ToListAsync(), audit => Assert.Equal("TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED", audit.Action));
     }
 
     private static DbContextOptions<NuamExchangeDbContext> CreateOptions() => new DbContextOptionsBuilder<NuamExchangeDbContext>()
@@ -163,7 +165,7 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
         .Options;
 
-    private static TaxClassification CreateTax(int id, string market, string code, int period, decimal factor, DateTime created) => new()
+    private static TaxClassification CreateTax(int id, string market, string code, int period, decimal amount, DateTime created) => new()
     {
         Id = id,
         CreatorUserId = 10,
@@ -173,8 +175,8 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         ClassificationType = "DIVIDENDO",
         Description = "Base",
         UpdatePercentage = 0m,
-        AppliedFactor = factor,
-        ReferenceAmount = 100m,
+        AppliedFactor = 9m,
+        ReferenceAmount = amount,
         Currency = "CLP",
         TaxPeriod = period,
         ValidFrom = new DateOnly(period, 1, 1),
@@ -184,7 +186,7 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         UpdatedAt = created
     };
 
-    private static MultipartFormDataContent CreateCsvForm(string content) => CreateForm("file", content, "x-factor.csv", "text/csv");
+    private static MultipartFormDataContent CreateCsvForm(string content) => CreateForm("file", content, "x-amount.csv", "text/csv");
 
     private static MultipartFormDataContent CreateForm(string fieldName, string content, string fileName, string mediaType)
     {
@@ -213,9 +215,9 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         public Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<TaxClassificationDetailDto?> CopyAsync(CopyTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<SupervisorValidationResult> SupervisorValidationAsync(ValidatedSupervisorValidationTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public Task<BulkLoadXFactorResult> BulkLoadXFactorAsync(BulkLoadXFactorCommand command, CancellationToken cancellationToken = default)
-            => Task.FromResult(new BulkLoadXFactorResult(55, 1, 1, 0, new[] { 7 }, Array.Empty<BulkLoadXFactorErrorDto>()));
-        public Task<BulkLoadXAmountResult> BulkLoadXAmountAsync(BulkLoadXAmountCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<BulkLoadXFactorResult> BulkLoadXFactorAsync(BulkLoadXFactorCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<BulkLoadXAmountResult> BulkLoadXAmountAsync(BulkLoadXAmountCommand command, CancellationToken cancellationToken = default)
+            => Task.FromResult(new BulkLoadXAmountResult(55, 1, 1, 0, new[] { 7 }, Array.Empty<BulkLoadXAmountErrorDto>()));
     }
 
     private sealed class RoleAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
