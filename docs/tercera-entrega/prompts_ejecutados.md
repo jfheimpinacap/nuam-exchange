@@ -239,3 +239,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo físico:** no se modifican entidades, Fluent API, snapshot ni constraints.
 - **Sin frontend:** no se implementa UI.
 - **Validación local posterior obligatoria:** restaurar, compilar, probar, iniciar API en `Development`, autenticar roles reales disponibles, cargar CSV válido e inválido y confirmar trazabilidad.
+
+## Prompt 021 — Corrección de validación y pruebas de Carga Masiva X Factor
+
+- **Alcance:** corrección acotada sobre Carga Masiva X Factor implementada en Prompt 020.
+- **Nulabilidad:** se corrigió la advertencia CS8629 evitando usar `Value` sobre un decimal nullable en la validación de `appliedFactor`.
+- **Fixture/pruebas:** se separaron los casos de decimal inválido y duplicidad para que el CSV pruebe identidades inequívocas y la expectativa refleje la prioridad funcional.
+- **Regla preservada:** una fila inválida no consume la identidad; solo una identidad procesada correctamente genera `DUPLICATE_ROW` en ocurrencias posteriores.
+- **Sin migraciones:** no se agregaron migraciones ni cambios de snapshot.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API ni modelo físico.
+- **Sin frontend:** no se modificó interfaz de usuario.
+- **Validación local posterior obligatoria:** ejecutar restore, build y test de la solución backend; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la prueba manual CSV de Prompt 020.
