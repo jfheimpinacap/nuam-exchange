@@ -220,3 +220,28 @@ Se corrigieron implementaciones fake de pruebas que quedaron desactualizadas al 
 La actualización cubre los dobles manuales usados por pruebas de copia, binding JSON de endpoints y validación supervisora. En esos fakes el método de X Monto se implementa con `NotSupportedException`, de forma explícita y segura, porque esos fixtures no ejercitan el endpoint ni el servicio de Carga Masiva X Monto. Los fakes específicos de Carga Masiva X Factor y Carga Masiva X Monto ya exponen comportamientos coherentes con sus contratos respectivos.
 
 No se eliminaron pruebas ni se redujo cobertura. No se modificaron migraciones, entidades, Fluent API, snapshot, modelo físico, frontend, roles, permisos, JWT ni políticas. La validación local posterior obligatoria sigue siendo restaurar, compilar y ejecutar pruebas sobre binarios recompilados antes de continuar con la prueba manual de Carga Masiva X Monto.
+
+## Prompt 025 — Consulta de cargas masivas
+
+Casos agregados para validar endpoints de solo lectura con EF Core InMemory y sin SQL Server real:
+
+| Área | Caso | Resultado esperado |
+|---|---|---|
+| Autorización | Administrador consulta `/api/bulk-loads` | `200 OK` |
+| Autorización | Analista Tributario consulta `/api/bulk-loads` | `200 OK` |
+| Autorización | Supervisor consulta `/api/bulk-loads` | `200 OK` |
+| Autorización | Sin JWT consulta `/api/bulk-loads` | `401 Unauthorized` |
+| Listado | Listado paginado con cargas existentes | `200 OK`, `items`, `page`, `pageSize`, `totalCount`, `totalPages` |
+| Listado | Listado vacío | `200 OK` con `items` vacío |
+| Listado | Filtros por `uploadType` y `status` | Devuelve solo cargas coincidentes |
+| Listado | `page`, `pageSize` o `sortBy` inválidos | `400 Bad Request` |
+| Seguridad | Respuesta de listado | No expone ruta física ni hash de archivo |
+| Resumen | Id existente | `200 OK` con resumen seguro |
+| Resumen | Id inexistente | `404 Not Found` |
+| Detalles | Consulta de filas de una carga | Solo detalles de la carga solicitada |
+| Detalles | Carga sin detalles | `200 OK` con colección vacía |
+| Detalles | Id inexistente | `404 Not Found` |
+| Errores | Consulta de errores de una carga | Solo errores de la carga solicitada |
+| Errores | Carga sin errores | `200 OK` con colección vacía |
+| Errores | Id inexistente | `404 Not Found` |
+| Integridad | Consultas de listado, resumen, detalles y errores | No modifican `UploadFile`, `BulkUploadDetail`, `BulkUploadError` ni `TaxClassification` |

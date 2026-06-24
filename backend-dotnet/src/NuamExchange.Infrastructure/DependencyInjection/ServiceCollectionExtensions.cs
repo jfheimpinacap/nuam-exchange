@@ -37,7 +37,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICreateTaxClassificationValidator, CreateTaxClassificationValidator>();
         services.AddSingleton<IUpdateTaxClassificationValidator, UpdateTaxClassificationValidator>();
         services.AddSingleton<ISupervisorValidationTaxClassificationValidator, SupervisorValidationTaxClassificationValidator>();
+        services.AddSingleton<IBulkLoadQueryValidator, BulkLoadQueryValidator>();
         services.AddScoped<ITaxClassificationQueryService, TaxClassificationQueryService>();
+        services.AddScoped<IBulkLoadQueryService, BulkLoadQueryService>();
         services.AddScoped<ITaxClassificationCommandService, TaxClassificationCommandService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
         services.AddScoped<ISecuritySeedService, SecuritySeedService>();
