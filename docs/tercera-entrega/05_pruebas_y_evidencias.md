@@ -320,3 +320,11 @@ No se debilitó la cobertura ni se cambió una expectativa válida de `3` a `0`.
 | Detalle | Id no tributario | `404 Not Found` | `TaxAuditQueryTests` |
 | Campos excluidos | IP, ruta, hash, email, password, claim, connection string | No expuestos | `TaxAuditQueryTests` |
 | Integridad | Ausencia de modificaciones | No cambia auditoría ni datos operacionales | `TaxAuditQueryTests` |
+## Evidencia de corrección — Prompt 030
+
+- Durante la validación local posterior a Prompt 029 se detectó el error `CS0246` en `backend-dotnet/src/NuamExchange.Application/TaxAudits/TaxAuditDtos.cs`: el tipo genérico `PagedResult<>` no se resolvía desde el namespace de auditoría tributaria.
+- La causa real fue una directiva `using` faltante hacia el namespace canónico `NuamExchange.Application.TaxClassifications`, donde ya existe `PagedResult<T>` como contrato paginado compartido por consultas de calificaciones tributarias y cargas masivas.
+- La corrección mínima aplicada fue reutilizar ese `PagedResult<T>` existente agregando la referencia de namespace requerida en los DTOs de Auditoría Tributaria.
+- No se creó una segunda implementación de `PagedResult<T>`, no se movieron clases entre capas y no se agregó una referencia desde Application hacia API.
+- No se modificó la lógica funcional de auditoría tributaria, sus filtros, autorización, endpoints ni contrato HTTP; se mantiene el contrato paginado con `items`, `page`, `pageSize`, `totalCount` y `totalPages`.
+- Validación local posterior obligatoria: ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build` sobre binarios recompilados.
