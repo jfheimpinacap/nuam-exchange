@@ -10,7 +10,7 @@ namespace NuamExchange.Api.Controllers;
 [ApiController]
 [Route("api/tax-classifications")]
 [Authorize(Policy = "TaxClassificationRead")]
-public sealed class TaxClassificationsController(IServiceProvider services, ITaxClassificationQueryValidator queryValidator, ICreateTaxClassificationValidator createValidator) : ControllerBase
+public sealed class TaxClassificationsController(IServiceProvider services, ITaxClassificationQueryValidator queryValidator, ICreateTaxClassificationValidator createValidator, IUpdateTaxClassificationValidator updateValidator) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<TaxClassificationListItemDto>), StatusCodes.Status200OK)]
@@ -60,6 +60,41 @@ public sealed class TaxClassificationsController(IServiceProvider services, ITax
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         });
     }
+
+    [HttpPut("{id:int}")]
+    [Authorize(Policy = "TaxClassificationWrite")]
+    [ProducesResponseType(typeof(TaxClassificationDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateTaxClassificationRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized(new { message = "No fue posible identificar al usuario autenticado." });
+
+        var validation = updateValidator.Validate(request.ToCommand(id, userId, HttpContext.Connection.RemoteIpAddress?.ToString()));
+        if (!validation.Succeeded) return BadRequest(new { message = validation.Message });
+
+        return await ExecuteCommandAsync(async service =>
+        {
+            var updated = await service.UpdateAsync(validation.Command!, cancellationToken);
+            return updated is null ? NotFound(new { message = "La calificación tributaria no existe." }) : Ok(updated);
+        });
+    }
+
+    [HttpGet("{id:int}/history")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<TaxClassificationHistoryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> GetHistory(int id, CancellationToken cancellationToken)
+        => await ExecuteAsync(async service =>
+        {
+            var history = await service.GetHistoryAsync(id, cancellationToken);
+            return history is null ? NotFound(new { message = "La calificación tributaria no existe." }) : Ok(history);
+        });
 
     [HttpGet("filter-options")]
     [ProducesResponseType(typeof(TaxClassificationFilterOptionsDto), StatusCodes.Status200OK)]

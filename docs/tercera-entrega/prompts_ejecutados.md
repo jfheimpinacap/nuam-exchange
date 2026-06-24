@@ -189,3 +189,13 @@ Validaciones locales obligatorias posteriores al merge:
 - **Frontend:** sin cambios.
 - **Base de datos:** sin modificaciones ni ejecución de `dotnet ef database update`.
 - **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador, crear una calificación con el JSON documentado, verificar `201 Created`, `Location`, listado, detalle, `ClassificationHistory` y Auditoria con `TAX_CLASSIFICATION_CREATED`.
+
+## Prompt 017 — Editar Calificaciones Tributarias y consultar historial — 2026-06-24
+
+- **Endpoints creados:** `PUT /api/tax-classifications/{id}` y `GET /api/tax-classifications/{id}/history`.
+- **Políticas usadas:** `TaxClassificationWrite` para edición y `TaxClassificationRead` para historial.
+- **Modelo:** sin migraciones, sin cambios de entidades, sin cambios de Fluent API y sin cambios de base de datos.
+- **Frontend:** sin modificaciones.
+- **Historial y auditoría:** la edición crea `ClassificationHistory` con `tipo_cambio = MODIFICACION` y `AuditLog` con `TAX_CLASSIFICATION_UPDATED`.
+- **Validaciones locales posteriores obligatorias:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador y Analista Tributario, editar una calificación existente, verificar `200 OK`, confirmar campos protegidos, consultar historial, probar `403` como Supervisor y revisar Auditoria.
+- **Limitación:** la copia de calificaciones queda pendiente para Prompt 018.

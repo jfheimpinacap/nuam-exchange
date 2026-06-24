@@ -82,6 +82,29 @@ public sealed class TaxClassificationsEndpointBindingTests
                 DateTime.UtcNow);
             return Task.FromResult(response);
         }
+
+        public Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default)
+        {
+            var response = new TaxClassificationDetailDto(
+                command.Id,
+                1,
+                command.Market,
+                command.InstrumentCode,
+                command.InstrumentName,
+                command.ClassificationType,
+                command.Description,
+                command.UpdatePercentage,
+                command.AppliedFactor,
+                command.ReferenceAmount,
+                command.Currency,
+                command.TaxPeriod,
+                command.ValidFrom,
+                command.ValidTo,
+                "VIGENTE",
+                new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                DateTime.UtcNow);
+            return Task.FromResult<TaxClassificationDetailDto?>(command.Id == 404 ? null : response);
+        }
     }
 
     private sealed class TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)

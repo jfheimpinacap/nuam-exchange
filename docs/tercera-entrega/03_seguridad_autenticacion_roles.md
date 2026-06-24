@@ -60,3 +60,9 @@ Queda pendiente implementar autorización dinámica basada directamente en permi
 - `TaxClassificationWrite` permite crear calificaciones tributarias solo a `Administrador` y `Analista Tributario`.
 - `Supervisor` conserva acceso de solo lectura mediante `TaxClassificationRead` y no puede ejecutar `POST /api/tax-classifications`.
 - La creación usa el usuario autenticado del JWT como actor de auditoría y como `CreatorUserId` de la calificación creada.
+
+## Prompt 017 — Edición e historial de calificaciones tributarias
+
+- `Administrador` y `Analista Tributario` pueden editar calificaciones tributarias mediante `PUT /api/tax-classifications/{id}` con la política `TaxClassificationWrite`.
+- `Supervisor` conserva acceso de lectura mediante `TaxClassificationRead`, incluido `GET /api/tax-classifications/{id}/history`.
+- `Supervisor` no puede editar calificaciones tributarias y debe recibir `403 Forbidden` en el endpoint `PUT`.
