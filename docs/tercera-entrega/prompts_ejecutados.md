@@ -343,3 +343,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
 - **Sin frontend:** no se modificó la aplicación cliente.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con validación manual del Reporte Tributario y CSV.
+
+## Prompt 029 — Consulta segura de auditoría tributaria (2026-06-24)
+
+- **Endpoints:** `GET /api/tax-audits` y `GET /api/tax-audits/{id}`.
+- **Política:** `TaxClassificationRead` para `Administrador`, `Analista Tributario` y `Supervisor`.
+- **Regla tributaria:** `AffectedEntity = CalificacionTributaria`, `AffectedRecordId` no nulo y acción en lista cerrada: `TAX_CLASSIFICATION_CREATED`, `TAX_CLASSIFICATION_UPDATED`, `TAX_CLASSIFICATION_COPIED`, `TAX_CLASSIFICATION_VALIDATED`, `TAX_CLASSIFICATION_FACTOR_BULK_UPDATED`, `TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED`.
+- **Filtros y paginación:** `page`, `pageSize` máximo 100, `taxClassificationId`, `action`, `dateFrom`, `dateTo`, `sortBy` con lista blanca y `sortDirection asc|desc`.
+- **Campos seguros:** `id`, `action`, `taxClassificationId`, `actorUserId`, `occurredAt`, y en detalle `detail`, `previousValue`, `newValue` bajo regla tributaria.
+- **Exclusión:** auditoría no tributaria no se lista y por id responde `404`; no se expone IP, claims, rutas, hashes, emails ni credenciales.
+- **Sin migraciones:** no hubo migraciones, cambios de modelo físico, frontend ni snapshot.
+- **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, iniciar API, autenticar roles permitidos, consultar listado/detalle, validar filtros y confirmar que no cambian calificaciones, cargas ni auditoría.

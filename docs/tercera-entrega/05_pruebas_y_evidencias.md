@@ -298,3 +298,25 @@ Se reforzó la cobertura del reporte tributario para validar:
 - solo lectura: consultar JSON y exportar CSV no modifica `TaxClassification` ni crea `UploadFile`, `BulkUploadDetail`, `BulkUploadError`, `ClassificationHistory`, `AuditLog` ni `TaxReport`.
 
 No se debilitó la cobertura ni se cambió una expectativa válida de `3` a `0`. No se modificaron entidades, Fluent API, migraciones, snapshot, modelo físico, frontend, JWT, roles, permisos ni políticas. No se usó SQL Server real ni credenciales reales.
+
+## Prompt 029 — Matriz de pruebas de consulta de auditoría tributaria
+
+| Área | Caso | Resultado esperado | Cobertura |
+|---|---|---|---|
+| Roles | Administrador consulta | `200 OK` | `TaxAuditQueryTests` |
+| Roles | Analista Tributario consulta | `200 OK` | `TaxAuditQueryTests` |
+| Roles | Supervisor consulta | `200 OK` | `TaxAuditQueryTests` |
+| Seguridad | Sin JWT | `401 Unauthorized` | `TaxAuditQueryTests` |
+| Listado | Respuesta paginada | `items` no nulo, `totalCount` y `totalPages` correctos | `TaxAuditQueryTests` |
+| Listado | Vacío | `200 OK`, `items=[]`, `totalPages=0` | `TaxAuditQueryTests` |
+| Filtros | Acción tributaria | Solo acción permitida | `TaxAuditQueryTests` |
+| Filtros | Calificación tributaria | Solo `registro_afectado_id` solicitado | `TaxAuditQueryTests` |
+| Filtros | Fechas | Solo rango solicitado | `TaxAuditQueryTests` |
+| Paginación | `page`/`pageSize` inválidos | `400 Bad Request` | `TaxAuditQueryTests` |
+| Ordenamiento | `sortBy` permitido/no permitido | permitido funciona; no permitido `400` | `TaxAuditQueryTests` |
+| Alcance | Eventos no tributarios | No aparecen en listado | `TaxAuditQueryTests` |
+| Detalle | Evento tributario existente | `200 OK` con DTO seguro | `TaxAuditQueryTests` |
+| Detalle | Id inexistente | `404 Not Found` | `TaxAuditQueryTests` |
+| Detalle | Id no tributario | `404 Not Found` | `TaxAuditQueryTests` |
+| Campos excluidos | IP, ruta, hash, email, password, claim, connection string | No expuestos | `TaxAuditQueryTests` |
+| Integridad | Ausencia de modificaciones | No cambia auditoría ni datos operacionales | `TaxAuditQueryTests` |

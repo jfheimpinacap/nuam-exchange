@@ -109,3 +109,9 @@ Las cargas `POST /api/tax-classifications/bulk-loads/x-factor` y `POST /api/tax-
 Los endpoints `GET /api/tax-reports/tax-classifications` y `GET /api/tax-reports/tax-classifications/export` usan exclusivamente `TaxClassificationRead`. Pueden consultarlos y exportarlos `Administrador`, `Analista Tributario` y `Supervisor`.
 
 Las cargas masivas tributarias mantienen su política de escritura (`TaxClassificationWrite`) para operaciones de carga; sus consultas existentes siguen con `TaxClassificationRead`.
+
+## Prompt 029 — Consulta de auditoría tributaria
+
+Los endpoints `GET /api/tax-audits` y `GET /api/tax-audits/{id}` usan exclusivamente `TaxClassificationRead`. Pueden consultar auditoría tributaria `Administrador`, `Analista Tributario` y `Supervisor`.
+
+La auditoría no tributaria permanece fuera de alcance: eventos de usuarios, autenticación, roles, permisos e infraestructura no se listan y si se solicitan por id responden `404 Not Found`.
