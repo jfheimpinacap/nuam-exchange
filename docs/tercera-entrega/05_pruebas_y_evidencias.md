@@ -279,3 +279,22 @@ No se modificaron entidades, Fluent API, migraciones, snapshot, modelo físico, 
 | Formula Injection | Textos que comienzan con =, +, - o @ se neutralizan con apóstrofo. |
 | Roles | Administrador, Analista Tributario y Supervisor usan TaxClassificationRead; sin JWT devuelve 401. |
 | Integridad | Consulta y exportación no modifican calificaciones ni crean cargas, errores, detalles, historiales, auditoría ni ReporteTributario. |
+
+## Actualización Prompt 028 — Corrección de fixture y pruebas de Reporte Tributario CSV
+
+Se corrigió el fallo posterior a Prompt 027 en `TaxReportQueryTests.JsonEndpoint_ReturnsSafeContractAndCsvHeaders`, donde la prueba esperaba tres calificaciones tributarias filtradas por `market=BOLSA`, pero el endpoint JSON recibía cero.
+
+La causa real inspeccionada fue el fixture de integración: `CreateFactory` configuraba EF Core InMemory con `Guid.NewGuid().ToString()` dentro del callback de `AddDbContext`. Ese callback puede ejecutarse más de una vez, por lo que el contexto usado para sembrar datos y el contexto resuelto por la API podían apuntar a bases InMemory distintas. El seed sí ejecutaba `SaveChanges`, pero no necesariamente sobre la misma base que consumía el cliente HTTP.
+
+La corrección captura un único nombre de base InMemory por `WebApplicationFactory` y reutiliza ese nombre para el seed y para los contextos de la API. La prueba ahora confirma explícitamente que la base visible desde `factory.Services` contiene las cuatro calificaciones sembradas antes de consultar el endpoint, y mantiene la expectativa válida de tres filas para `market=BOLSA`.
+
+Se reforzó la cobertura del reporte tributario para validar:
+
+- `200 OK`, `items` no nulo, `summary` no nulo, `totalCount`, `totalPages` y resumen sobre el universo filtrado completo;
+- filtros válidos que devuelven solo las filas esperadas;
+- listado vacío con `200 OK`, `items` vacío no nulo y `summary` no nulo;
+- CSV con BOM UTF-8, encabezado, delimitador punto y coma, mismo filtro lógico, escape de comillas/punto y coma/saltos de línea y neutralización de Formula Injection;
+- exclusión de campos internos como rutas físicas o claims;
+- solo lectura: consultar JSON y exportar CSV no modifica `TaxClassification` ni crea `UploadFile`, `BulkUploadDetail`, `BulkUploadError`, `ClassificationHistory`, `AuditLog` ni `TaxReport`.
+
+No se debilitó la cobertura ni se cambió una expectativa válida de `3` a `0`. No se modificaron entidades, Fluent API, migraciones, snapshot, modelo físico, frontend, JWT, roles, permisos ni políticas. No se usó SQL Server real ni credenciales reales.
