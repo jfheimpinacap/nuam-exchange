@@ -166,3 +166,16 @@ Validaciones locales obligatorias posteriores al merge:
 - Sin cambios de frontend.
 - Limitaciones de Codex Cloud: las validaciones de SDK .NET dependen de disponibilidad del entorno; no se debe declarar éxito si el SDK no está disponible.
 - Validaciones locales posteriores obligatorias: `dotnet restore .\NuamExchange.sln`, `dotnet build .\NuamExchange.sln --no-restore`, `dotnet test .\NuamExchange.sln --no-build`, iniciar API en Development y validar respuestas 200, 400, 401, 403, 404 y listado/opciones vacías cuando no existan registros.
+
+## Prompt 015 — Crear Calificaciones Tributarias y registrar historial/auditoría
+
+- **Fecha real:** 2026-06-23.
+- **Alcance:** creación controlada de calificaciones tributarias desde API, reutilizando el modelo físico existente.
+- **Endpoint creado:** `POST /api/tax-classifications`.
+- **Política agregada:** `TaxClassificationWrite`, permitida a `Administrador` y `Analista Tributario`; `Supervisor` queda excluido de escritura.
+- **Historial y auditoría:** la creación registra `HistorialCalificacion` con `CREACION` y `Auditoria` con `TAX_CLASSIFICATION_CREATED`.
+- **Sin migraciones:** no se creó migración nueva.
+- **Sin cambios de modelo:** no se modificaron entidades ni Fluent API.
+- **Sin frontend:** no se modificó la interfaz web.
+- **Limitaciones de Codex Cloud:** las validaciones contra una base SQL Server real quedan pendientes para ambiente local o de QA con credenciales seguras.
+- **Validaciones locales posteriores obligatorias:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador y Analista Tributario, crear calificación válida, verificar listado/detalle, confirmar `403` para Supervisor, confirmar `400` para rango de fechas inválido, revisar `HistorialCalificacion` y revisar `Auditoria` para `TAX_CLASSIFICATION_CREATED`.

@@ -27,4 +27,39 @@ public sealed class TaxClassificationAuthorizationPolicyTests
         var rolesRequirement = Assert.Single(policy!.Requirements.OfType<RolesAuthorizationRequirement>());
         Assert.Contains(roleName, rolesRequirement.AllowedRoles);
     }
+
+
+    [Theory]
+    [InlineData(SecuritySeedService.AdministratorRole)]
+    [InlineData(SecuritySeedService.TaxAnalystRole)]
+    public void TaxClassificationWritePolicy_AllowsWriteRoles(string roleName)
+    {
+        var policy = GetTaxClassificationWritePolicy();
+
+        var rolesRequirement = Assert.Single(policy.Requirements.OfType<RolesAuthorizationRequirement>());
+        Assert.Contains(roleName, rolesRequirement.AllowedRoles);
+    }
+
+    [Fact]
+    public void TaxClassificationWritePolicy_RejectsSupervisor()
+    {
+        var policy = GetTaxClassificationWritePolicy();
+
+        var rolesRequirement = Assert.Single(policy.Requirements.OfType<RolesAuthorizationRequirement>());
+        Assert.DoesNotContain(SecuritySeedService.SupervisorRole, rolesRequirement.AllowedRoles);
+    }
+
+    private static AuthorizationPolicy GetTaxClassificationWritePolicy()
+    {
+        var services = new ServiceCollection();
+        services.AddInfrastructure(new ConfigurationBuilder().Build());
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<AuthorizationOptions>>().Value;
+
+        var policy = options.GetPolicy("TaxClassificationWrite");
+
+        Assert.NotNull(policy);
+        return policy!;
+    }
+
 }
