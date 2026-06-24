@@ -153,6 +153,7 @@ public sealed class TaxClassificationCopyTests
         public Task<TaxClassificationDetailDto> CreateAsync(ValidatedCreateTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<SupervisorValidationResult> SupervisorValidationAsync(ValidatedSupervisorValidationTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<BulkLoadXFactorResult> BulkLoadXFactorAsync(BulkLoadXFactorCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<TaxClassificationDetailDto?> CopyAsync(CopyTaxClassificationCommand command, CancellationToken cancellationToken = default)
         {
             if (command.SourceId == 404) return Task.FromResult<TaxClassificationDetailDto?>(null);

@@ -179,6 +179,7 @@ public sealed class TaxClassificationSupervisorValidationTests
         public Task<TaxClassificationDetailDto> CreateAsync(ValidatedCreateTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<TaxClassificationDetailDto?> CopyAsync(CopyTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<BulkLoadXFactorResult> BulkLoadXFactorAsync(BulkLoadXFactorCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<SupervisorValidationResult> SupervisorValidationAsync(ValidatedSupervisorValidationTaxClassificationCommand command, CancellationToken cancellationToken = default)
         {
             if (command.Id == 404) return Task.FromResult(SupervisorValidationResult.Failure(404, "La calificación tributaria no existe."));

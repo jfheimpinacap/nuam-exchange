@@ -81,3 +81,10 @@ Queda pendiente implementar autorización dinámica basada directamente en permi
 | Supervisor | Sí (`TaxClassificationRead`) | Sí (`TaxClassificationRead`) | No (`403 Forbidden`) | No (`403 Forbidden`) | No (`403 Forbidden`) | Sí (`TaxClassificationSupervise`) |
 
 `TaxClassificationSupervise` reutiliza claims de rol del JWT y permite solo `Administrador` y `Supervisor`. No modifica login, bootstrap, entidades de seguridad ni datos de roles/permisos.
+
+## Carga Masiva X Factor
+
+- `POST /api/tax-classifications/bulk-loads/x-factor` usa la política `TaxClassificationWrite`.
+- `Administrador` y `Analista Tributario` pueden ejecutar la carga masiva X Factor.
+- `Supervisor` no puede ejecutarla y recibe `403 Forbidden` cuando está autenticado.
+- La carga no modifica `TaxClassificationRead` ni `TaxClassificationSupervise`; el Supervisor conserva lectura, historial y validación supervisora, pero no escritura ni cargas masivas tributarias.

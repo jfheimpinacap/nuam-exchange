@@ -158,3 +158,21 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 | Persistencia | Historial registra cambio | transición válida | Ejecutar servicio | `tipo_cambio=OBSERVACION`, `Status`, anterior/nuevo | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
 | Auditoría | Registrar operación | transición válida | Ejecutar servicio | `TAX_CLASSIFICATION_VALIDATED` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
 | Consistencia | No dejar cambios parciales | transición inválida | Ejecutar servicio | Sin validación, historial ni auditoría | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+
+## Casos Prompt 020 — Carga Masiva X Factor
+
+| Módulo | Objetivo | Datos de entrada | Pasos | Resultado esperado | Resultado obtenido | Prioridad | Responsable | Evidencia |
+|---|---|---|---|---|---|---|---|---|
+| API Carga X Factor | Administrador carga CSV X Factor válido | JWT Administrador, CSV UTF-8 con `file` | POST multipart a `/api/tax-classifications/bulk-loads/x-factor` | `200 OK`, conteos correctos | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| API Carga X Factor | Analista Tributario carga CSV X Factor válido | JWT Analista, CSV válido | POST multipart | `200 OK` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Seguridad | Supervisor recibe 403 | JWT Supervisor, CSV válido | POST multipart | `403 Forbidden` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| API Carga X Factor | Archivo vacío responde 400 | `file` vacío `.csv` | POST multipart | `400 Bad Request` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| API Carga X Factor | Encabezado inválido responde 400 | CSV con header distinto | POST multipart | `400 Bad Request` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Servicio Carga X Factor | Fila válida actualiza `AppliedFactor` | `BOLSA;NUAM-1;2026;1.25000000` | Ejecutar servicio con EF InMemory | Solo cambia factor y `UpdatedAt` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Servicio Carga X Factor | Fila inválida registra error sin modificar calificación | Decimal inválido | Ejecutar servicio | Error de fila, sin historial ni auditoría tributaria para esa fila | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Servicio Carga X Factor | Coincidencia inexistente registra error | Instrumento inexistente | Ejecutar servicio | `NOT_FOUND`, sin creación tributaria | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Servicio Carga X Factor | Coincidencia ambigua registra error | Dos calificaciones con misma identidad lógica | Ejecutar servicio | `AMBIGUOUS_MATCH`, sin modificación | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Servicio Carga X Factor | Duplicado en archivo registra error | Identidad repetida | Ejecutar servicio | Segunda ocurrencia `DUPLICATE_ROW` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Historial | Historial registra tipo permitido | Fila aplicada | Consultar `ClassificationHistory` | `MODIFICACION` y `AppliedFactor` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Auditoría | Auditoría registra acción implementada | Fila aplicada | Consultar `AuditLog` | `TAX_CLASSIFICATION_FACTOR_BULK_UPDATED` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
+| Consistencia | Sin cambios parciales ante fallo inesperado | Falla de infraestructura durante transacción | Ejecutar con proveedor transaccional en validación posterior | Rollback completo | Pendiente de validación local con proveedor relacional; la implementación usa transacción EF Core | Alta | Equipo local | Validación posterior obligatoria |

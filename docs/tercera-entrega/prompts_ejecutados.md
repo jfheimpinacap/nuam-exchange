@@ -225,3 +225,17 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo físico:** no se modificaron entidades, Fluent API, snapshot, tablas, columnas ni constraints.
 - **Sin frontend:** no se tocaron pantallas ni assets frontend.
 - **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar con un Administrador real, validar una calificación en estado permitido, revisar detalle, historial, validación y auditoría, y confirmar `409 Conflict` para una transición inválida.
+
+## Prompt 020 — Carga masiva X Factor de Calificaciones Tributarias
+
+- **Fecha real de ejecución:** 2026-06-24.
+- **Endpoint creado:** `POST /api/tax-classifications/bulk-loads/x-factor`.
+- **Política usada:** `TaxClassificationWrite`.
+- **Formato CSV:** UTF-8 con o sin BOM, delimitado por punto y coma, header `market;instrumentCode;taxPeriod;appliedFactor`.
+- **Campo actualizado:** solo `AppliedFactor` y `UpdatedAt` en calificaciones existentes con coincidencia única.
+- **Entidades de carga utilizadas:** `UploadTemplate`, `UploadFile`, `BulkUploadDetail` y `BulkUploadError` existentes.
+- **Historial y auditoría:** filas aplicadas generan `ClassificationHistory` con `MODIFICACION` y `AuditLog` con `TAX_CLASSIFICATION_FACTOR_BULK_UPDATED`.
+- **Sin migraciones:** no se agregan migraciones.
+- **Sin cambios de modelo físico:** no se modifican entidades, Fluent API, snapshot ni constraints.
+- **Sin frontend:** no se implementa UI.
+- **Validación local posterior obligatoria:** restaurar, compilar, probar, iniciar API en `Development`, autenticar roles reales disponibles, cargar CSV válido e inválido y confirmar trazabilidad.

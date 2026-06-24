@@ -58,3 +58,13 @@ No se modificó el modelo físico, no se agregaron columnas, no se cambiaron tip
 `ValidacionTributaria` contiene la PK `validacion_id` y el campo nullable `calificacion_id`, que referencia a `CalificacionTributaria.calificacion_id`. La misma tabla también contiene `archivo_carga_id`; el CHECK `CK_ValidacionTributaria_Referencia` exige que al menos una de esas referencias exista. Para calificaciones tributarias, la validación supervisora persiste `calificacion_id` y no requiere `archivo_carga_id`.
 
 La cardinalidad real es una calificación con cero o muchas validaciones (`TaxClassification.TaxValidations`), sin restricción física de una única validación por calificación. Cada validación se asocia además a `Usuario` mediante `usuario_id`, guarda `resultado`, `observacion` y `fecha_validacion`, y opera como trazabilidad funcional sin modificar el modelo físico ni crear migraciones nuevas.
+
+## Trazabilidad de Carga Masiva X Factor
+
+La Carga Masiva X Factor reutiliza el modelo físico existente sin migraciones ni cambios de columnas. `UploadFile` / `ArchivoCarga` representa el archivo lógico recibido y mantiene la FK obligatoria a `UploadTemplate` / `PlantillaCarga`. Para X Factor se usa `tipo_carga = X_FACTOR`, `extension = CSV` y estados existentes de `ArchivoCarga`.
+
+`BulkUploadDetail` / `DetalleCargaMasiva` depende de `ArchivoCarga` mediante `archivo_carga_id`; cada fila del CSV estructuralmente válido genera un detalle con `numero_fila`, `campo_afectado = AppliedFactor`, `valor_factor`, `valor_texto_original` acotado y estado real permitido (`APLICADA` o `CON_ERROR`). La relación opcional con `TaxClassification` / `CalificacionTributaria` se informa solo cuando la fila llega a una coincidencia única y se actualiza la calificación.
+
+`BulkUploadError` / `ErrorCargaMasiva` también depende de `ArchivoCarga` mediante `archivo_carga_id`; las filas rechazadas registran `numero_fila`, columna cuando aplica, descripción segura y severidad `ERROR`. El modelo existente no contiene FK directa de error a detalle, por lo que la correlación comprobable se realiza por `archivo_carga_id` y `numero_fila`.
+
+Estas entidades permiten demostrar qué archivo fue recibido, qué filas fueron aplicadas o rechazadas y qué errores ocurrieron, sin afirmar ni requerir cambios físicos de base de datos.
