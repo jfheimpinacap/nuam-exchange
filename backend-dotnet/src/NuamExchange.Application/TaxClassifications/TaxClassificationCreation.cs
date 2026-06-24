@@ -46,4 +46,5 @@ public interface ICreateTaxClassificationValidator
 public interface ITaxClassificationCommandService
 {
     Task<TaxClassificationDetailDto> CreateAsync(ValidatedCreateTaxClassificationCommand command, CancellationToken cancellationToken = default);
+    Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default);
 }

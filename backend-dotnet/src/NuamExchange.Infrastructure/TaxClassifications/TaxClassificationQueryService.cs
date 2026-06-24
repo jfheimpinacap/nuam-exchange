@@ -26,6 +26,19 @@ public sealed class TaxClassificationQueryService(NuamExchangeDbContext dbContex
             .Select(x => new TaxClassificationDetailDto(x.Id, x.CreatorUserId, x.Market, x.InstrumentCode, x.InstrumentName, x.ClassificationType, x.Description, x.UpdatePercentage, x.AppliedFactor, x.ReferenceAmount, x.Currency, x.TaxPeriod, x.ValidFrom, x.ValidTo, x.Status, x.CreatedAt, x.UpdatedAt))
             .SingleOrDefaultAsync(cancellationToken);
 
+    public async Task<IReadOnlyCollection<TaxClassificationHistoryDto>?> GetHistoryAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var exists = await dbContext.TaxClassifications.AsNoTracking().AnyAsync(x => x.Id == id, cancellationToken);
+        if (!exists) return null;
+
+        return await dbContext.ClassificationHistories.AsNoTracking()
+            .Where(x => x.TaxClassificationId == id)
+            .OrderByDescending(x => x.ChangedAt)
+            .ThenByDescending(x => x.Id)
+            .Select(x => new TaxClassificationHistoryDto(x.Id, x.TaxClassificationId, x.UserId, x.ChangeType, x.ModifiedField, x.PreviousValue, x.NewValue, x.Observation, x.ChangedAt))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<TaxClassificationFilterOptionsDto> GetFilterOptionsAsync(CancellationToken cancellationToken = default)
     {
         var markets = await dbContext.TaxClassifications.AsNoTracking()

@@ -116,3 +116,15 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 - Fallo local real posterior al merge de Prompt 015: un JSON válido para `POST /api/tax-classifications` fue rechazado con `400 Bad Request` antes de crear la calificación, reportando error de binding sobre `description` y el campo `request` requerido.
 - Corrección Prompt 016: se fijó explícitamente el contrato JSON de `CreateTaxClassificationRequest`, incluyendo `description` como `string` opcional y nullable, y se agregaron pruebas sin SQL Server para deserialización, contrato DTO y endpoint con servicio fake.
 - Validación local posterior obligatoria: iniciar API en `Development`, autenticarse como Administrador, ejecutar el POST con el JSON documentado, confirmar `HTTP 201 Created`, confirmar cabecera `Location`, consultar listado y detalle, revisar `ClassificationHistory` y revisar Auditoria para `TAX_CLASSIFICATION_CREATED`.
+
+## Validaciones manuales futuras — Prompt 017
+
+- Administrador actualiza una calificación existente y recibe `HTTP 200 OK`.
+- Analista Tributario actualiza una calificación existente y recibe `HTTP 200 OK`.
+- Supervisor recibe `HTTP 403 Forbidden` al intentar editar.
+- `PUT /api/tax-classifications/{id}` con id inexistente devuelve `404 Not Found`.
+- `PUT` con fecha final anterior a la inicial devuelve `400 Bad Request`.
+- `CreatorUserId`, `CreatedAt` y `Status` no cambian después de editar.
+- `UpdatedAt` cambia luego de editar.
+- `GET /api/tax-classifications/{id}/history` muestra creación y modificación.
+- Auditoria incluye una entrada `TAX_CLASSIFICATION_UPDATED` para el registro actualizado.

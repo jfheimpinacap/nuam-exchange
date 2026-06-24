@@ -41,3 +41,15 @@ public sealed record TaxClassificationFilterOptionsDto(
     IReadOnlyCollection<string> Statuses);
 
 public sealed record PagedResult<T>(IReadOnlyCollection<T> Items, int Page, int PageSize, int TotalCount);
+
+
+public sealed record TaxClassificationHistoryDto(
+    int Id,
+    int TaxClassificationId,
+    int UserId,
+    string ChangeType,
+    string? ModifiedField,
+    string? PreviousValue,
+    string? NewValue,
+    string? Observation,
+    DateTime ChangedAt);
