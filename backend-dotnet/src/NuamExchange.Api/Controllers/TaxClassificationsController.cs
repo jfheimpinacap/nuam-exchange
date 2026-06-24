@@ -139,10 +139,27 @@ public sealed class TaxClassificationsController(IServiceProvider services, ITax
     public async Task<IActionResult> BulkLoadXFactor([FromForm] IFormFile? file, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized(new { message = "No fue posible identificar al usuario autenticado." });
-        var validation = await ValidateCsvFileAsync(file, cancellationToken);
+        var validation = await ValidateCsvFileAsync(file, "market;instrumentCode;taxPeriod;appliedFactor", cancellationToken);
         if (!validation.Succeeded) return BadRequest(new { message = validation.Message });
 
         return await ExecuteCommandAsync(async service => Ok(await service.BulkLoadXFactorAsync(new BulkLoadXFactorCommand(userId, file!.FileName, file.Length, validation.Content!, HttpContext.Connection.RemoteIpAddress?.ToString()), cancellationToken)));
+    }
+
+
+    [HttpPost("bulk-loads/x-amount")]
+    [Authorize(Policy = "TaxClassificationWrite")]
+    [ProducesResponseType(typeof(BulkLoadXAmountResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> BulkLoadXAmount([FromForm] IFormFile? file, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized(new { message = "No fue posible identificar al usuario autenticado." });
+        var validation = await ValidateCsvFileAsync(file, "market;instrumentCode;taxPeriod;referenceAmount", cancellationToken);
+        if (!validation.Succeeded) return BadRequest(new { message = validation.Message });
+
+        return await ExecuteCommandAsync(async service => Ok(await service.BulkLoadXAmountAsync(new BulkLoadXAmountCommand(userId, file!.FileName, file.Length, validation.Content!, HttpContext.Connection.RemoteIpAddress?.ToString()), cancellationToken)));
     }
 
     [HttpGet("{id:int}/history")]
@@ -167,7 +184,7 @@ public sealed class TaxClassificationsController(IServiceProvider services, ITax
         => await ExecuteAsync(async service => Ok(await service.GetFilterOptionsAsync(cancellationToken)));
 
 
-    private static async Task<CsvFileValidationResult> ValidateCsvFileAsync(IFormFile? file, CancellationToken cancellationToken)
+    private static async Task<CsvFileValidationResult> ValidateCsvFileAsync(IFormFile? file, string expectedHeader, CancellationToken cancellationToken)
     {
         if (file is null) return CsvFileValidationResult.Failure("El campo multipart file es obligatorio.");
         if (file.Length <= 0) return CsvFileValidationResult.Failure("El archivo CSV no puede estar vacío.");
@@ -183,7 +200,7 @@ public sealed class TaxClassificationsController(IServiceProvider services, ITax
         var normalized = content.Replace("\r\n", "\n").Replace('\r', '\n');
         var lines = normalized.Split('\n');
         var header = lines.FirstOrDefault()?.Trim('\uFEFF').Trim();
-        if (!string.Equals(header, "market;instrumentCode;taxPeriod;appliedFactor", StringComparison.OrdinalIgnoreCase)) return CsvFileValidationResult.Failure("El encabezado CSV debe ser market;instrumentCode;taxPeriod;appliedFactor.");
+        if (!string.Equals(header, expectedHeader, StringComparison.OrdinalIgnoreCase)) return CsvFileValidationResult.Failure($"El encabezado CSV debe ser {expectedHeader}.");
         if (!lines.Skip(1).Any(line => !string.IsNullOrWhiteSpace(line))) return CsvFileValidationResult.Failure("El archivo CSV debe contener al menos una fila de datos.");
         return CsvFileValidationResult.Success(normalized);
     }

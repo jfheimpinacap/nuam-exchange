@@ -88,3 +88,10 @@ Queda pendiente implementar autorización dinámica basada directamente en permi
 - `Administrador` y `Analista Tributario` pueden ejecutar la carga masiva X Factor.
 - `Supervisor` no puede ejecutarla y recibe `403 Forbidden` cuando está autenticado.
 - La carga no modifica `TaxClassificationRead` ni `TaxClassificationSupervise`; el Supervisor conserva lectura, historial y validación supervisora, pero no escritura ni cargas masivas tributarias.
+
+## Carga Masiva X Monto
+
+- `POST /api/tax-classifications/bulk-loads/x-amount` usa la política `TaxClassificationWrite`.
+- Administrador y Analista Tributario pueden ejecutar la carga masiva X Monto.
+- Supervisor conserva lectura, historial y validación supervisora, pero no puede ejecutar la carga masiva X Monto y recibe `403 Forbidden`.
+- Sin JWT válido la API responde `401 Unauthorized`.
