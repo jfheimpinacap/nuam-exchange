@@ -86,3 +86,11 @@ La consulta de cargas masivas se apoya en el modelo físico existente sin introd
 `BulkUploadError` / `ErrorCargaMasiva` se relaciona con `UploadFile` por `archivo_carga_id` y conserva errores seguros por fila, columna, descripción y severidad. No existe relación física directa entre error y detalle; la correlación disponible se realiza por carga y número de fila.
 
 Los endpoints de consulta usan proyecciones `AsNoTracking`, filtran siempre por `archivo_carga_id` para detalles y errores, y no actualizan encabezados, detalles, errores ni calificaciones tributarias. Esta sección describe uso de trazabilidad existente y no representa migraciones, columnas, índices, constraints ni relaciones nuevas.
+
+## Prompt 027 — Reporte tributario desde Calificaciones Tributarias
+
+`CalificacionTributaria` es la fuente directa del reporte tributario de consulta y exportación CSV. El reporte usa únicamente campos reales de la entidad: mercado, código y nombre de instrumento, tipo de calificación, período tributario, estado, factor aplicado, monto de referencia, moneda, vigencias y fecha de actualización.
+
+Se inspeccionó `ReporteTributario`: contiene `reporte_id`, `usuario_id`, `tipo_reporte`, `filtros_aplicados`, `formato`, `ruta_reporte` y `generado_en`, con formato restringido a `PDF`, `XLSX` o `CSV` y FK a `Usuario`. No se fuerza su uso porque no existe una implementación previa compatible que demuestre semántica de historial para esta exportación en tiempo real.
+
+No se realizaron migraciones ni cambios físicos: sin nuevas tablas, columnas, índices, relaciones, constraints, cambios de entidad, Fluent API o snapshot.

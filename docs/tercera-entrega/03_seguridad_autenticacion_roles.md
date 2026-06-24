@@ -103,3 +103,9 @@ Los endpoints `GET /api/bulk-loads`, `GET /api/bulk-loads/{id}`, `GET /api/bulk-
 Pueden consultar cargas masivas los roles `Administrador`, `Analista Tributario` y `Supervisor`. La consulta es de solo lectura y no cambia usuarios, roles, permisos, JWT ni bootstrap.
 
 Las cargas `POST /api/tax-classifications/bulk-loads/x-factor` y `POST /api/tax-classifications/bulk-loads/x-amount` siguen usando `TaxClassificationWrite`; por tanto, el Supervisor puede consultar trazabilidad, pero no ejecutar cargas masivas.
+
+## Prompt 027 — Seguridad del reporte tributario CSV
+
+Los endpoints `GET /api/tax-reports/tax-classifications` y `GET /api/tax-reports/tax-classifications/export` usan exclusivamente `TaxClassificationRead`. Pueden consultarlos y exportarlos `Administrador`, `Analista Tributario` y `Supervisor`.
+
+Las cargas masivas tributarias mantienen su política de escritura (`TaxClassificationWrite`) para operaciones de carga; sus consultas existentes siguen con `TaxClassificationRead`.

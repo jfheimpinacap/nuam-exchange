@@ -264,3 +264,18 @@ La corrección captura un único nombre de base InMemory por factory de prueba y
 También se corrigió la advertencia xUnit2012 sustituyendo la assertion basada en `Assert.False(...Any(...))` por `Assert.DoesNotContain(...)`, sin desactivar analyzers ni debilitar la intención de validar ausencia de cambios rastreados.
 
 No se modificaron entidades, Fluent API, migraciones, snapshot, modelo físico, frontend, JWT, roles, permisos ni políticas. No se usó SQL Server real ni credenciales reales.
+
+## Prompt 027 — Matriz de pruebas de reporte tributario y CSV
+
+| Área | Evidencia cubierta |
+| --- | --- |
+| Filtros | market, instrumentCode, taxPeriod, status, classificationType y currency validados en consulta compartida. |
+| Paginación | page/pageSize y totalPages sobre universo filtrado. |
+| Resumen agregado | totales por estado, tipo, factor aplicado y monto de referencia. |
+| Moneda | ReferenceAmount se suma por currency y no mezcla monedas. |
+| CSV | UTF-8 BOM, encabezado, delimitador punto y coma y content disposition seguro. |
+| Límite | Más de 10000 filas devuelve 400 sin archivo parcial. |
+| Escape CSV | Punto y coma, comillas y saltos de línea se escapan. |
+| Formula Injection | Textos que comienzan con =, +, - o @ se neutralizan con apóstrofo. |
+| Roles | Administrador, Analista Tributario y Supervisor usan TaxClassificationRead; sin JWT devuelve 401. |
+| Integridad | Consulta y exportación no modifican calificaciones ni crean cargas, errores, detalles, historiales, auditoría ni ReporteTributario. |

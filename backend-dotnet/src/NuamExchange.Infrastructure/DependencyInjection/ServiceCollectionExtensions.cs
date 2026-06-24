@@ -13,6 +13,8 @@ using NuamExchange.Infrastructure.Authentication;
 using NuamExchange.Infrastructure.Persistence;
 using NuamExchange.Infrastructure.Seeding;
 using NuamExchange.Infrastructure.TaxClassifications;
+using NuamExchange.Application.TaxReports;
+using NuamExchange.Infrastructure.TaxReports;
 
 namespace NuamExchange.Infrastructure.DependencyInjection;
 
@@ -38,8 +40,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUpdateTaxClassificationValidator, UpdateTaxClassificationValidator>();
         services.AddSingleton<ISupervisorValidationTaxClassificationValidator, SupervisorValidationTaxClassificationValidator>();
         services.AddSingleton<IBulkLoadQueryValidator, BulkLoadQueryValidator>();
+        services.AddSingleton<ITaxReportQueryValidator, TaxReportQueryValidator>();
         services.AddScoped<ITaxClassificationQueryService, TaxClassificationQueryService>();
         services.AddScoped<IBulkLoadQueryService, BulkLoadQueryService>();
+        services.AddScoped<ITaxReportQueryService, TaxReportQueryService>();
         services.AddScoped<ITaxClassificationCommandService, TaxClassificationCommandService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
         services.AddScoped<ISecuritySeedService, SecuritySeedService>();
