@@ -66,8 +66,9 @@ Nunca se modifican por esta carga: `Market`, `InstrumentCode`, `InstrumentName`,
 - Fila válida con coincidencia única: actualiza `AppliedFactor`, registra detalle `APLICADA`, historial `MODIFICACION` y auditoría `TAX_CLASSIFICATION_FACTOR_BULK_UPDATED`.
 - Fila con coincidencia inexistente: registra detalle `CON_ERROR` y `ErrorCargaMasiva`; no modifica calificación.
 - Fila con coincidencia ambigua: registra detalle `CON_ERROR` y `ErrorCargaMasiva`; no modifica calificación.
-- Decimal inválido o incompatible con `decimal(18,8)` / no negativo: registra error; no modifica calificación.
-- Identidad duplicada dentro del mismo archivo: la primera ocurrencia válida puede procesarse; ocurrencias posteriores quedan con error de duplicidad.
+- Decimal inválido o incompatible con `decimal(18,8)` / no negativo: registra error; no modifica calificación. Si la identidad todavía no fue procesada correctamente en una fila válida previa, este error tiene prioridad sobre duplicidad y no consume la identidad.
+- Identidad duplicada dentro del mismo archivo: la primera ocurrencia válida puede procesarse; ocurrencias posteriores de una identidad ya procesada correctamente quedan con error `DUPLICATE_ROW`, incluso si informan otro factor.
+- Una fila inválida por decimal, campo requerido o `taxPeriod` inválido no consume la identidad lógica `market + instrumentCode + taxPeriod`; una fila válida posterior con esa misma identidad se evalúa como primera fila válida procesable.
 - Filas válidas e inválidas pueden coexistir si la estructura global del archivo es válida.
 
 ## Respuesta 200 OK

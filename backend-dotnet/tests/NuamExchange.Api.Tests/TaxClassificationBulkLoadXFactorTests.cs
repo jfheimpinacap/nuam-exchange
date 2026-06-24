@@ -106,21 +106,23 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         dbContext.TaxClassifications.AddRange(
             CreateTax(1, "BOLSA", "NUAM-1", 2026, 1m, created),
             CreateTax(2, "BOLSA", "DUP", 2026, 2m, created),
-            CreateTax(3, "BOLSA", "DUP", 2026, 3m, created));
+            CreateTax(3, "BOLSA", "DUP", 2026, 3m, created),
+            CreateTax(4, "BOLSA", "BAD-FIRST", 2026, 4m, created));
         await dbContext.SaveChangesAsync();
 
         var service = new TaxClassificationCommandService(dbContext);
-        var csv = "market;instrumentCode;taxPeriod;appliedFactor\nBOLSA;NUAM-1;2026;1.25000000\nBOLSA;NOPE;2026;4.0\nBOLSA;DUP;2026;5.0\nBOLSA;NUAM-1;2026;bad\nBOLSA;NUAM-1;2026;6.0\n";
+        var csv = "market;instrumentCode;taxPeriod;appliedFactor\nBOLSA;NUAM-1;2026;1.25000000\nBOLSA;NOPE;2026;4.0\nBOLSA;DUP;2026;5.0\nBOLSA;BAD-FIRST;2026;bad\nBOLSA;NUAM-1;2026;6.0\nBOLSA;BAD-FIRST;2026;7.50000000\n";
         var result = await service.BulkLoadXFactorAsync(new BulkLoadXFactorCommand(99, "x-factor.csv", Encoding.UTF8.GetByteCount(csv), csv, "127.0.0.1"));
 
-        Assert.Equal(5, result.TotalRows);
-        Assert.Equal(1, result.SuccessfulRows);
+        Assert.Equal(6, result.TotalRows);
+        Assert.Equal(2, result.SuccessfulRows);
         Assert.Equal(4, result.FailedRows);
         Assert.Contains(1, result.UpdatedTaxClassificationIds);
-        Assert.Contains(result.Errors, x => x.Code == "NOT_FOUND");
-        Assert.Contains(result.Errors, x => x.Code == "AMBIGUOUS_MATCH");
-        Assert.Contains(result.Errors, x => x.Code == "INVALID_APPLIED_FACTOR");
-        Assert.Contains(result.Errors, x => x.Code == "DUPLICATE_ROW");
+        Assert.Contains(4, result.UpdatedTaxClassificationIds);
+        Assert.Contains(result.Errors, x => x.RowNumber == 3 && x.Code == "NOT_FOUND");
+        Assert.Contains(result.Errors, x => x.RowNumber == 4 && x.Code == "AMBIGUOUS_MATCH");
+        Assert.Contains(result.Errors, x => x.RowNumber == 5 && x.Code == "INVALID_APPLIED_FACTOR");
+        Assert.Contains(result.Errors, x => x.RowNumber == 6 && x.Code == "DUPLICATE_ROW");
 
         var updated = await dbContext.TaxClassifications.SingleAsync(x => x.Id == 1);
         Assert.Equal(1.25m, updated.AppliedFactor);
@@ -131,14 +133,29 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         Assert.Equal("BOLSA", updated.Market);
         Assert.Equal("NUAM-1", updated.InstrumentCode);
 
+        var invalidThenValid = await dbContext.TaxClassifications.SingleAsync(x => x.Id == 4);
+        Assert.Equal(7.5m, invalidThenValid.AppliedFactor);
+        Assert.True(invalidThenValid.UpdatedAt > created);
+
+        var ambiguousRows = await dbContext.TaxClassifications.Where(x => x.InstrumentCode == "DUP").ToListAsync();
+        Assert.All(ambiguousRows, x =>
+        {
+            Assert.Equal(created, x.UpdatedAt);
+            Assert.Contains(x.AppliedFactor, new[] { 2m, 3m });
+        });
+
+        Assert.Equal(4, await dbContext.TaxClassifications.CountAsync());
         Assert.Single(dbContext.UploadFiles);
-        Assert.Equal(5, await dbContext.BulkUploadDetails.CountAsync());
+        Assert.Equal(6, await dbContext.BulkUploadDetails.CountAsync());
         Assert.Equal(4, await dbContext.BulkUploadErrors.CountAsync());
-        var history = await dbContext.ClassificationHistories.SingleAsync();
-        Assert.Equal("MODIFICACION", history.ChangeType);
-        Assert.Equal("AppliedFactor", history.ModifiedField);
-        var audit = await dbContext.AuditLogs.SingleAsync();
-        Assert.Equal("TAX_CLASSIFICATION_FACTOR_BULK_UPDATED", audit.Action);
+        Assert.Equal(2, await dbContext.ClassificationHistories.CountAsync());
+        Assert.All(await dbContext.ClassificationHistories.ToListAsync(), history =>
+        {
+            Assert.Equal("MODIFICACION", history.ChangeType);
+            Assert.Equal("AppliedFactor", history.ModifiedField);
+        });
+        Assert.Equal(2, await dbContext.AuditLogs.CountAsync());
+        Assert.All(await dbContext.AuditLogs.ToListAsync(), audit => Assert.Equal("TAX_CLASSIFICATION_FACTOR_BULK_UPDATED", audit.Action));
     }
 
     private static DbContextOptions<NuamExchangeDbContext> CreateOptions() => new DbContextOptionsBuilder<NuamExchangeDbContext>()

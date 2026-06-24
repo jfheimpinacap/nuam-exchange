@@ -297,22 +297,23 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
                 AddFailed(upload.Id, row.RowNumber, null, null, original, "REQUIRED_FIELD", "market, instrumentCode, taxPeriod y appliedFactor son obligatorios.", errors, now);
                 continue;
             }
-            if (!seen.Add(key))
-            {
-                AddFailed(upload.Id, row.RowNumber, null, null, original, "DUPLICATE_ROW", "La identidad market + instrumentCode + taxPeriod ya fue informada en el archivo.", errors, now);
-                continue;
-            }
             if (!int.TryParse(taxPeriodText, NumberStyles.None, CultureInfo.InvariantCulture, out var taxPeriod))
             {
                 AddFailed(upload.Id, row.RowNumber, null, null, original, "INVALID_TAX_PERIOD", "taxPeriod debe ser un número entero válido.", errors, now);
                 continue;
             }
-            if (!TryParseFactor(factorText, out var factor) || factor.Value < 0 || factor.Value >= 10000000000m || decimal.Round(factor.Value, 8) != factor.Value)
+            if (seen.Contains(key))
+            {
+                AddFailed(upload.Id, row.RowNumber, null, null, original, "DUPLICATE_ROW", "La identidad market + instrumentCode + taxPeriod ya fue procesada correctamente en el archivo.", errors, now);
+                continue;
+            }
+            if (!TryParseFactor(factorText, out var parsedFactor) || parsedFactor < 0 || parsedFactor >= 10000000000m || decimal.Round(parsedFactor, 8) != parsedFactor)
             {
                 AddFailed(upload.Id, row.RowNumber, null, null, original, "INVALID_APPLIED_FACTOR", "appliedFactor debe ser decimal válido, no negativo y compatible con decimal(18,8).", errors, now);
                 continue;
             }
 
+            var factor = parsedFactor;
             var matches = await dbContext.TaxClassifications.Where(x => x.Market == market && x.InstrumentCode == instrumentCode && x.TaxPeriod == taxPeriod).Take(2).ToListAsync(cancellationToken);
             if (matches.Count == 0)
             {
@@ -324,6 +325,8 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
                 AddFailed(upload.Id, row.RowNumber, null, factor, original, "AMBIGUOUS_MATCH", "Existe más de una calificación tributaria para market + instrumentCode + taxPeriod.", errors, now);
                 continue;
             }
+
+            seen.Add(key);
 
             var entity = matches[0];
             var previous = entity.AppliedFactor;
@@ -363,11 +366,11 @@ public sealed class TaxClassificationCommandService(NuamExchangeDbContext dbCont
         dbContext.BulkUploadErrors.Add(new BulkUploadError { UploadFileId = uploadId, RowNumber = rowNumber, ColumnName = code == "INVALID_APPLIED_FACTOR" ? "appliedFactor" : null, ErrorDescription = Truncate(message, 800), Severity = "ERROR", CreatedAt = now });
     }
 
-    private static bool TryParseFactor(string text, out decimal? value)
+    private static bool TryParseFactor(string text, out decimal value)
     {
         if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var invariant)) { value = invariant; return true; }
         if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.GetCultureInfo("es-CL"), out var cl)) { value = cl; return true; }
-        value = null;
+        value = default;
         return false;
     }
 
