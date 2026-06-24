@@ -301,3 +301,18 @@ Validaciones locales obligatorias posteriores al merge:
 - **Base de datos:** sin migraciones, sin cambios físicos, sin nuevas tablas, columnas, índices ni relaciones.
 - **Frontend:** sin cambios.
 - **Validación local posterior obligatoria:** restaurar, compilar, probar, iniciar API en Development, autenticarse con Administrador real y verificar listado, resumen, detalles, errores, aislamiento entre cargas, `404` para id inexistente y ausencia de modificaciones en datos tributarios o registros de carga.
+
+## Prompt 026 — Corrección de consultas y pruebas de Cargas Masivas
+
+- **Fecha real:** 2026-06-24.
+- **Alcance:** corrección mínima de fixtures y assertions de pruebas para los endpoints de consulta de cargas masivas implementados en Prompt 025.
+- **Causa real detectada:** el fixture de integración generaba el nombre de base EF Core InMemory dentro de `AddDbContext`, permitiendo que el seed y las consultas usaran bases distintas; por eso una carga sembrada podía no aparecer en listado, resumen, detalles ni errores.
+- **Corrección aplicada:** se captura un único nombre InMemory por `WebApplicationFactory` y se reutiliza para sembrado y consultas; los IDs sembrados vuelven a coincidir con los endpoints `/api/bulk-loads/{id}`.
+- **xUnit2012:** se reemplazó `Assert.False(...Any(...))` por `Assert.DoesNotContain(...)` para comprobar ausencia de entidades modificadas en el `ChangeTracker`.
+- **Endpoints preservados:** `GET /api/bulk-loads`, `GET /api/bulk-loads/{id}`, `GET /api/bulk-loads/{id}/details` y `GET /api/bulk-loads/{id}/errors` siguen siendo de solo lectura y mantienen `404` solo para cargas inexistentes.
+- **Colecciones:** details y errors devuelven `PagedResult` con `items` no nulo, incluyendo colecciones vacías cuando la carga existe sin hijos.
+- **Seguridad:** no se exponen `FilePath`, `FileHash` ni rutas físicas.
+- **Sin migraciones:** no se crearon ni modificaron migraciones.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
+- **Sin frontend:** no se modificó la aplicación cliente.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con validación manual de consultas de cargas masivas.
