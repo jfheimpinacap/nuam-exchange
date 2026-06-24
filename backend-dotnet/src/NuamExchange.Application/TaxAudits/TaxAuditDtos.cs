@@ -1,3 +1,5 @@
+using NuamExchange.Application.TaxClassifications;
+
 namespace NuamExchange.Application.TaxAudits;
 
 public sealed record TaxAuditQuery(int? Page = TaxAuditQueryDefaults.DefaultPage, int? PageSize = TaxAuditQueryDefaults.DefaultPageSize, int? TaxClassificationId = null, string? Action = null, DateTime? DateFrom = null, DateTime? DateTo = null, string? SortBy = TaxAuditQueryDefaults.DefaultSortBy, string SortDirection = TaxAuditQueryDefaults.DefaultSortDirection);

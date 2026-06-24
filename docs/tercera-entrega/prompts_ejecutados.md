@@ -354,3 +354,12 @@ Validaciones locales obligatorias posteriores al merge:
 - **Exclusión:** auditoría no tributaria no se lista y por id responde `404`; no se expone IP, claims, rutas, hashes, emails ni credenciales.
 - **Sin migraciones:** no hubo migraciones, cambios de modelo físico, frontend ni snapshot.
 - **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, iniciar API, autenticar roles permitidos, consultar listado/detalle, validar filtros y confirmar que no cambian calificaciones, cargas ni auditoría.
+## Prompt 030 — Corrección de referencia PagedResult en Auditoría Tributaria (2026-06-24)
+
+- **Corrección CS0246:** se corrigió la resolución de `PagedResult<>` usada por `ITaxAuditQueryService` en los DTOs de Auditoría Tributaria.
+- **PagedResult canónico:** se reutiliza el `PagedResult<T>` existente en `NuamExchange.Application.TaxClassifications`, sin crear tipos duplicados ni mover clases entre capas.
+- **Alcance funcional:** no se modificaron filtros, reglas tributarias, servicios, controladores, autorización, DTOs seguros ni endpoints públicos de auditoría.
+- **Sin migraciones:** no se crearon ni modificaron migraciones.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
+- **Sin frontend:** no se modificó la aplicación cliente.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la validación manual de Auditoría Tributaria.
