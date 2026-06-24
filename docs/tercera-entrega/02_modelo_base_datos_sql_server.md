@@ -94,3 +94,9 @@ Los endpoints de consulta usan proyecciones `AsNoTracking`, filtran siempre por 
 Se inspeccionó `ReporteTributario`: contiene `reporte_id`, `usuario_id`, `tipo_reporte`, `filtros_aplicados`, `formato`, `ruta_reporte` y `generado_en`, con formato restringido a `PDF`, `XLSX` o `CSV` y FK a `Usuario`. No se fuerza su uso porque no existe una implementación previa compatible que demuestre semántica de historial para esta exportación en tiempo real.
 
 No se realizaron migraciones ni cambios físicos: sin nuevas tablas, columnas, índices, relaciones, constraints, cambios de entidad, Fluent API o snapshot.
+
+## Prompt 029 — Consulta segura de Auditoria tributaria
+
+Se inspeccionó la entidad real `AuditLog` mapeada a `Auditoria`: `auditoria_id`, `usuario_id`, `entidad_afectada`, `registro_afectado_id`, `accion`, `detalle`, `valor_anterior`, `valor_nuevo`, `ip_origen` y `fecha_accion`. `Auditoria.usuario_id` mantiene relación opcional con `Usuario`; no existe relación física directa con `CalificacionTributaria`, por lo que el alcance seguro de consulta se define por convención estricta existente: `entidad_afectada = CalificacionTributaria`, `registro_afectado_id` no nulo y acción en lista cerrada tributaria.
+
+Las acciones tributarias incluidas son `TAX_CLASSIFICATION_CREATED`, `TAX_CLASSIFICATION_UPDATED`, `TAX_CLASSIFICATION_COPIED`, `TAX_CLASSIFICATION_VALIDATED`, `TAX_CLASSIFICATION_FACTOR_BULK_UPDATED` y `TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED`. No se realizaron migraciones ni cambios físicos de base de datos, entidades, Fluent API ni snapshot.
