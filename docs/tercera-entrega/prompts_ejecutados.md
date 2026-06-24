@@ -179,3 +179,13 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin frontend:** no se modificó la interfaz web.
 - **Limitaciones de Codex Cloud:** las validaciones contra una base SQL Server real quedan pendientes para ambiente local o de QA con credenciales seguras.
 - **Validaciones locales posteriores obligatorias:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador y Analista Tributario, crear calificación válida, verificar listado/detalle, confirmar `403` para Supervisor, confirmar `400` para rango de fechas inválido, revisar `HistorialCalificacion` y revisar `Auditoria` para `TAX_CLASSIFICATION_CREATED`.
+
+## Prompt 016 — Corrección de binding JSON en creación de Calificaciones Tributarias
+
+- **Fecha real:** 2026-06-24.
+- **Objetivo:** corregir el binding JSON de `POST /api/tax-classifications` para aceptar el contrato publicado de `CreateTaxClassificationRequest`, especialmente `description` como string opcional o `null`.
+- **Contrato HTTP:** creación válida de calificación tributaria responde `201 Created`, retorna el detalle seguro e incluye cabecera `Location`; Swagger documenta request y respuestas `201`, `400`, `401`, `403` y `503`.
+- **Modelo de datos:** sin migraciones y sin cambios de modelo.
+- **Frontend:** sin cambios.
+- **Base de datos:** sin modificaciones ni ejecución de `dotnet ef database update`.
+- **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador, crear una calificación con el JSON documentado, verificar `201 Created`, `Location`, listado, detalle, `ClassificationHistory` y Auditoria con `TAX_CLASSIFICATION_CREATED`.

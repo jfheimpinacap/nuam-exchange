@@ -1,21 +1,47 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using NuamExchange.Application.TaxClassifications;
 
 namespace NuamExchange.Api.Contracts.TaxClassifications;
 
 public sealed class CreateTaxClassificationRequest
 {
-    public string? Market { get; init; }
-    public string? InstrumentCode { get; init; }
-    public string? InstrumentName { get; init; }
-    public string? ClassificationType { get; init; }
-    public string? Description { get; init; }
-    public decimal? UpdatePercentage { get; init; }
-    public decimal? AppliedFactor { get; init; }
-    public decimal? ReferenceAmount { get; init; }
-    public string? Currency { get; init; }
-    public int TaxPeriod { get; init; }
-    public DateOnly ValidFrom { get; init; }
-    public DateOnly? ValidTo { get; init; }
+    [JsonPropertyName("market")]
+    public string? Market { get; set; }
+
+    [JsonPropertyName("instrumentCode")]
+    public string? InstrumentCode { get; set; }
+
+    [JsonPropertyName("instrumentName")]
+    public string? InstrumentName { get; set; }
+
+    [JsonPropertyName("classificationType")]
+    public string? ClassificationType { get; set; }
+
+    [JsonPropertyName("description")]
+    [MaxLength(500)]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("updatePercentage")]
+    public decimal? UpdatePercentage { get; set; }
+
+    [JsonPropertyName("appliedFactor")]
+    public decimal? AppliedFactor { get; set; }
+
+    [JsonPropertyName("referenceAmount")]
+    public decimal? ReferenceAmount { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("taxPeriod")]
+    public int TaxPeriod { get; set; }
+
+    [JsonPropertyName("validFrom")]
+    public DateOnly ValidFrom { get; set; }
+
+    [JsonPropertyName("validTo")]
+    public DateOnly? ValidTo { get; set; }
 
     public CreateTaxClassificationCommand ToCommand(int creatorUserId, string? originIp) => new(
         creatorUserId,

@@ -97,3 +97,14 @@ Se registra `Auditoria` con:
 ## Limitaciones
 
 Este contrato no implementa edición, copia, eliminación, validación supervisora, cargas masivas ni frontend.
+
+## Corrección de binding JSON — Prompt 016
+
+Se fijó explícitamente el contrato JSON de `CreateTaxClassificationRequest` para que `POST /api/tax-classifications` acepte el contrato documentado en camelCase.
+
+- `description` acepta texto normal como `string` opcional.
+- `description` acepta `null` porque el modelo de creación permite descripción nula.
+- Los campos numéricos (`updatePercentage`, `appliedFactor`, `referenceAmount`) se enlazan como decimales opcionales.
+- Las fechas (`validFrom`, `validTo`) se enlazan como `DateOnly` / `DateOnly?` usando el formato JSON `YYYY-MM-DD`.
+- Una solicitud válida devuelve `201 Created` e incluye cabecera `Location` hacia `GET /api/tax-classifications/{id}`.
+- Las solicitudes inválidas continúan devolviendo `400 Bad Request` seguro.
