@@ -110,3 +110,9 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 - `GET /api/tax-classifications/{id}` retorna el registro creado.
 - Existe historial inicial en `HistorialCalificacion` con `tipo_cambio = CREACION`.
 - Existe auditoría `TAX_CLASSIFICATION_CREATED` en `Auditoria`.
+
+## Evidencia de corrección — Prompt 016
+
+- Fallo local real posterior al merge de Prompt 015: un JSON válido para `POST /api/tax-classifications` fue rechazado con `400 Bad Request` antes de crear la calificación, reportando error de binding sobre `description` y el campo `request` requerido.
+- Corrección Prompt 016: se fijó explícitamente el contrato JSON de `CreateTaxClassificationRequest`, incluyendo `description` como `string` opcional y nullable, y se agregaron pruebas sin SQL Server para deserialización, contrato DTO y endpoint con servicio fake.
+- Validación local posterior obligatoria: iniciar API en `Development`, autenticarse como Administrador, ejecutar el POST con el JSON documentado, confirmar `HTTP 201 Created`, confirmar cabecera `Location`, consultar listado y detalle, revisar `ClassificationHistory` y revisar Auditoria para `TAX_CLASSIFICATION_CREATED`.
