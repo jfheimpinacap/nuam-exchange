@@ -250,3 +250,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades, Fluent API ni modelo físico.
 - **Sin frontend:** no se modificó interfaz de usuario.
 - **Validación local posterior obligatoria:** ejecutar restore, build y test de la solución backend; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la prueba manual CSV de Prompt 020.
+## Prompt 022 — Corrección de compilación y validación final de pruebas X Factor
+
+- **Fecha real de ejecución:** 2026-06-24.
+- **Objetivo:** corregir el error de compilación CS1503 en `TaxClassificationBulkLoadXFactorTests` y validar estáticamente la consistencia del fixture X Factor actualizado.
+- **Corrección CS1503:** la assertion de factores ambiguos ahora compara `AppliedFactor` como `decimal?` contra una colección `decimal?[]`, alineada con la nulabilidad real de `TaxClassification.AppliedFactor` y sin usar `dynamic` ni casts inseguros.
+- **Revisión de assertion y tipos:** se confirmó que la colección evaluada proviene de `ToListAsync()` sobre EF Core y que cada elemento expone `AppliedFactor` nullable; la expectativa mantiene la comprobación de valores `2m` y `3m` sin debilitarla a solo conteo.
+- **Cobertura preservada:** el fixture conserva `INVALID_APPLIED_FACTOR` para una identidad no procesada previamente, `DUPLICATE_ROW` para una identidad ya aplicada correctamente y una fila válida posterior a una fila inválida con la misma identidad.
+- **Sin migraciones:** no se generaron ni modificaron migraciones.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
+- **Sin frontend:** no se modificó la aplicación frontend.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore .\NuamExchange.sln`, `dotnet build .\NuamExchange.sln --no-restore` y `dotnet test .\NuamExchange.sln --no-build` sobre código recompilado; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la prueba manual de Carga Masiva X Factor.

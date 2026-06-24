@@ -141,7 +141,7 @@ public sealed class TaxClassificationBulkLoadXFactorTests
         Assert.All(ambiguousRows, x =>
         {
             Assert.Equal(created, x.UpdatedAt);
-            Assert.Contains(x.AppliedFactor, new[] { 2m, 3m });
+            Assert.Contains<decimal?>(x.AppliedFactor, new decimal?[] { 2m, 3m });
         });
 
         Assert.Equal(4, await dbContext.TaxClassifications.CountAsync());
