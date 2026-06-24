@@ -52,3 +52,9 @@ La API de consulta `/api/tax-classifications` se construyó sobre la entidad ofi
 Los filtros disponibles derivan del modelo oficial existente: `market` usa `Market`, `exercise` usa `TaxPeriod`, `status` usa `Status` y `search` consulta campos de texto reales (`InstrumentCode`, `InstrumentName`, `Description`, `ClassificationType`). El filtro funcional `origin` de mockups no se expone porque no existe una columna o propiedad equivalente en `TaxClassification`.
 
 No se modificó el modelo físico, no se agregaron columnas, no se cambiaron tipos, no se alteró Fluent API y no se creó migración. Las respuestas y opciones de filtro derivan exclusivamente del modelo oficial existente y de valores persistidos en la base de datos.
+
+## Relación CalificacionTributaria - ValidacionTributaria para validación supervisora
+
+`ValidacionTributaria` contiene la PK `validacion_id` y el campo nullable `calificacion_id`, que referencia a `CalificacionTributaria.calificacion_id`. La misma tabla también contiene `archivo_carga_id`; el CHECK `CK_ValidacionTributaria_Referencia` exige que al menos una de esas referencias exista. Para calificaciones tributarias, la validación supervisora persiste `calificacion_id` y no requiere `archivo_carga_id`.
+
+La cardinalidad real es una calificación con cero o muchas validaciones (`TaxClassification.TaxValidations`), sin restricción física de una única validación por calificación. Cada validación se asocia además a `Usuario` mediante `usuario_id`, guarda `resultado`, `observacion` y `fecha_validacion`, y opera como trazabilidad funcional sin modificar el modelo físico ni crear migraciones nuevas.

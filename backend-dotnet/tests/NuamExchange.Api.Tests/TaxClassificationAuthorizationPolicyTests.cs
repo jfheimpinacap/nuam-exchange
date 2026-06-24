@@ -49,14 +49,37 @@ public sealed class TaxClassificationAuthorizationPolicyTests
         Assert.DoesNotContain(SecuritySeedService.SupervisorRole, rolesRequirement.AllowedRoles);
     }
 
-    private static AuthorizationPolicy GetTaxClassificationWritePolicy()
+
+    [Theory]
+    [InlineData(SecuritySeedService.AdministratorRole)]
+    [InlineData(SecuritySeedService.SupervisorRole)]
+    public void TaxClassificationSupervisePolicy_AllowsSupervisoryRoles(string roleName)
+    {
+        var policy = GetPolicy("TaxClassificationSupervise");
+
+        var rolesRequirement = Assert.Single(policy.Requirements.OfType<RolesAuthorizationRequirement>());
+        Assert.Contains(roleName, rolesRequirement.AllowedRoles);
+    }
+
+    [Fact]
+    public void TaxClassificationSupervisePolicy_RejectsTaxAnalyst()
+    {
+        var policy = GetPolicy("TaxClassificationSupervise");
+
+        var rolesRequirement = Assert.Single(policy.Requirements.OfType<RolesAuthorizationRequirement>());
+        Assert.DoesNotContain(SecuritySeedService.TaxAnalystRole, rolesRequirement.AllowedRoles);
+    }
+
+    private static AuthorizationPolicy GetTaxClassificationWritePolicy() => GetPolicy("TaxClassificationWrite");
+
+    private static AuthorizationPolicy GetPolicy(string policyName)
     {
         var services = new ServiceCollection();
         services.AddInfrastructure(new ConfigurationBuilder().Build());
         using var provider = services.BuildServiceProvider();
         var options = provider.GetRequiredService<IOptions<AuthorizationOptions>>().Value;
 
-        var policy = options.GetPolicy("TaxClassificationWrite");
+        var policy = options.GetPolicy(policyName);
 
         Assert.NotNull(policy);
         return policy!;

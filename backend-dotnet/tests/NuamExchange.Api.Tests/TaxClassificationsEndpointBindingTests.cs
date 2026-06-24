@@ -106,6 +106,8 @@ public sealed class TaxClassificationsEndpointBindingTests
             return Task.FromResult<TaxClassificationDetailDto?>(response);
         }
 
+        public Task<SupervisorValidationResult> SupervisorValidationAsync(ValidatedSupervisorValidationTaxClassificationCommand command, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
         public Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default)
         {
             var response = new TaxClassificationDetailDto(

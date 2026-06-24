@@ -142,3 +142,19 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 - El origen no cambia.
 - La copia tiene historial propio con `CREACION`.
 - Auditoría incluye `TAX_CLASSIFICATION_COPIED`.
+
+## Casos de prueba agregados - Prompt 019
+
+| Módulo | Objetivo | Datos de entrada | Pasos | Resultado esperado | Resultado obtenido | Prioridad | Responsable | Evidencia |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| API Calificaciones | Supervisor valida calificación en estado permitido | `id=7`, rol `Supervisor`, `decision=OBSERVADO` | POST `/api/tax-classifications/7/supervisor-validation` | `200 OK`, DTO con `status=OBSERVADA` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| API Calificaciones | Administrador valida calificación en estado permitido | `id=7`, rol `Administrador`, `decision=OBSERVADO` | POST `/api/tax-classifications/7/supervisor-validation` | `200 OK`, DTO seguro actualizado | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| Seguridad | Analista Tributario no valida | rol `Analista Tributario` | POST endpoint de validación | `403 Forbidden` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| Contrato | Decisión inválida | `decision=RECHAZADO` | POST endpoint de validación | `400 Bad Request` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| Negocio | Transición no permitida | estado `ANULADA`, `decision=OBSERVADO` | Ejecutar servicio | `409 Conflict`, sin datos parciales | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| API Calificaciones | Id inexistente | `id=404` | POST endpoint de validación | `404 Not Found` | Cubierto por prueba automatizada | Media | Codex | `TaxClassificationSupervisorValidationTests` |
+| Persistencia | Crear `ValidacionTributaria` | transición `VIGENTE -> OBSERVADA` | Ejecutar servicio con EF InMemory | Registro vinculado a calificación y usuario actor | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| Persistencia | Cambiar estado permitido | `VIGENTE` + `OBSERVADO` | Ejecutar servicio | Estado final `OBSERVADA` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| Persistencia | Historial registra cambio | transición válida | Ejecutar servicio | `tipo_cambio=OBSERVACION`, `Status`, anterior/nuevo | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| Auditoría | Registrar operación | transición válida | Ejecutar servicio | `TAX_CLASSIFICATION_VALIDATED` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
+| Consistencia | No dejar cambios parciales | transición inválida | Ejecutar servicio | Sin validación, historial ni auditoría | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationSupervisorValidationTests` |
