@@ -49,17 +49,83 @@ public sealed class TaxReportQueryTests
     {
         using var factory = CreateFactory(SecuritySeedService.AdministratorRole);
         var client = factory.CreateClient();
+
+        await using var seedScope = factory.Services.CreateAsyncScope();
+        var seededDb = seedScope.ServiceProvider.GetRequiredService<NuamExchangeDbContext>();
+        Assert.Equal(4, await seededDb.TaxClassifications.CountAsync());
+
         var response = await client.GetAsync("/api/tax-reports/tax-classifications?market=BOLSA&page=1&pageSize=1&sortBy=taxPeriod&sortDirection=desc");
         var body = await response.Content.ReadAsStringAsync();
         var report = await response.Content.ReadFromJsonAsync<TaxClassificationReportDto>();
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.NotNull(report); Assert.NotNull(report!.Items); Assert.Equal(3, report.TotalCount); Assert.Equal(3, report.TotalPages);
+        Assert.NotNull(report);
+        Assert.NotNull(report!.Items);
+        Assert.NotNull(report.Summary);
+        Assert.Single(report.Items);
+        Assert.Equal(3, report.TotalCount);
+        Assert.Equal(3, report.TotalPages);
+        Assert.Equal(3, report.Summary.TotalClassifications);
         Assert.DoesNotContain("filePath", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("claims", body, StringComparison.OrdinalIgnoreCase);
+
         var csv = await client.GetAsync("/api/tax-reports/tax-classifications/export?market=BOLSA&sortBy=id&sortDirection=asc");
+        var csvBytes = await csv.Content.ReadAsByteArrayAsync();
+        var csvText = System.Text.Encoding.UTF8.GetString(csvBytes);
         Assert.Equal(HttpStatusCode.OK, csv.StatusCode);
         Assert.Contains("text/csv", csv.Content.Headers.ContentType?.ToString());
         Assert.Contains("reporte_calificaciones_tributarias_", csv.Content.Headers.ContentDisposition?.FileName ?? string.Empty);
+        Assert.True(csvBytes.Length >= 3 && csvBytes[0] == 0xEF && csvBytes[1] == 0xBB && csvBytes[2] == 0xBF);
+        Assert.StartsWith("\uFEFFmarket;instrumentCode;instrumentName;classificationType;taxPeriod;status;", csvText);
+        Assert.Contains("'=CMD", csvText);
+        Assert.Contains("\"Name; \"\"quoted\"\"", csvText);
+        Assert.DoesNotContain("filePath", csvText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task JsonEndpoint_FiltersSeededRowsAndKeepsEmptyListNonNull()
+    {
+        using var factory = CreateFactory(SecuritySeedService.AdministratorRole);
+        var client = factory.CreateClient();
+
+        var filteredResponse = await client.GetAsync("/api/tax-reports/tax-classifications?market=BOLSA&currency=USD&page=1&pageSize=20&sortBy=id&sortDirection=asc");
+        var filteredReport = await filteredResponse.Content.ReadFromJsonAsync<TaxClassificationReportDto>();
+
+        Assert.Equal(HttpStatusCode.OK, filteredResponse.StatusCode);
+        Assert.NotNull(filteredReport);
+        Assert.NotNull(filteredReport!.Items);
+        Assert.NotNull(filteredReport.Summary);
+        var item = Assert.Single(filteredReport.Items);
+        Assert.Equal("USD", item.Currency);
+        Assert.Equal(1, filteredReport.TotalCount);
+        Assert.Equal(1, filteredReport.TotalPages);
+        Assert.Equal(1, filteredReport.Summary.TotalClassifications);
+
+        var emptyResponse = await client.GetAsync("/api/tax-reports/tax-classifications?market=NO_EXISTE&page=1&pageSize=20");
+        var emptyReport = await emptyResponse.Content.ReadFromJsonAsync<TaxClassificationReportDto>();
+
+        Assert.Equal(HttpStatusCode.OK, emptyResponse.StatusCode);
+        Assert.NotNull(emptyReport);
+        Assert.NotNull(emptyReport!.Items);
+        Assert.Empty(emptyReport.Items);
+        Assert.NotNull(emptyReport.Summary);
+        Assert.Equal(0, emptyReport.TotalCount);
+        Assert.Equal(0, emptyReport.TotalPages);
+        Assert.Equal(0, emptyReport.Summary.TotalClassifications);
+    }
+
+    [Fact]
+    public async Task Endpoints_DoNotCreateOrModifyOperationalData()
+    {
+        using var factory = CreateFactory(SecuritySeedService.AdministratorRole);
+        var client = factory.CreateClient();
+
+        var before = await SnapshotAsync(factory.Services);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/tax-reports/tax-classifications?market=BOLSA")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/tax-reports/tax-classifications/export?market=BOLSA")).StatusCode);
+        var after = await SnapshotAsync(factory.Services);
+
+        Assert.Equal(before, after);
     }
     [Theory]
     [InlineData(0, 20, "taxPeriod", "desc")]
@@ -120,12 +186,29 @@ public sealed class TaxReportQueryTests
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<NuamExchangeDbContext>(); services.RemoveAll<DbContextOptions<NuamExchangeDbContext>>();
-            services.AddDbContext<NuamExchangeDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()).ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
+            var databaseName = Guid.NewGuid().ToString();
+            services.AddDbContext<NuamExchangeDbContext>(o => o.UseInMemoryDatabase(databaseName).ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
             services.RemoveAll<ITaxReportQueryService>(); services.AddScoped<ITaxReportQueryService, TaxReportQueryService>();
             services.AddAuthentication(options => { options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme; options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme; }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(TestAuthenticationHandler.AuthenticationScheme, o => { o.ClaimsIssuer = authenticated ? role : "__unauthenticated__"; });
             using var sp = services.BuildServiceProvider(); using var scope = sp.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<NuamExchangeDbContext>(); Seed(db); db.SaveChanges();
         });
     });
+
+    private static async Task<ReadOnlySnapshot> SnapshotAsync(IServiceProvider services)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<NuamExchangeDbContext>();
+        return new ReadOnlySnapshot(
+            await db.TaxClassifications.CountAsync(),
+            await db.UploadFiles.CountAsync(),
+            await db.BulkUploadDetails.CountAsync(),
+            await db.BulkUploadErrors.CountAsync(),
+            await db.ClassificationHistories.CountAsync(),
+            await db.AuditLogs.CountAsync(),
+            await db.TaxReports.CountAsync());
+    }
+
+    private sealed record ReadOnlySnapshot(int TaxClassifications, int UploadFiles, int BulkUploadDetails, int BulkUploadErrors, int ClassificationHistories, int AuditLogs, int TaxReports);
 
     private sealed class TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {

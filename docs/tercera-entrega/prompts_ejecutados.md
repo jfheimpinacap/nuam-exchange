@@ -329,3 +329,17 @@ Validaciones locales obligatorias posteriores al merge:
 - **Modelo:** sin migraciones, sin cambios físicos, sin cambios de entidades, Fluent API o snapshot.
 - **Frontend:** sin cambios.
 - **Validación local posterior obligatoria:** `dotnet restore`, `dotnet build --no-restore` y `dotnet test --no-build` sobre `backend-dotnet/NuamExchange.sln`.
+
+## Prompt 028 — Corrección de fixture y pruebas de Reporte Tributario CSV (2026-06-24)
+
+- **Alcance:** corrección mínima de pruebas de Reporte Tributario JSON/CSV tras el fallo `Expected: 3 / Actual: 0` en `TaxReportQueryTests.JsonEndpoint_ReturnsSafeContractAndCsvHeaders`.
+- **Causa real:** el fixture de integración de `TaxReportQueryTests` generaba el nombre EF Core InMemory dentro del callback de `AddDbContext`; el seed y la API podían resolver bases distintas aunque el seed hiciera `SaveChanges`.
+- **Corrección aplicada:** se captura un único nombre InMemory por `WebApplicationFactory` y se reutiliza para seed, cliente HTTP y contextos de verificación, siguiendo el patrón corregido previamente en `BulkLoadQueryTests`.
+- **Cobertura preservada:** se mantuvo la expectativa válida de tres registros `BOLSA`; no se cambió a cero ni se debilitaron assertions.
+- **JSON preservado:** `GET /api/tax-reports/tax-classifications` conserva `200 OK`, `items` no nulo, `summary` no nulo, paginación, `totalCount`, `totalPages`, filtros y contrato seguro.
+- **CSV preservado:** `GET /api/tax-reports/tax-classifications/export` conserva UTF-8 con BOM, delimitador `;`, encabezado, escape CSV, neutralización de Formula Injection, exclusión de campos internos y mismo conjunto filtrado que JSON.
+- **Solo lectura:** las pruebas verifican que JSON y CSV no modifican calificaciones ni crean cargas, detalles, errores, historial, auditoría ni `TaxReport`/ReporteTributario.
+- **Sin migraciones:** no se crearon ni modificaron migraciones.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
+- **Sin frontend:** no se modificó la aplicación cliente.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con validación manual del Reporte Tributario y CSV.
