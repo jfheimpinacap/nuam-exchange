@@ -179,3 +179,17 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 | Historial | Historial registra tipo permitido | Fila aplicada | Consultar `ClassificationHistory` | `MODIFICACION` y `AppliedFactor` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
 | Auditoría | Auditoría registra acción implementada | Fila aplicada | Consultar `AuditLog` | `TAX_CLASSIFICATION_FACTOR_BULK_UPDATED` | Cubierto por prueba automatizada | Alta | Codex | `TaxClassificationBulkLoadXFactorTests` |
 | Consistencia | Sin cambios parciales ante fallo inesperado | Falla de infraestructura durante transacción | Ejecutar con proveedor transaccional en validación posterior | Rollback completo | Pendiente de validación local con proveedor relacional; la implementación usa transacción EF Core | Alta | Equipo local | Validación posterior obligatoria |
+## Actualización Prompt 022 — Corrección de compilación X Factor
+
+Se corrigió la compilación de la prueba automatizada de Carga Masiva X Factor: la validación de los factores de filas ambiguas compara `AppliedFactor` como `decimal?` contra una colección `decimal?[]`, compatible con la nulabilidad real de la entidad `TaxClassification`.
+
+La cobertura automatizada conserva la verificación fuerte de los factores aplicados y los casos de servicio para:
+
+- fila válida que actualiza `AppliedFactor`;
+- `NOT_FOUND`;
+- `AMBIGUOUS_MATCH`;
+- `INVALID_APPLIED_FACTOR`;
+- `DUPLICATE_ROW`;
+- fila válida posterior a una fila inválida con la misma identidad, confirmando que una fila inválida no consume la identidad procesable.
+
+No se modificaron migraciones, entidades, Fluent API, snapshot, modelo físico, frontend, roles, permisos, JWT ni políticas. La validación local posterior obligatoria sigue siendo restaurar, compilar y ejecutar pruebas sobre el binario recompilado antes de continuar con la prueba manual de Carga Masiva X Factor.
