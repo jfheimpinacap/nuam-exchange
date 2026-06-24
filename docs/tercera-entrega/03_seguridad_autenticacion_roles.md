@@ -54,3 +54,9 @@ Las acciones exitosas sobre roles registran auditoría con `ROLE_CREATED`, `ROLE
 ### Pendiente
 
 Queda pendiente implementar autorización dinámica basada directamente en permisos efectivos.
+
+## Política de escritura de Calificaciones Tributarias
+
+- `TaxClassificationWrite` permite crear calificaciones tributarias solo a `Administrador` y `Analista Tributario`.
+- `Supervisor` conserva acceso de solo lectura mediante `TaxClassificationRead` y no puede ejecutar `POST /api/tax-classifications`.
+- La creación usa el usuario autenticado del JWT como actor de auditoría y como `CreatorUserId` de la calificación creada.

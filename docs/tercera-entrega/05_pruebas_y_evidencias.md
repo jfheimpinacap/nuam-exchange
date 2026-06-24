@@ -98,3 +98,15 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 - Consulta con parámetro de ordenamiento inválido responde `400`.
 - Consulta de detalle inexistente en `GET /api/tax-classifications/{id}` responde `404`.
 - Base sin registros devuelve listado vacío y opciones vacías.
+
+## Validaciones manuales futuras — creación de Calificaciones Tributarias
+
+- Administrador crea una calificación y recibe `201 Created`.
+- Analista Tributario crea una calificación y recibe `201 Created`.
+- Supervisor intenta crear una calificación y recibe `403 Forbidden`.
+- Datos inválidos reciben `400 Bad Request`.
+- `validTo` anterior a `validFrom` recibe `400 Bad Request`.
+- El registro creado aparece en `GET /api/tax-classifications`.
+- `GET /api/tax-classifications/{id}` retorna el registro creado.
+- Existe historial inicial en `HistorialCalificacion` con `tipo_cambio = CREACION`.
+- Existe auditoría `TAX_CLASSIFICATION_CREATED` en `Auditoria`.

@@ -34,7 +34,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IAdministrationService, AdministrationService>();
         services.AddSingleton<ITaxClassificationQueryValidator, TaxClassificationQueryValidator>();
+        services.AddSingleton<ICreateTaxClassificationValidator, CreateTaxClassificationValidator>();
         services.AddScoped<ITaxClassificationQueryService, TaxClassificationQueryService>();
+        services.AddScoped<ITaxClassificationCommandService, TaxClassificationCommandService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
         services.AddScoped<ISecuritySeedService, SecuritySeedService>();
 
@@ -69,6 +71,7 @@ public static class ServiceCollectionExtensions
             options.AddPolicy("TaxAnalystOrAdministrator", policy => policy.RequireRole(SecuritySeedService.TaxAnalystRole, SecuritySeedService.AdministratorRole));
             options.AddPolicy("SupervisorOrAdministrator", policy => policy.RequireRole(SecuritySeedService.SupervisorRole, SecuritySeedService.AdministratorRole));
             options.AddPolicy("TaxClassificationRead", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole, SecuritySeedService.SupervisorRole));
+            options.AddPolicy("TaxClassificationWrite", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole));
         });
 
         return services;
