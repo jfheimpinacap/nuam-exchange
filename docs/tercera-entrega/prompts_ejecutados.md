@@ -210,3 +210,18 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin frontend:** no se modificó la aplicación frontend.
 - **Historial y auditoría de copia:** la copia registra `ClassificationHistory` con `CREACION` y `AuditLog` con `TAX_CLASSIFICATION_COPIED`.
 - **Validaciones locales posteriores obligatorias:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador y Analista Tributario, ejecutar `POST /api/tax-classifications/{id}/copy` sin body, verificar `201 Created`, `Location`, id nuevo, campos editables copiados, origen sin cambios, historial `CREACION`, rechazo `403` para Supervisor y Auditoria con `TAX_CLASSIFICATION_COPIED`.
+
+## Prompt 019 - Estados y validación supervisora de Calificaciones Tributarias
+
+- **Fecha real de ejecución:** 2026-06-24.
+- **Endpoint creado:** `POST /api/tax-classifications/{id}/supervisor-validation`.
+- **Política usada:** `TaxClassificationSupervise`.
+- **Roles permitidos:** `Administrador` y `Supervisor`.
+- **Rol denegado:** `Analista Tributario`.
+- **Estados y transiciones implementados:** `VIGENTE + OBSERVADO -> OBSERVADA`; `OBSERVADA + VALIDADO -> VIGENTE`; `OBSERVADA + APROBADO -> VIGENTE`.
+- **Uso de ValidacionTributaria:** se crea un registro por decisión con `calificacion_id`, `usuario_id`, `resultado`, `observacion` y fecha de servidor.
+- **Historial y auditoría:** se registra `HistorialCalificacion` con `OBSERVACION` o `APROBACION` y `Auditoria` con acción `TAX_CLASSIFICATION_VALIDATED`.
+- **Sin migraciones:** no se generó ni modificó migración.
+- **Sin cambios de modelo físico:** no se modificaron entidades, Fluent API, snapshot, tablas, columnas ni constraints.
+- **Sin frontend:** no se tocaron pantallas ni assets frontend.
+- **Validación local posterior obligatoria:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar con un Administrador real, validar una calificación en estado permitido, revisar detalle, historial, validación y auditoría, y confirmar `409 Conflict` para una transición inválida.

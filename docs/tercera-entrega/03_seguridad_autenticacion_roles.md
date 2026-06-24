@@ -71,3 +71,13 @@ Queda pendiente implementar autorización dinámica basada directamente en permi
 
 - `Administrador` y `Analista Tributario` pueden copiar calificaciones tributarias mediante `POST /api/tax-classifications/{id}/copy` con la política `TaxClassificationWrite`.
 - `Supervisor` conserva permisos de lectura e historial mediante `TaxClassificationRead`, pero no puede copiar calificaciones tributarias porque no pertenece a `TaxClassificationWrite`.
+
+## Matriz de permisos para calificaciones tributarias con validación supervisora
+
+| Rol | Lectura | Historial | Creación | Edición | Copia | Validación supervisora |
+| --- | --- | --- | --- | --- | --- | --- |
+| Administrador | Sí (`TaxClassificationRead`) | Sí (`TaxClassificationRead`) | Sí (`TaxClassificationWrite`) | Sí (`TaxClassificationWrite`) | Sí (`TaxClassificationWrite`) | Sí (`TaxClassificationSupervise`) |
+| Analista Tributario | Sí (`TaxClassificationRead`) | Sí (`TaxClassificationRead`) | Sí (`TaxClassificationWrite`) | Sí (`TaxClassificationWrite`) | Sí (`TaxClassificationWrite`) | No (`403 Forbidden`) |
+| Supervisor | Sí (`TaxClassificationRead`) | Sí (`TaxClassificationRead`) | No (`403 Forbidden`) | No (`403 Forbidden`) | No (`403 Forbidden`) | Sí (`TaxClassificationSupervise`) |
+
+`TaxClassificationSupervise` reutiliza claims de rol del JWT y permite solo `Administrador` y `Supervisor`. No modifica login, bootstrap, entidades de seguridad ni datos de roles/permisos.
