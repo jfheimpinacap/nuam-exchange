@@ -199,3 +199,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Historial y auditoría:** la edición crea `ClassificationHistory` con `tipo_cambio = MODIFICACION` y `AuditLog` con `TAX_CLASSIFICATION_UPDATED`.
 - **Validaciones locales posteriores obligatorias:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador y Analista Tributario, editar una calificación existente, verificar `200 OK`, confirmar campos protegidos, consultar historial, probar `403` como Supervisor y revisar Auditoria.
 - **Limitación:** la copia de calificaciones queda pendiente para Prompt 018.
+
+## Prompt 018 — Copiar Calificaciones Tributarias con historial y auditoría
+
+- **Fecha real:** 2026-06-24.
+- **Endpoint creado:** `POST /api/tax-classifications/{id}/copy`.
+- **Política usada:** `TaxClassificationWrite`, permitida a `Administrador` y `Analista Tributario`.
+- **Sin migraciones:** no se crearon migraciones ni cambios de esquema.
+- **Sin cambios de modelo:** no se modificaron entidades ni Fluent API.
+- **Sin frontend:** no se modificó la aplicación frontend.
+- **Historial y auditoría de copia:** la copia registra `ClassificationHistory` con `CREACION` y `AuditLog` con `TAX_CLASSIFICATION_COPIED`.
+- **Validaciones locales posteriores obligatorias:** restaurar, compilar, ejecutar pruebas, iniciar API en `Development`, autenticar como Administrador y Analista Tributario, ejecutar `POST /api/tax-classifications/{id}/copy` sin body, verificar `201 Created`, `Location`, id nuevo, campos editables copiados, origen sin cambios, historial `CREACION`, rechazo `403` para Supervisor y Auditoria con `TAX_CLASSIFICATION_COPIED`.

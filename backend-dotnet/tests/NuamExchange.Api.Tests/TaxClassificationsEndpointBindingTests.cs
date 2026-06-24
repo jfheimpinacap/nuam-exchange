@@ -83,6 +83,29 @@ public sealed class TaxClassificationsEndpointBindingTests
             return Task.FromResult(response);
         }
 
+        public Task<TaxClassificationDetailDto?> CopyAsync(CopyTaxClassificationCommand command, CancellationToken cancellationToken = default)
+        {
+            var response = new TaxClassificationDetailDto(
+                202,
+                command.ActorUserId,
+                "BOLSA",
+                "COPIA",
+                "Instrumento Copia",
+                "DIVIDENDO",
+                "Copia",
+                0m,
+                1m,
+                100m,
+                "CLP",
+                2026,
+                new DateOnly(2026, 1, 1),
+                null,
+                "VIGENTE",
+                DateTime.UtcNow,
+                DateTime.UtcNow);
+            return Task.FromResult<TaxClassificationDetailDto?>(response);
+        }
+
         public Task<TaxClassificationDetailDto?> UpdateAsync(ValidatedUpdateTaxClassificationCommand command, CancellationToken cancellationToken = default)
         {
             var response = new TaxClassificationDetailDto(

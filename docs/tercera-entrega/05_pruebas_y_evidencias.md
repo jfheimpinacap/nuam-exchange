@@ -128,3 +128,17 @@ Posterior al merge, validar con base local de desarrollo y configuración JWT lo
 - `UpdatedAt` cambia luego de editar.
 - `GET /api/tax-classifications/{id}/history` muestra creación y modificación.
 - Auditoria incluye una entrada `TAX_CLASSIFICATION_UPDATED` para el registro actualizado.
+
+## Validaciones manuales futuras — Copia de calificaciones tributarias
+
+- Administrador copia una calificación existente.
+- Analista Tributario copia una calificación existente.
+- Supervisor recibe `403 Forbidden` al intentar copiar.
+- Copia de id inexistente responde `404 Not Found`.
+- Copia exitosa responde `201 Created` y cabecera `Location`.
+- La copia tiene id distinto al origen.
+- La copia conserva los campos editables del origen.
+- La copia tiene nuevo creador, timestamps de servidor y estado inicial `VIGENTE`.
+- El origen no cambia.
+- La copia tiene historial propio con `CREACION`.
+- Auditoría incluye `TAX_CLASSIFICATION_COPIED`.
