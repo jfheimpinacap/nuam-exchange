@@ -316,3 +316,16 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
 - **Sin frontend:** no se modificó la aplicación cliente.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con validación manual de consultas de cargas masivas.
+
+## Prompt 027 — Reporte Tributario de Calificaciones y Exportación CSV (2026-06-24)
+
+- **Endpoints:** `GET /api/tax-reports/tax-classifications` y `GET /api/tax-reports/tax-classifications/export`.
+- **Política:** `TaxClassificationRead` para `Administrador`, `Analista Tributario` y `Supervisor`.
+- **Filtros:** market, instrumentCode, taxPeriod, status, classificationType, currency, sortBy y sortDirection; JSON agrega page/pageSize.
+- **Resumen:** total filtrado, conteos por estado/tipo, conteos con factor/monto y suma de ReferenceAmount agrupada por moneda.
+- **CSV:** UTF-8 BOM, delimitador `;`, encabezado explícito, escape RFC compatible y neutralización de Formula Injection con apóstrofo.
+- **Límite:** 10000 filas; sobre el límite responde 400 sin exportación parcial.
+- **ReporteTributario:** inspeccionado y no usado para persistir exportaciones por falta de semántica previa compatible demostrada.
+- **Modelo:** sin migraciones, sin cambios físicos, sin cambios de entidades, Fluent API o snapshot.
+- **Frontend:** sin cambios.
+- **Validación local posterior obligatoria:** `dotnet restore`, `dotnet build --no-restore` y `dotnet test --no-build` sobre `backend-dotnet/NuamExchange.sln`.
