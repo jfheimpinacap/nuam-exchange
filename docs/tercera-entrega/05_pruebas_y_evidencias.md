@@ -366,3 +366,22 @@ Validaciones futuras requeridas antes de implementar operaciones reales:
 - Aprobar política y roles antes de cualquier consulta de metadatos.
 
 No se realizaron migraciones, cambios de modelo físico, cambios de entidades, cambios de Fluent API, cambios de snapshot, cambios de frontend, endpoints, servicios funcionales ni datos de prueba.
+
+## Prompt 033 — Evidencias de consulta segura de metadatos de respaldos
+
+| Cobertura | Evidencia esperada |
+|---|---|
+| Autorización Administrador | `GET /api/backup-metadata` responde `200 OK`. |
+| Autorización Supervisor | `GET /api/backup-metadata` responde `403 Forbidden`. |
+| Autorización Analista Tributario | `GET /api/backup-metadata` responde `403 Forbidden`. |
+| No autenticado | `GET /api/backup-metadata` responde `401 Unauthorized`. |
+| Listado | Respuesta paginada con `items`, `page`, `pageSize`, `totalCount` y `totalPages`. |
+| Orden por defecto | `occurredAt desc` y luego `id desc`. |
+| Filtros | `backupType`, `status`, `dateFrom` y `dateTo` aplicados antes de conteo y paginación. |
+| Parámetros inválidos | `page`, `pageSize`, `sortBy`, `sortDirection` y rango de fechas inválido responden `400`. |
+| Detalle existente | `GET /api/backup-metadata/{id}` responde `200 OK`. |
+| Detalle inexistente | `GET /api/backup-metadata/{id-inexistente}` responde `404 Not Found`. |
+| Exclusión de campos sensibles | No se devuelven rutas, `BackupPath`, `ruta_respaldo`, observaciones, usuarios, emails, tokens, hashes ni tamaños. |
+| Solo lectura | Las consultas no modifican `Respaldo`, `Auditoria`, calificaciones tributarias, cargas masivas ni usuarios. |
+
+Las pruebas usan exclusivamente EF Core InMemory dentro del proyecto de pruebas. No usan archivos físicos, bases externas, `NuamTributariaDB_Dev`, migraciones, SQL Server remoto, Plesk ni credenciales reales.
