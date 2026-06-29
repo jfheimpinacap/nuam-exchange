@@ -1,0 +1,4 @@
+import { Link } from 'react-router-dom';
+import type { UserRole } from '../../types/session';
+const actions = { Administrador: [['Nueva Calificación','/calificaciones/nueva'],['Carga X Factor','/cargas/x-factor'],['Carga X Monto','/cargas/x-monto'],['Ver Reportes','/reportes'],['Usuarios','/administracion/usuarios']], 'Analista Tributario': [['Nueva Calificación','/calificaciones/nueva'],['Carga X Factor','/cargas/x-factor'],['Carga X Monto','/cargas/x-monto'],['Ver Reportes','/reportes']], Supervisor: [['Ver Calificaciones','/calificaciones'],['Revisar Carga X Factor','/cargas/x-factor'],['Revisar Carga X Monto','/cargas/x-monto'],['Ver Reportes','/reportes']] } as const;
+export function QuickActions({ role }: { role: UserRole }) { return <section className="quick-actions"><h2>Acciones rápidas</h2><div>{actions[role].map(([label,path])=><Link className="button button-secondary" key={path+label} to={path}>{label}</Link>)}</div></section>; }

@@ -1,0 +1,16 @@
+import type { BackupPolicy, BackupRecord } from '../types/backup';
+export const backups: BackupRecord[] = [
+['BKP-2026-001','2026-06-20T01:00:00','2026-06-20T01:08:00','Completo','Todos los módulos',964689920,'Completado','Usuario Administrador','Programado','Respaldo integral nocturno','12450','Metadatos de demostración verificados.'],
+['BKP-2026-002','2026-06-21T10:15:00','2026-06-21T10:19:00','Diferencial','Base de datos',184549376,'Completado','Analista Reportes','Manual','Respaldo diferencial previo a revisión','2430','No contiene datos reales.'],
+['BKP-2026-003','2026-06-22T01:00:00','','Completo','Todos los módulos',0,'En proceso','Proceso programado','Programado','Ejecución demostrativa activa','0','Progreso simulado.'],
+['BKP-2026-004','2026-06-24T01:00:00','','Completo','Todos los módulos',0,'Programado','Proceso programado','Programado','Ejecución planificada ficticia','0','Puede cancelarse en memoria.'],
+['BKP-2025-009','2025-11-12T02:00:00','2025-11-12T02:03:00','Configuración','Configuración del sistema',8388608,'Completado','Usuario Administrador','Manual','Copia visual de configuración','84','Sin rutas ni secretos.'],
+['BKP-2025-010','2025-09-08T02:00:00','2025-09-08T02:01:00','Diferencial','Archivos de carga',0,'Fallido','Supervisor Demo','Manual','Falla simulada por archivo inválido','0','Error ficticio sin acceso a archivos.'],
+['BKP-2025-011','2025-05-17T02:00:00','2025-05-17T02:11:00','Completo','Base de datos',734003200,'Completado','Usuario Administrador','Programado','Respaldo mensual simulado','9320','Disponible para simulación de restauración.'],
+['BKP-2025-012','2025-03-03T02:00:00','2025-03-03T02:02:00','Configuración','Configuración del sistema',6291456,'Cancelado','Usuario Administrador','Manual','Cancelación de práctica','0','Cancelado manualmente en demo.'],
+['BKP-2024-001','2024-12-29T01:00:00','2024-12-29T01:06:00','Completo','Todos los módulos',805306368,'Completado','Proceso programado','Programado','Cierre anual simulado','11004','Retención visual.'],
+['BKP-2024-002','2024-08-14T03:00:00','2024-08-14T03:04:00','Diferencial','Base de datos',146800640,'Completado','Analista Reportes','Manual','Respaldo para reporte trimestral','1750','Metadatos seguros.'],
+['BKP-2024-003','2024-04-04T03:00:00','2024-04-04T03:01:00','Configuración','Configuración del sistema',0,'Fallido','Usuario Administrador','Manual','Validación fallida simulada','0','No se creó archivo.'],
+['BKP-2024-004','2024-01-15T01:00:00','2024-01-15T01:05:00','Completo','Archivos de carga',419430400,'Completado','Proceso programado','Programado','Respaldo de cargas ficticio','6810','Sin contenido de usuarios.'],
+].map((r)=>({id:r[0] as string,fechaInicio:r[1] as string,fechaTermino:r[2] as string,tipo:r[3] as BackupRecord['tipo'],alcance:r[4] as BackupRecord['alcance'],tamañoBytes:r[5] as number,estado:r[6] as BackupRecord['estado'],ejecutadoPor:r[7] as string,origen:r[8] as BackupRecord['origen'],descripcion:r[9] as string,registrosIncluidos:Number(r[10]),observaciones:r[11] as string}));
+export const defaultBackupPolicy: BackupPolicy = { frecuencia:'Diaria', horaProgramada:'01:00', retencionDias:30, tipoPredeterminado:'Completo', alcancePredeterminado:'Todos los módulos' };

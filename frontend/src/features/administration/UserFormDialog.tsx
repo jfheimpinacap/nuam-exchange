@@ -1,0 +1,13 @@
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '../../components/Button';
+import { FormField } from '../../components/FormField';
+import type { AdministrationUser, UserFormErrors, UserFormValues } from '../../types/administration';
+import { userRoles, userStatuses } from './administrationUtils';
+
+interface Props { title: string; initialValues: UserFormValues; errors: UserFormErrors; isSelf: boolean; onSave: (values: UserFormValues) => void; onClose: () => void; }
+export function UserFormDialog({ title, initialValues, errors, isSelf, onSave, onClose }: Props) {
+  const [values, setValues] = useState(initialValues);
+  const first = useRef<HTMLInputElement>(null);
+  useEffect(() => { first.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; document.addEventListener('keydown', onKey); return () => document.removeEventListener('keydown', onKey); }, [onClose]);
+  return <div className="dialog-backdrop"><section className="confirm-dialog admin-dialog" role="dialog" aria-modal="true" aria-labelledby="user-dialog-title"><h2 id="user-dialog-title">{title}</h2>{isSelf && <p className="inline-message inline-warning">Tu propio rol y estado activo están protegidos en esta demostración.</p>}<div className="dialog-form"><FormField id="dialog-name" label="Nombre"><input ref={first} id="dialog-name" value={values.nombre} aria-invalid={Boolean(errors.nombre)} aria-describedby="name-error" onChange={(e) => setValues({ ...values, nombre: e.target.value })} />{errors.nombre && <span id="name-error" className="field-error" role="alert">{errors.nombre}</span>}</FormField><FormField id="dialog-email" label="Correo"><input id="dialog-email" value={values.email} aria-invalid={Boolean(errors.email)} aria-describedby="email-error" onChange={(e) => setValues({ ...values, email: e.target.value })} />{errors.email && <span id="email-error" className="field-error" role="alert">{errors.email}</span>}</FormField><FormField id="dialog-role" label="Rol"><select id="dialog-role" value={values.rol} disabled={isSelf} onChange={(e) => setValues({ ...values, rol: e.target.value as AdministrationUser['rol'] })}>{userRoles.map((role) => <option key={role}>{role}</option>)}</select></FormField><FormField id="dialog-status" label="Estado"><select id="dialog-status" value={values.estado} disabled={isSelf} onChange={(e) => setValues({ ...values, estado: e.target.value as AdministrationUser['estado'] })}>{userStatuses.map((status) => <option key={status}>{status}</option>)}</select></FormField></div><div className="filter-actions"><Button variant="primary" onClick={() => onSave(values)}>Guardar</Button><Button onClick={onClose}>Cancelar</Button></div></section></div>;
+}

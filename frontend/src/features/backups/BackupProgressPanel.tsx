@@ -1,0 +1,2 @@
+import type { BackupSimulationState } from '../../types/backup';
+export function BackupProgressPanel({ simulation }: { simulation: BackupSimulationState | null }){ if(!simulation) return null; return <section className="progress-panel" role="status" aria-live="polite"><strong>{simulation.kind==='backup'?'Respaldo simulado':'Restauración simulada'}</strong><progress max={100} value={simulation.progress}>{simulation.progress}%</progress><span>{simulation.progress}% · {simulation.message}</span></section>; }

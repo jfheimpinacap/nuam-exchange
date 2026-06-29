@@ -1,0 +1,3 @@
+import { Button } from '../../components/Button';
+import type { UploadResult } from '../../types/upload';
+export function UploadResultPanel({ result, onNew }: { result: UploadResult; onNew: () => void }){ return <section className="result-panel" aria-live="polite"><h2>Procesamiento simulado completado</h2><p>Procesadas: {result.processedRows}. Rechazadas: {result.rejectedRows}.</p><p>Inicio: {new Date(result.startedAt).toLocaleString('es-CL')} · Término: {new Date(result.completedAt).toLocaleString('es-CL')}</p><p><strong>La demostración no guardó datos ni envió el archivo al backend.</strong></p><Button variant="primary" onClick={onNew}>Nueva carga</Button></section>; }

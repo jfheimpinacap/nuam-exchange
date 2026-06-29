@@ -1,0 +1,5 @@
+import type { Classification } from '../../types/classification';
+import type { UploadReviewItem } from '../../types/upload';
+import { dateStamp, downloadCsv } from '../../utils/csvExport';
+export function exportClassifications(rows: Classification[]) { downloadCsv(`reporte-calificaciones-${dateStamp()}.csv`, rows, [{header:'ID',value:r=>r.id},{header:'Ejercicio',value:r=>r.ejercicio},{header:'Mercado',value:r=>r.mercado},{header:'Origen',value:r=>r.origen},{header:'Instrumento',value:r=>r.instrumento},{header:'Fecha de pago',value:r=>r.fechaPago},{header:'Secuencia',value:r=>r.secuenciaEvento},{header:'Monto',value:r=>r.monto},{header:'Estado',value:r=>r.estado}]); }
+export function exportUploads(rows: UploadReviewItem[]) { downloadCsv(`reporte-cargas-${dateStamp()}.csv`, rows, [{header:'Archivo',value:r=>r.fileName},{header:'Tipo',value:r=>r.type},{header:'Fecha',value:r=>r.date},{header:'Responsable',value:r=>r.owner},{header:'Total',value:r=>r.totalRows},{header:'Válidas',value:r=>r.validRows},{header:'Con error',value:r=>r.invalidRows},{header:'Estado',value:r=>r.status}]); }

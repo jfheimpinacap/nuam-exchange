@@ -1,0 +1,2 @@
+import type { ReportType } from '../../types/report';
+export function ReportTypeSelector({ value, onChange }: { value: ReportType; onChange:(v:ReportType)=>void }) { return <div className="report-selector" role="tablist" aria-label="Tipo de reporte"><button className="button" type="button" role="tab" aria-selected={value==='classifications'} onClick={()=>onChange('classifications')}>Calificaciones</button><button className="button" type="button" role="tab" aria-selected={value==='uploads'} onClick={()=>onChange('uploads')}>Cargas</button></div>; }

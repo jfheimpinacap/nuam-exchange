@@ -1,0 +1,1 @@
+export function ReportsSummary({ items }: { items: Array<[string, string | number]> }) { return <dl className="reports-summary">{items.map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>; }

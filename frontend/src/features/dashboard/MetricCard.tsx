@@ -1,0 +1,1 @@
+export function MetricCard({ label, value, description }: { label: string; value: string | number; description: string }) { return <article className="metric-card"><span>{label}</span><strong>{value}</strong><p>{description}</p></article>; }

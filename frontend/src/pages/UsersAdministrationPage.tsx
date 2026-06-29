@@ -1,0 +1,43 @@
+import { useMemo, useState } from 'react';
+import { Button } from '../components/Button';
+import { InlineMessage } from '../components/InlineMessage';
+import { PageHeader } from '../components/PageHeader';
+import { Pagination } from '../components/Pagination';
+import { EmptyState, ErrorState, LoadingState } from '../components/ViewStates';
+import { useSession } from '../app/session/useSession';
+import { UserFilters } from '../features/administration/UserFilters';
+import { UserFormDialog } from '../features/administration/UserFormDialog';
+import { UserStatusDialog } from '../features/administration/UserStatusDialog';
+import { ResetAccessDialog } from '../features/administration/ResetAccessDialog';
+import { UserSummary } from '../features/administration/UserSummary';
+import { UsersTable } from '../features/administration/UsersTable';
+import { createUserId, filterUsers, initialUserFilters, sortUsers } from '../features/administration/administrationUtils';
+import { normalizeUserForm, validateUserForm } from '../features/administration/administrationValidation';
+import { administrationUsers } from '../mocks/administrationUsers';
+import type { AdministrationUser, DemoViewState, UserAccountStatus, UserFilters as UserFiltersType, UserFormErrors, UserFormValues, UserPaginationState, UserSortKey, UserSortState } from '../types/administration';
+import { dateStamp, downloadCsv } from '../utils/csvExport';
+
+const emptyForm: UserFormValues = { nombre: '', email: '', rol: 'Analista Tributario', estado: 'Activo' };
+export function UsersAdministrationPage() {
+  const { user } = useSession();
+  const [users, setUsers] = useState(administrationUsers);
+  const [draftFilters, setDraftFilters] = useState<UserFiltersType>(initialUserFilters);
+  const [filters, setFilters] = useState<UserFiltersType>(initialUserFilters);
+  const [pagination, setPagination] = useState<UserPaginationState>({ page: 1, pageSize: 5 });
+  const [sort, setSort] = useState<UserSortState>({ key: 'nombre', direction: 'asc' });
+  const [viewState, setViewState] = useState<DemoViewState>('normal');
+  const [message, setMessage] = useState('');
+  const [formUser, setFormUser] = useState<AdministrationUser | null | 'new'>(null);
+  const [formErrors, setFormErrors] = useState<UserFormErrors>({});
+  const [statusChange, setStatusChange] = useState<{ user: AdministrationUser; status: UserAccountStatus } | null>(null);
+  const [resetUser, setResetUser] = useState<AdministrationUser | null>(null);
+  const filtered = useMemo(() => sortUsers(filterUsers(users, filters), sort), [users, filters, sort]);
+  const pageUsers = filtered.slice((pagination.page - 1) * pagination.pageSize, pagination.page * pagination.pageSize);
+  const initialValues = formUser && formUser !== 'new' ? { nombre: formUser.nombre, email: formUser.email, rol: formUser.rol, estado: formUser.estado } : emptyForm;
+  const applyFilters = () => { setFilters(draftFilters); setPagination({ ...pagination, page: 1 }); };
+  const clearFilters = () => { setDraftFilters(initialUserFilters); setFilters(initialUserFilters); setPagination({ ...pagination, page: 1 }); };
+  const onSort = (key: UserSortKey) => setSort((current) => ({ key, direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc' }));
+  const saveUser = (values: UserFormValues) => { const normalized = normalizeUserForm(values); const currentId = formUser && formUser !== 'new' ? formUser.id : undefined; const errors = validateUserForm(normalized, users, currentId); setFormErrors(errors); if (Object.keys(errors).length) return; if (formUser === 'new') { setUsers([{ id: createUserId(users), ...normalized, fechaCreacion: new Date().toISOString().slice(0, 10), ultimoAcceso: null, creadoPor: user?.nombre ?? 'Sesión demo' }, ...users]); setMessage('Usuario creado en la demostración. El cambio no se guardará al recargar.'); } else if (formUser) { setUsers(users.map((item) => item.id === formUser.id ? { ...item, ...normalized } : item)); setMessage('Usuario actualizado en la demostración. El cambio no se guardará al recargar.'); } setFormUser(null); };
+  const exportUsers = () => downloadCsv(`usuarios-${dateStamp()}.csv`, filtered, [{ header: 'ID', value: (row) => row.id }, { header: 'Nombre', value: (row) => row.nombre }, { header: 'Correo', value: (row) => row.email }, { header: 'Rol', value: (row) => row.rol }, { header: 'Estado', value: (row) => row.estado }, { header: 'Fecha de creación', value: (row) => row.fechaCreacion }, { header: 'Último acceso', value: (row) => row.ultimoAcceso ?? 'Sin acceso registrado' }, { header: 'Creado por', value: (row) => row.creadoPor }]);
+  return <section className="admin-page"><PageHeader title="Administración de Usuarios" description="Gestión simulada de cuentas y perfiles del sistema." /><div className="demo-panel"><label htmlFor="users-demo-state">Estado de demostración</label><select id="users-demo-state" value={viewState} onChange={(e) => setViewState(e.target.value as DemoViewState)}><option value="normal">Normal</option><option value="loading">Cargando</option><option value="error">Error</option></select><span>Control técnico separado de los filtros de negocio.</span></div>{message && <InlineMessage tone="success" message={message} />}<UserSummary users={users} /><div className="actions-bar"><Button variant="primary" onClick={() => { setFormErrors({}); setFormUser('new'); }}>Nuevo usuario</Button><Button onClick={exportUsers}>Exportar usuarios</Button></div><UserFilters draft={draftFilters} total={filtered.length} onChange={setDraftFilters} onSearch={applyFilters} onClear={clearFilters} />{viewState === 'loading' && <LoadingState message="Cargando usuarios administrativos..." />}{viewState === 'error' && <ErrorState title="Error de demostración" description="Estado simulado para validar la pantalla de error." />}{viewState === 'normal' && (filtered.length === 0 ? <EmptyState title="Sin usuarios" description="No hay resultados para los filtros aplicados." actionLabel="Limpiar filtros" onAction={clearFilters} /> : <><UsersTable users={pageUsers} sort={sort} activeUserId={user?.id ?? ''} onSort={onSort} onEdit={(selected) => { setFormErrors({}); setFormUser(selected); }} onStatus={(selected, status) => setStatusChange({ user: selected, status })} onReset={setResetUser} /><Pagination pagination={pagination} totalItems={filtered.length} onPageChange={(page) => setPagination({ ...pagination, page })} onPageSizeChange={(pageSize) => setPagination({ page: 1, pageSize })} /></>)}{formUser && <UserFormDialog title={formUser === 'new' ? 'Nuevo usuario' : 'Editar usuario'} initialValues={initialValues} errors={formErrors} isSelf={formUser !== 'new' && formUser.id === user?.id} onSave={saveUser} onClose={() => setFormUser(null)} />}{statusChange && <UserStatusDialog user={statusChange.user} status={statusChange.status} onClose={() => setStatusChange(null)} onConfirm={() => { setUsers(users.map((item) => item.id === statusChange.user.id ? { ...item, estado: statusChange.status } : item)); setMessage('Estado actualizado en la demostración. El cambio no se guardará al recargar.'); setStatusChange(null); }} />}{resetUser && <ResetAccessDialog user={resetUser} onClose={() => setResetUser(null)} onConfirm={() => { setMessage('Restablecimiento simulado. No se generaron credenciales ni se contactó al usuario.'); setResetUser(null); }} />}</section>;
+}

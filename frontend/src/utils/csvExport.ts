@@ -1,0 +1,5 @@
+export interface CsvColumn<T> { header: string; value: (row: T) => string | number; }
+function sanitizeCell(value: string | number) { const raw = String(value ?? '').replace(/\r?\n/g, ' '); const safe = /^[=+\-@]/.test(raw) ? `'${raw}` : raw; return `"${safe.replace(/"/g, '""')}"`; }
+export function buildCsv<T>(rows: T[], columns: CsvColumn<T>[]) { return `\uFEFF${[columns.map((c)=>sanitizeCell(c.header)), ...rows.map((r)=>columns.map((c)=>sanitizeCell(c.value(r))))].map((r)=>r.join(';')).join('\n')}`; }
+export function downloadCsv<T>(fileName: string, rows: T[], columns: CsvColumn<T>[]) { const blob = new Blob([buildCsv(rows, columns)], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = fileName; link.click(); URL.revokeObjectURL(url); }
+export function dateStamp(date = new Date()) { return `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`; }
