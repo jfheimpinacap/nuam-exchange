@@ -394,3 +394,12 @@ Las pruebas usan exclusivamente EF Core InMemory dentro del proyecto de pruebas.
 - La corrección reemplazó la inicialización inválida por una plantilla X Factor válida con `TemplateName`, `RequiredColumns`, `AllowedFormat` y `TemplateVersion`, sin modificar entidad, Fluent API, migraciones, snapshot ni modelo físico.
 - Se conserva la prueba de solo lectura: las consultas `GET /api/backup-metadata` y `GET /api/backup-metadata/{id}` no modifican `Respaldo`, `Auditoria`, calificaciones tributarias, cargas masivas ni usuarios.
 - Se conservan las pruebas de autorización, listado paginado, orden por defecto, filtros, parámetros inválidos, detalle, `404` y exclusión de rutas, observaciones y campos sensibles.
+
+## Evidencia de corrección — Prompt 035
+
+- Después del merge y sincronización de Prompt 034 se confirmó un falso positivo en `BackupMetadataQueryTests`: dos pruebas fallaban porque el helper de exclusión de campos sensibles buscaba la subcadena `observation` en todo el JSON y coincidía indebidamente con la propiedad segura `hasObservation`.
+- `hasObservation` se mantiene como booleano permitido del contrato seguro de metadatos de respaldos; informa únicamente existencia de observación y no expone el texto persistido en `Observation` / `observacion`.
+- La corrección reemplaza la búsqueda amplia por validación exacta de nombres de propiedades JSON mediante `JsonDocument`, recorriendo objetos y arreglos de forma recursiva para bloquear propiedades sensibles concretas como `observation`, `observacion`, `backupPath`, `rutaRespaldo`, `ruta_respaldo`, usuario, correo, tokens, hashes, tamaños, archivos, rutas, secretos y datos de infraestructura.
+- La fixture usa valores centinela inequívocos para `BackupPath` y `Observation`; las respuestas reales de listado y detalle se validan contra esos valores exactos para impedir que una ruta u observación textual se filtren a través de cualquier campo permitido.
+- Se conserva la protección frente a exposición accidental de `Observation` y `BackupPath` sin cambiar endpoints, DTOs públicos, política `BackupMetadataRead`, entidad `BackupRecord`, Fluent API, migraciones, snapshot, modelo físico, frontend ni servicios de consulta.
+- Validación local posterior obligatoria: ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.

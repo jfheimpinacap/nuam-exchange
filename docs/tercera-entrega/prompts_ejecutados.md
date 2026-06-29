@@ -407,3 +407,13 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de API funcional:** no se modificaron endpoints, DTOs públicos, políticas, JWT, login, usuarios, roles, permisos ni frontend.
 - **Cobertura preservada:** se mantienen las pruebas de Administrador autorizado, Supervisor/Analista bloqueados, no autenticado, listado paginado, orden, filtros, parámetros inválidos, detalle, `404`, exclusión de campos sensibles y solo lectura sobre datos operacionales.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
+
+## Prompt 035 — Corrección de falso positivo en pruebas de campos sensibles de metadatos de respaldos (2026-06-29)
+
+- **Corrección de pruebas:** se ajustó `BackupMetadataQueryTests` para evitar el falso positivo causado por buscar la subcadena `observation` dentro de `hasObservation`.
+- **Contrato conservado:** `hasObservation` permanece como propiedad segura permitida y no se cambian endpoints, DTOs públicos, autorización, servicios, entidades, Fluent API, migraciones, snapshot ni modelo físico.
+- **Validación exacta:** la exclusión de datos sensibles ahora parsea el JSON con `JsonDocument`, recorre objetos/arreglos recursivamente y bloquea nombres exactos de propiedades sensibles sin prohibiciones genéricas por subcadena.
+- **Valores centinela:** la fixture de `BackupRecord` usa valores únicos para ruta y observación, y el helper confirma que esos valores no aparezcan en las respuestas de listado o detalle.
+- **Cobertura preservada:** se mantienen autorización de Administrador, bloqueos 401/403, filtros, paginación, orden, detalle, 404/400, solo lectura y exclusión de rutas, observaciones textuales, usuarios, infraestructura y secretos.
+- **Sin cambios funcionales de API:** no hubo modificaciones del contrato funcional seguro de Prompt 033, frontend, JWT, login, permisos, backup, restore, archivos, SQL dinámico ni comandos de sistema operativo.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
