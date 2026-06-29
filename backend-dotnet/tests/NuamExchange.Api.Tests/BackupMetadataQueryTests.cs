@@ -82,7 +82,11 @@ public sealed class BackupMetadataQueryTests
         Assert.Single(byStatus!.Items);
         Assert.Equal(3, byStatus.Items.Single().Id);
         var byDate = await client.GetFromJsonAsync<PagedResult<BackupMetadataListItemDto>>("/api/backup-metadata?dateFrom=2026-06-02T00:00:00Z&dateTo=2026-06-03T23:59:59Z&sortBy=id&sortDirection=asc");
-        Assert.Equal(new[] { 2, 3 }, byDate!.Items.Select(x => x.Id).ToArray());
+        Assert.Equal(3, byDate!.TotalCount);
+        Assert.Equal(1, byDate.TotalPages);
+        Assert.Equal(new[] { 2, 3, 4 }, byDate.Items.Select(x => x.Id).ToArray());
+        Assert.All(byDate.Items, item => Assert.InRange(item.OccurredAt, new DateTime(2026, 6, 2, 0, 0, 0, DateTimeKind.Utc), new DateTime(2026, 6, 3, 23, 59, 59, DateTimeKind.Utc)));
+        Assert.Contains(byDate.Items, item => item.Id == 4 && item.BackupType == "BASE_DATOS" && item.Status == "RESTAURADO" && item.OccurredAt == new DateTime(2026, 6, 3, 12, 0, 0, DateTimeKind.Utc));
     }
 
     [Theory]

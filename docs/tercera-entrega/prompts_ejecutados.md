@@ -417,3 +417,12 @@ Validaciones locales obligatorias posteriores al merge:
 - **Cobertura preservada:** se mantienen autorización de Administrador, bloqueos 401/403, filtros, paginación, orden, detalle, 404/400, solo lectura y exclusión de rutas, observaciones textuales, usuarios, infraestructura y secretos.
 - **Sin cambios funcionales de API:** no hubo modificaciones del contrato funcional seguro de Prompt 033, frontend, JWT, login, permisos, backup, restore, archivos, SQL dinámico ni comandos de sistema operativo.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
+
+## Prompt 036 — Corrección de expectativa en listado de metadatos de respaldos (2026-06-29)
+
+- **Corrección basada en evidencia:** se inspeccionó la fixture de `BackupRecord`, la solicitud HTTP de la prueba, `BackupMetadataRequest`, `BackupMetadataQueryValidator`, `BackupMetadataQueryService`, `ApplyFilters`, `ApplyOrdering` y el contrato documentado de metadatos de respaldos.
+- **Causa:** ID 4 cumple el rango `dateFrom=2026-06-02T00:00:00Z` / `dateTo=2026-06-03T23:59:59Z`; la consulta no filtra por tipo ni estado y ordena por `id asc`, por lo que la colección correcta es `[2, 3, 4]`.
+- **Cobertura preservada:** se mantienen filtros, orden, paginación, `hasObservation`, exclusión de `Observation`/`BackupPath`, valores centinela, autorización de Administrador y bloqueos 401/403.
+- **Sin cambios funcionales:** no se modificaron servicios productivos, endpoints, DTOs públicos, políticas, entidades, Fluent API, migraciones, snapshot, modelo físico, frontend, JWT, login, usuarios, roles ni permisos.
+- **Sin operaciones reales:** no hubo backup, restore, archivos, SQL dinámico, migraciones, SQL Server remoto, Plesk, credenciales reales, merge manual ni push manual.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
