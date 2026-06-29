@@ -123,3 +123,14 @@ El módulo de respaldos no tiene operaciones API implementadas, no expone endpoi
 Aunque existe el permiso semilla textual `backups.read`, no se creó ni modificó ninguna política de autorización para respaldos. Cualquier futura consulta de metadatos requerirá una decisión explícita de política, roles y campos seguros antes de implementarse.
 
 No debe asumirse que `Administrador` puede respaldar o restaurar una base de datos desde la aplicación. Una fase futura deberá definir qué rol puede consultar metadatos, qué rol puede solicitar operaciones, qué rol puede aprobar restauraciones, qué acciones requieren doble aprobación y qué operaciones no deben estar disponibles desde una API pública.
+
+## Prompt 033 — Política `BackupMetadataRead`
+
+Se agrega la política `BackupMetadataRead` para la consulta segura de metadatos de respaldos. La política autoriza exclusivamente al rol real `Administrador`.
+
+| Endpoint | Política | Administrador | Supervisor | Analista Tributario | No autenticado |
+|---|---|---:|---:|---:|---:|
+| `GET /api/backup-metadata` | `BackupMetadataRead` | Permitido | `403` | `403` | `401` |
+| `GET /api/backup-metadata/{id}` | `BackupMetadataRead` | Permitido | `403` | `403` | `401` |
+
+No se modifica `TaxClassificationRead`, `TaxClassificationWrite` ni `TaxClassificationSupervise`. Esta política no autoriza backup real, restore real, descarga, acceso a archivos ni automatización.

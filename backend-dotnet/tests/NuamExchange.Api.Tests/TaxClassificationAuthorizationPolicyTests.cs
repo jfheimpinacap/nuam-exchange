@@ -70,6 +70,19 @@ public sealed class TaxClassificationAuthorizationPolicyTests
         Assert.DoesNotContain(SecuritySeedService.TaxAnalystRole, rolesRequirement.AllowedRoles);
     }
 
+
+    [Fact]
+    public void BackupMetadataReadPolicy_AllowsOnlyAdministrator()
+    {
+        var policy = GetPolicy("BackupMetadataRead");
+
+        var rolesRequirement = Assert.Single(policy.Requirements.OfType<RolesAuthorizationRequirement>());
+        Assert.Contains(SecuritySeedService.AdministratorRole, rolesRequirement.AllowedRoles);
+        Assert.DoesNotContain(SecuritySeedService.TaxAnalystRole, rolesRequirement.AllowedRoles);
+        Assert.DoesNotContain(SecuritySeedService.SupervisorRole, rolesRequirement.AllowedRoles);
+        Assert.Single(rolesRequirement.AllowedRoles);
+    }
+
     private static AuthorizationPolicy GetTaxClassificationWritePolicy() => GetPolicy("TaxClassificationWrite");
 
     private static AuthorizationPolicy GetPolicy(string policyName)

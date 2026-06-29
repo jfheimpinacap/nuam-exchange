@@ -388,3 +388,13 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin frontend:** no se modificó la aplicación cliente.
 - **Sin cambios de seguridad:** no se modificaron JWT, login, usuarios, roles, permisos, bootstrap ni políticas existentes.
 - **Validación local posterior obligatoria:** ejecutar `git diff --check`, `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
+
+## Prompt 033 — Consulta segura de metadatos de respaldos (2026-06-29)
+
+- **Consulta segura:** se implementa una API interna de solo lectura para metadatos mínimos de `Respaldo`.
+- **Política exclusiva:** `BackupMetadataRead` autoriza únicamente a `Administrador`; `Supervisor` y `Analista Tributario` reciben `403`.
+- **Endpoints:** solo `GET /api/backup-metadata` y `GET /api/backup-metadata/{id}`.
+- **Datos expuestos:** `id`, `backupType`, `status`, `occurredAt` y `hasObservation` booleano.
+- **Exclusiones:** no se exponen rutas, `ruta_respaldo`, `BackupPath`, `observacion`, `Observation`, usuario, correo, roles, hashes, tamaños, tokens ni datos de infraestructura.
+- **Sin operaciones reales:** sin backup, sin restore, sin archivos, sin automatización, sin descargas, sin frontend, sin migraciones y sin cambios físicos de base de datos.
+- **Validación posterior obligatoria:** ejecutar restore, build y test locales tras el merge y confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.

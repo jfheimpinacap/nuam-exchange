@@ -108,3 +108,14 @@ Se inspeccionó la entidad real `BackupRecord`, mapeada a la tabla `Respaldo`. L
 Las restricciones reales son `CK_Respaldo_TipoRespaldo` para `BASE_DATOS`, `ARCHIVOS` o `COMPLETO`, `CK_Respaldo_EstadoRespaldo` para `PROGRAMADO`, `EJECUTADO`, `FALLIDO` o `RESTAURADO`, la FK `FK_Respaldo_Usuario_usuario_id` y el índice `IX_Respaldo_usuario_id`.
 
 No se realizaron cambios físicos, migraciones, alteraciones de entidades, Fluent API ni snapshot. La existencia de `Respaldo` representa metadatos parciales y no implica que la aplicación ejecute `BACKUP DATABASE`, `RESTORE DATABASE`, descargas, restauraciones, retención automática ni operaciones sobre archivos.
+
+## Prompt 033 — Relación de `Respaldo` con consulta segura de metadatos
+
+La tabla `Respaldo` mantiene el modelo físico existente y se utiliza únicamente como fuente de metadatos para la API interna `GET /api/backup-metadata` y `GET /api/backup-metadata/{id}`.
+
+- No cambió el modelo de dominio.
+- No cambió la tabla `Respaldo`.
+- No se alteraron restricciones, índices, llaves ni relaciones.
+- No se modificaron migraciones ni snapshot EF Core.
+- La API no expone `ruta_respaldo` ni `observacion`.
+- La API no prueba existencia física, integridad ni recuperabilidad de archivos de respaldo.

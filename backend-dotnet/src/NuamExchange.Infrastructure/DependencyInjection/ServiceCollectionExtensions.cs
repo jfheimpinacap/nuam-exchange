@@ -17,6 +17,8 @@ using NuamExchange.Application.TaxReports;
 using NuamExchange.Infrastructure.TaxReports;
 using NuamExchange.Application.TaxAudits;
 using NuamExchange.Infrastructure.TaxAudits;
+using NuamExchange.Application.BackupMetadata;
+using NuamExchange.Infrastructure.BackupMetadata;
 
 namespace NuamExchange.Infrastructure.DependencyInjection;
 
@@ -44,10 +46,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBulkLoadQueryValidator, BulkLoadQueryValidator>();
         services.AddSingleton<ITaxReportQueryValidator, TaxReportQueryValidator>();
         services.AddSingleton<ITaxAuditQueryValidator, TaxAuditQueryValidator>();
+        services.AddSingleton<IBackupMetadataQueryValidator, BackupMetadataQueryValidator>();
         services.AddScoped<ITaxClassificationQueryService, TaxClassificationQueryService>();
         services.AddScoped<IBulkLoadQueryService, BulkLoadQueryService>();
         services.AddScoped<ITaxReportQueryService, TaxReportQueryService>();
         services.AddScoped<ITaxAuditQueryService, TaxAuditQueryService>();
+        services.AddScoped<IBackupMetadataQueryService, BackupMetadataQueryService>();
         services.AddScoped<ITaxClassificationCommandService, TaxClassificationCommandService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
         services.AddScoped<ISecuritySeedService, SecuritySeedService>();
@@ -85,6 +89,7 @@ public static class ServiceCollectionExtensions
             options.AddPolicy("TaxClassificationRead", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole, SecuritySeedService.SupervisorRole));
             options.AddPolicy("TaxClassificationWrite", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole));
             options.AddPolicy("TaxClassificationSupervise", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.SupervisorRole));
+            options.AddPolicy("BackupMetadataRead", policy => policy.RequireRole(SecuritySeedService.AdministratorRole));
         });
 
         return services;
