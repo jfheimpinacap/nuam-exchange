@@ -1,20 +1,49 @@
 type DataSource = 'mock' | 'api';
 
+const DEFAULT_DATA_SOURCE: DataSource = 'mock';
+const DEFAULT_BASE_URL = '/api';
+const DEFAULT_TIMEOUT_MS = 10_000;
+
 function parseDataSource(value: string | undefined): DataSource {
-  if (!value) return 'mock';
-  if (value === 'mock' || value === 'api') return value;
-  throw new Error(`Configuración inválida: VITE_DATA_SOURCE debe ser "mock" o "api". Valor recibido: "${value}".`);
+  const normalized = value?.trim();
+
+  return normalized === 'mock' || normalized === 'api'
+    ? normalized
+    : DEFAULT_DATA_SOURCE;
 }
+
 function parseTimeout(value: string | undefined): number {
-  const raw = value ?? '10000';
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || parsed <= 0) throw new Error('Configuración inválida: VITE_API_TIMEOUT_MS debe ser un entero positivo.');
-  return parsed;
+  const normalized = value?.trim();
+  const parsed = Number(normalized);
+
+  return Number.isInteger(parsed) && parsed > 0
+    ? parsed
+    : DEFAULT_TIMEOUT_MS;
 }
-function sanitizeBaseUrl(value: string): string { return value.split('?')[0].replace(/\/+$/, ''); }
+
+function sanitizeBaseUrl(value: string | undefined): string {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return DEFAULT_BASE_URL;
+  }
+
+  const withoutQuery = normalized.split('?')[0];
+  const withoutTrailingSlashes = withoutQuery.replace(/\/+$/, '');
+
+  return withoutTrailingSlashes || '/';
+}
+
 const dataSource = parseDataSource(import.meta.env.VITE_DATA_SOURCE);
-const baseUrl = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL ?? '/api/v1');
+const baseUrl = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
 const timeoutMs = parseTimeout(import.meta.env.VITE_API_TIMEOUT_MS);
-if (dataSource === 'api' && !baseUrl) throw new Error('Configuración inválida: VITE_API_BASE_URL es obligatoria en modo api.');
-export const apiConfig = { dataSource, baseUrl, timeoutMs, isMock: dataSource === 'mock', isApi: dataSource === 'api' } as const;
+
+export const apiConfig = {
+  dataSource,
+  baseUrl,
+  timeoutMs,
+  isMock: dataSource === 'mock',
+  isApi: dataSource === 'api',
+} as const;
+
 export type ApiConfig = typeof apiConfig;
