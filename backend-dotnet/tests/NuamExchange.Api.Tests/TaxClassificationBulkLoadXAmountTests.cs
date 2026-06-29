@@ -199,6 +199,7 @@ public sealed class TaxClassificationBulkLoadXAmountTests
     {
         builder.ConfigureTestServices(services =>
         {
+            services.AddNuamExchangeInMemoryDatabase();
             services.RemoveAll<ITaxClassificationCommandService>();
             services.AddScoped<ITaxClassificationCommandService, FakeBulkLoadCommandService>();
             services.AddAuthentication(options =>

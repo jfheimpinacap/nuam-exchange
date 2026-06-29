@@ -1,0 +1,59 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend-dotnet/**"
+      - "global.json"
+      - ".github/workflows/backend-ci.yml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "backend-dotnet/**"
+      - "global.json"
+      - ".github/workflows/backend-ci.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+
+jobs:
+  backend:
+    name: Restore, build and test backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore backend solution
+        working-directory: backend-dotnet
+        run: dotnet restore NuamExchange.sln
+
+      - name: Build backend solution
+        working-directory: backend-dotnet
+        run: dotnet build NuamExchange.sln --configuration Release --no-restore
+
+      - name: Test backend solution
+        working-directory: backend-dotnet
+        run: dotnet test NuamExchange.sln --configuration Release --no-build --logger "console;verbosity=normal"

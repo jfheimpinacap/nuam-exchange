@@ -24,6 +24,7 @@ public sealed class AdminRolesEndpointBindingTests
         {
             builder.ConfigureTestServices(services =>
             {
+                services.AddNuamExchangeInMemoryDatabase();
                 services.RemoveAll<IAdministrationService>();
                 services.AddScoped<IAdministrationService, CapturingAdministrationService>();
                 services.AddAuthentication(options =>

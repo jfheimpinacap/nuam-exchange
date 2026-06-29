@@ -164,6 +164,7 @@ public sealed class TaxClassificationSupervisorValidationTests
     {
         builder.ConfigureTestServices(services =>
         {
+            services.AddNuamExchangeInMemoryDatabase();
             services.RemoveAll<ITaxClassificationCommandService>();
             services.AddScoped<ITaxClassificationCommandService, FakeSupervisorValidationCommandService>();
             services.AddAuthentication(options =>
