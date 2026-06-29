@@ -129,7 +129,7 @@ public sealed class BackupMetadataQueryTests
         db.Roles.Add(new Role { Id = 1, Name = SecuritySeedService.AdministratorRole, CreatedAt = DateTime.UtcNow });
         db.Users.Add(new ApplicationUser { Id = 1, FullName = "User", Email = "u@example.test", PasswordHash = "hash", RoleId = 1, CreatedAt = DateTime.UtcNow });
         db.TaxClassifications.Add(new TaxClassification { Id = 10, CreatorUserId = 1, Market = "BOLSA", ClassificationType = "DIVIDENDO", Currency = "CLP", TaxPeriod = 2026, ValidFrom = new DateOnly(2026, 1, 1), Status = "VIGENTE", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
-        db.UploadTemplates.Add(new UploadTemplate { Id = 1, Name = "Plantilla", UploadType = "X_FACTOR", RequiredFieldsJson = "[]", CreatedAt = DateTime.UtcNow });
+        db.UploadTemplates.Add(new UploadTemplate { Id = 1, UploadType = "X_FACTOR", TemplateName = "Plantilla X Factor", RequiredColumns = "market,classification_type,currency,tax_period,valid_from,factor", AllowedFormat = "CSV", TemplateVersion = "1.0", CreatedAt = DateTime.UtcNow });
         db.UploadFiles.Add(new UploadFile { Id = 1, UserId = 1, UploadTemplateId = 1, UploadType = "X_FACTOR", FileName = "archivo.csv", Extension = "CSV", FilePath = "/private/archivo.csv", FileHash = "hash", UploadStatus = "PROCESADO", UploadedAt = DateTime.UtcNow });
         db.BackupRecords.AddRange(
             Backup(1, "BASE_DATOS", "EJECUTADO", new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc), "C:/secret/db.bak", "No exponer observación"),

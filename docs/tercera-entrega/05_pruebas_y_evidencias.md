@@ -385,3 +385,12 @@ No se realizaron migraciones, cambios de modelo físico, cambios de entidades, c
 | Solo lectura | Las consultas no modifican `Respaldo`, `Auditoria`, calificaciones tributarias, cargas masivas ni usuarios. |
 
 Las pruebas usan exclusivamente EF Core InMemory dentro del proyecto de pruebas. No usan archivos físicos, bases externas, `NuamTributariaDB_Dev`, migraciones, SQL Server remoto, Plesk ni credenciales reales.
+
+## Evidencia de corrección — Prompt 034
+
+- Durante la validación local posterior a Prompt 033 se detectó un fallo de compilación en `BackupMetadataQueryTests.cs`: la fixture de la prueba de consulta de metadatos de respaldos inicializaba `UploadTemplate.Name` y `UploadTemplate.RequiredFieldsJson`, propiedades inexistentes en la entidad real.
+- La inspección confirmó que `UploadTemplate` define `UploadType`, `TemplateName`, `Description`, `RequiredColumns`, `AllowedFormat`, `TemplateVersion`, `IsActive`, `CreatedAt` y la navegación `UploadFiles`.
+- La configuración Fluent API y el snapshot exigen `UploadType`, `TemplateName`, `RequiredColumns`, `AllowedFormat`, `TemplateVersion`, `IsActive` y `CreatedAt`; además restringen `tipo_carga` a `X_FACTOR|X_MONTO`, `formato_permitido` a `CSV|XLSX|CSV/XLSX`, longitud 40 para tipo, 150 para nombre, 80 para formato y 30 para versión, con índice único por tipo-versión.
+- La corrección reemplazó la inicialización inválida por una plantilla X Factor válida con `TemplateName`, `RequiredColumns`, `AllowedFormat` y `TemplateVersion`, sin modificar entidad, Fluent API, migraciones, snapshot ni modelo físico.
+- Se conserva la prueba de solo lectura: las consultas `GET /api/backup-metadata` y `GET /api/backup-metadata/{id}` no modifican `Respaldo`, `Auditoria`, calificaciones tributarias, cargas masivas ni usuarios.
+- Se conservan las pruebas de autorización, listado paginado, orden por defecto, filtros, parámetros inválidos, detalle, `404` y exclusión de rutas, observaciones y campos sensibles.
