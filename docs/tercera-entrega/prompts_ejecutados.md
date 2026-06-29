@@ -398,3 +398,12 @@ Validaciones locales obligatorias posteriores al merge:
 - **Exclusiones:** no se exponen rutas, `ruta_respaldo`, `BackupPath`, `observacion`, `Observation`, usuario, correo, roles, hashes, tamaños, tokens ni datos de infraestructura.
 - **Sin operaciones reales:** sin backup, sin restore, sin archivos, sin automatización, sin descargas, sin frontend, sin migraciones y sin cambios físicos de base de datos.
 - **Validación posterior obligatoria:** ejecutar restore, build y test locales tras el merge y confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
+
+## Prompt 034 — Corrección de compilación en pruebas de metadatos de respaldos (2026-06-29)
+
+- **Corrección CS0117:** se corrigió `BackupMetadataQueryTests` porque la fixture usaba `UploadTemplate.Name` y `UploadTemplate.RequiredFieldsJson`, propiedades inexistentes en la entidad real.
+- **Fixture UploadTemplate:** se reemplazaron esos campos por propiedades reales y obligatorias: `TemplateName`, `RequiredColumns`, `AllowedFormat` y `TemplateVersion`, manteniendo `UploadType` y `CreatedAt` con valores válidos.
+- **Sin cambios de modelo:** no se modificó `UploadTemplate`, `BackupRecord`, entidades de dominio, Fluent API, migraciones, snapshot ni modelo físico.
+- **Sin cambios de API funcional:** no se modificaron endpoints, DTOs públicos, políticas, JWT, login, usuarios, roles, permisos ni frontend.
+- **Cobertura preservada:** se mantienen las pruebas de Administrador autorizado, Supervisor/Analista bloqueados, no autenticado, listado paginado, orden, filtros, parámetros inválidos, detalle, `404`, exclusión de campos sensibles y solo lectura sobre datos operacionales.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
