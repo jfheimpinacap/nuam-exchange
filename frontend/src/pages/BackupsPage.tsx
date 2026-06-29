@@ -1,0 +1,1 @@
+export function BackupsPage() { return <section className="page"><h1>Respaldos</h1><p>Gestión visual simulada de respaldos, restauración y manifiestos CSV. No ejecuta respaldos reales.</p></section>; }

@@ -434,3 +434,13 @@ Validaciones locales obligatorias posteriores al merge:
 - Se agrega un helper interno de pruebas para registrar `NuamExchangeDbContext` con EF Core InMemory desde `ConfigureTestServices`.
 - Se actualizan fixtures HTTP afectadas por la ausencia de `NuamExchangeDbContext` sin modificar código productivo ni requerir SQL Server.
 - Se documenta que no hay frontend, Node, npm, migraciones, secretos, despliegues, Plesk, credenciales ni fallback InMemory productivo.
+
+## Prompt 041 — Importación curada del frontend React — 2026-06-29
+
+- Alcance: importación curada de la interfaz React de `Rodbrok/Nuam-Exchange` rama `main` dentro de `frontend/`.
+- Decisión: no se usó `subtree`, `submodule`, merge de historiales ni remote externo.
+- Importado/adaptado: `frontend/src/**`, `index.html`, configuración TypeScript, ESLint, `.env.example`, `package.json` y `package-lock.json`.
+- Excluido: backend externo, CI externo, `global.json`, README externo, `.gitignore` externo, `docs/api`, contratos provisionales, `node_modules`, artefactos generados, `.env` reales y secretos.
+- Preservación: `frontend/vite.config.ts` mantiene puerto `5173`, proxy `/api`, proxy `/health`, destino `http://localhost:5000` y build target `../backend-dotnet/src/NuamExchange.Api/wwwroot`.
+- Estado: frontend temporalmente en modo mock; integración real con backend queda para Prompt 042.
+- Validación: `npm ci`, `npm run lint`, TypeScript y build temporal con `.tmp-dist-prompt041` ejecutados; el directorio temporal fue eliminado.

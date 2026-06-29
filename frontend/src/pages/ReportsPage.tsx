@@ -1,0 +1,1 @@
+export function ReportsPage() { return <section className="page"><h1>Reportes</h1><p>Reportes simulados de calificaciones y cargas con exportación CSV preparada para prompts posteriores.</p></section>; }

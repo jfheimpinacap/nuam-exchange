@@ -1,0 +1,1 @@
+export function AdminUsersPage() { return <section className="page"><h1>Administración de usuarios</h1><p>CRUD visual en memoria para perfiles Administrador, Analista Tributario y Supervisor. Sin credenciales reales.</p></section>; }

@@ -4,11 +4,19 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', '../backend-dotnet/src/NuamExchange.Api/wwwroot'] },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
+  { ignores: ['dist', '.tmp-dist-prompt041'] },
   {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: {
+        AbortSignal: 'readonly',
+        document: 'readonly',
+        fetch: 'readonly',
+        window: 'readonly'
+      }
+    },
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh

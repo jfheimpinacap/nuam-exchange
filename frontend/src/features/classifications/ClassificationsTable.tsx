@@ -1,0 +1,3 @@
+import type { Classification } from '../../types';
+import { money } from '../../utils/formatters';
+export function ClassificationsTable({ rows }: { rows: Classification[] }) { return <div className="table-wrap"><table><thead><tr><th>ID</th><th>Mercado</th><th>Instrumento</th><th>Ejercicio</th><th>Pago</th><th>Monto</th><th>Estado</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td>{row.id}</td><td>{row.market}</td><td><strong>{row.instrument}</strong><span>{row.description}</span></td><td>{row.fiscalYear}</td><td>{row.paymentDate}</td><td>{money.format(row.amount)}</td><td><span className={`status status-${row.status.toLowerCase()}`}>{row.status}</span></td></tr>)}</tbody></table></div>; }
