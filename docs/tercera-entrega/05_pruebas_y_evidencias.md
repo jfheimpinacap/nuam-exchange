@@ -337,3 +337,32 @@ No se debilitó la cobertura ni se cambió una expectativa válida de `3` a `0`.
 - El alcance tributario cerrado se conserva: entidad `CalificacionTributaria`, `registro_afectado_id` informado y acción dentro de la lista cerrada permitida.
 - Se agregó validación de traducción SQL mediante `ToQueryString()` con proveedor relacional SQL Server y connection string local ficticia, sin abrir conexión, sin base real y sin migraciones.
 - El comportamiento seguro `HTTP 503` se conserva sin exponer stack trace, connection string ni detalles internos; además, el controlador registra la excepción del lado servidor con `ILogger<TaxAuditsController>`.
+
+## Prompt 032 — Matriz de revisión documental del módulo de Respaldos
+
+| Área revisada | Evidencia | Resultado |
+| --- | --- | --- |
+| Entidad | `BackupRecord` en dominio | Existe modelo persistente de metadatos parciales. |
+| DbContext | `BackupRecords` en `NuamExchangeDbContext` | Existe `DbSet`; no implica endpoint ni operación. |
+| Fluent API | `BackupRecordConfiguration` | Tabla `Respaldo`, CHECK de tipo/estado, FK opcional a `Usuario`. |
+| Migración inicial | `20260622200947_InitialCreate` | Tabla, PK, FK, CHECK e índice versionados previamente. |
+| Snapshot | `NuamExchangeDbContextModelSnapshot` | Modelo EF Core consistente con migración inicial. |
+| Código funcional | Controllers, servicios, DTOs, jobs y frontend | No se encontraron operaciones de respaldo o restauración. |
+| Scripts y comandos | `BACKUP DATABASE`, `RESTORE DATABASE`, `sqlcmd`, comandos de SO | No se encontraron implementaciones relacionadas. |
+| Seguridad | Políticas/JWT/roles/permisos | No se modificaron; no existe autorización aprobada para backup/restore. |
+| Documentación | Modelo, seguridad, evidencias y prompt ejecutado | Se documentó decisión de no implementar operaciones reales. |
+
+Confirmación de ausencia de operaciones: la revisión global de `Backup`, `Respaldo`, `Restore` y `Recovery` encontró únicamente el modelo persistente, documentación, comandos generales de `dotnet restore` y el permiso semilla `backups.read`; no se encontraron endpoints, servicios funcionales, scripts ni automatizaciones de backup o restore.
+
+Validaciones futuras requeridas antes de implementar operaciones reales:
+
+- Aprobar propietario operativo, ambiente permitido y base objetivo.
+- Definir cuenta técnica de privilegios mínimos.
+- Definir almacenamiento, cifrado, gestión de claves y nombres de archivo.
+- Definir retención, eliminación segura e integridad.
+- Definir monitoreo, auditoría, recuperación, restauración y pruebas de restore.
+- Definir flujo de aprobación, doble aprobación y manejo de incidentes.
+- Definir separación entre desarrollo, pruebas y producción.
+- Aprobar política y roles antes de cualquier consulta de metadatos.
+
+No se realizaron migraciones, cambios de modelo físico, cambios de entidades, cambios de Fluent API, cambios de snapshot, cambios de frontend, endpoints, servicios funcionales ni datos de prueba.

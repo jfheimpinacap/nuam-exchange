@@ -374,3 +374,17 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
 - **Sin frontend:** no se modificó la aplicación cliente.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas, y luego validar manualmente `GET /api/tax-audits` y detalle con API en Development.
+
+## Prompt 032 — Revisión y definición de alcance del módulo de Respaldos (2026-06-29)
+
+- **Revisión de entidad:** se inspeccionó `BackupRecord` / `Respaldo`, su `DbSet`, Fluent API, migración inicial, designer y snapshot EF Core.
+- **Campos reales:** `respaldo_id`, `usuario_id`, `tipo_respaldo`, `ruta_respaldo`, `estado_respaldo`, `fecha_respaldo` y `observacion`.
+- **Relaciones y restricciones:** FK opcional a `Usuario`, CHECK de tipo `BASE_DATOS|ARCHIVOS|COMPLETO`, CHECK de estado `PROGRAMADO|EJECUTADO|FALLIDO|RESTAURADO` e índice `IX_Respaldo_usuario_id`.
+- **Clasificación:** B. Metadatos parciales; existe tabla/entidad para registrar información, pero no hay mecanismo seguro de creación, validación, restauración, descarga, retención ni eliminación.
+- **Decisión:** Nuam Exchange no ejecutará backup ni restore desde la aplicación mientras no exista definición operacional aprobada de infraestructura, permisos, almacenamiento, cifrado, retención, recuperación y autorización.
+- **Requisitos futuros:** propietario operativo, ambiente, base objetivo, cuenta técnica, privilegios mínimos, almacenamiento, cifrado, llaves, nombres, retención, eliminación segura, integridad, monitoreo, auditoría, recuperación, restauración, aprobaciones, pruebas e incidentes.
+- **Sin migraciones:** no se crearon ni modificaron migraciones.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
+- **Sin frontend:** no se modificó la aplicación cliente.
+- **Sin cambios de seguridad:** no se modificaron JWT, login, usuarios, roles, permisos, bootstrap ni políticas existentes.
+- **Validación local posterior obligatoria:** ejecutar `git diff --check`, `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.

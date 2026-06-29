@@ -115,3 +115,11 @@ Las cargas masivas tributarias mantienen su política de escritura (`TaxClassifi
 Los endpoints `GET /api/tax-audits` y `GET /api/tax-audits/{id}` usan exclusivamente `TaxClassificationRead`. Pueden consultar auditoría tributaria `Administrador`, `Analista Tributario` y `Supervisor`.
 
 La auditoría no tributaria permanece fuera de alcance: eventos de usuarios, autenticación, roles, permisos e infraestructura no se listan y si se solicitan por id responden `404 Not Found`.
+
+## Prompt 032 — Alcance de seguridad para Respaldos
+
+El módulo de respaldos no tiene operaciones API implementadas, no expone endpoints y no cuenta con una autorización aprobada para ejecutar backups o restores desde la aplicación.
+
+Aunque existe el permiso semilla textual `backups.read`, no se creó ni modificó ninguna política de autorización para respaldos. Cualquier futura consulta de metadatos requerirá una decisión explícita de política, roles y campos seguros antes de implementarse.
+
+No debe asumirse que `Administrador` puede respaldar o restaurar una base de datos desde la aplicación. Una fase futura deberá definir qué rol puede consultar metadatos, qué rol puede solicitar operaciones, qué rol puede aprobar restauraciones, qué acciones requieren doble aprobación y qué operaciones no deben estar disponibles desde una API pública.
