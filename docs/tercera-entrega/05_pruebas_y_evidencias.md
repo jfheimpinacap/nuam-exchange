@@ -328,3 +328,12 @@ No se debilitó la cobertura ni se cambió una expectativa válida de `3` a `0`.
 - No se creó una segunda implementación de `PagedResult<T>`, no se movieron clases entre capas y no se agregó una referencia desde Application hacia API.
 - No se modificó la lógica funcional de auditoría tributaria, sus filtros, autorización, endpoints ni contrato HTTP; se mantiene el contrato paginado con `items`, `page`, `pageSize`, `totalCount` y `totalPages`.
 - Validación local posterior obligatoria: ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build` sobre binarios recompilados.
+
+## Evidencia de corrección — Prompt 031
+
+- Después de Prompt 030 se detectó en validación manual que `GET /api/tax-audits?page=1&pageSize=100` respondía `HTTP 503` aunque la base estaba operativa para login, consulta de usuario e inserción de auditoría.
+- La causa técnica fue el uso de `IReadOnlySet<string>.Contains` dentro de una consulta `IQueryable` de EF Core para filtrar acciones tributarias permitidas; esa forma podía no ser traducible por SQL Server antes de `CountAsync`, `ToListAsync` o `SingleOrDefaultAsync`.
+- La corrección mantiene una única fuente de verdad en `TaxAuditRules`: un arreglo estático con las seis acciones tributarias reales y un `AllowedActions` derivado para validación en memoria.
+- El alcance tributario cerrado se conserva: entidad `CalificacionTributaria`, `registro_afectado_id` informado y acción dentro de la lista cerrada permitida.
+- Se agregó validación de traducción SQL mediante `ToQueryString()` con proveedor relacional SQL Server y connection string local ficticia, sin abrir conexión, sin base real y sin migraciones.
+- El comportamiento seguro `HTTP 503` se conserva sin exponer stack trace, connection string ni detalles internos; además, el controlador registra la excepción del lado servidor con `ILogger<TaxAuditsController>`.

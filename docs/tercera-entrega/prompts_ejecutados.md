@@ -363,3 +363,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
 - **Sin frontend:** no se modificó la aplicación cliente.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas antes de continuar con la validación manual de Auditoría Tributaria.
+
+## Prompt 031 — Corrección de traducción EF Core en Auditoría Tributaria (2026-06-29)
+
+- **Corrección EF Core:** se reemplazó el uso de `IReadOnlySet<string>.Contains` dentro del `IQueryable` de Auditoría Tributaria por un arreglo estático traducible por EF Core SQL Server.
+- **Causa del HTTP 503:** la consulta de listado/detalle podía fallar por traducción SQL al evaluar la lista cerrada de acciones mediante `TaxAuditRules.AllowedActions.Contains(x.Action)`; el controlador convertía esa excepción en respuesta segura `503`.
+- **Fuente de verdad única:** `TaxAuditRules.AllowedActionValues` contiene las seis acciones tributarias y `AllowedActions` se deriva de ese arreglo para validaciones en memoria.
+- **Mensaje 503 y logging:** se preserva el mensaje público seguro en español correcto y se agrega registro interno de la excepción sin exponer detalles al cliente.
+- **Sin migraciones:** no se crearon ni modificaron migraciones.
+- **Sin cambios de modelo:** no se modificaron entidades, Fluent API, snapshot ni modelo físico.
+- **Sin frontend:** no se modificó la aplicación cliente.
+- **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas, y luego validar manualmente `GET /api/tax-audits` y detalle con API en Development.

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NuamExchange.Api.Contracts.TaxAudits;
 using NuamExchange.Application.TaxAudits;
 using NuamExchange.Application.TaxClassifications;
@@ -10,7 +11,7 @@ namespace NuamExchange.Api.Controllers;
 [ApiController]
 [Route("api/tax-audits")]
 [Authorize(Policy = "TaxClassificationRead")]
-public sealed class TaxAuditsController(IServiceProvider services, ITaxAuditQueryValidator validator) : ControllerBase
+public sealed class TaxAuditsController(IServiceProvider services, ITaxAuditQueryValidator validator, ILogger<TaxAuditsController> logger) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<TaxAuditListItemDto>), StatusCodes.Status200OK)]
@@ -41,7 +42,11 @@ public sealed class TaxAuditsController(IServiceProvider services, ITaxAuditQuer
         var service = services.GetService<ITaxAuditQueryService>();
         if (service is null) return DatabaseUnavailable();
         try { return await action(service); }
-        catch (Exception) when (!HttpContext.RequestAborted.IsCancellationRequested) { return DatabaseUnavailable(); }
+        catch (Exception ex) when (!HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            logger.LogError(ex, "Error al consultar auditoría tributaria.");
+            return DatabaseUnavailable();
+        }
     }
 
     private ObjectResult DatabaseUnavailable() => StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "La base de datos no está disponible para procesar la solicitud." });

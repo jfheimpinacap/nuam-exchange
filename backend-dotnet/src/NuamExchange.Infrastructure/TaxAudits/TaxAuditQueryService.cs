@@ -26,8 +26,11 @@ public sealed class TaxAuditQueryService(NuamExchangeDbContext dbContext) : ITax
             .Select(x => new TaxAuditDetailDto(x.Id, x.Action, x.AffectedRecordId!.Value, x.UserId, x.ActionAt, x.Detail, x.PreviousValue, x.NewValue))
             .SingleOrDefaultAsync(cancellationToken);
 
-    private static IQueryable<AuditLog> ApplyTaxAuditScope(IQueryable<AuditLog> query)
-        => query.Where(x => x.AffectedEntity == TaxAuditRules.TaxClassificationEntity && x.AffectedRecordId != null && TaxAuditRules.AllowedActions.Contains(x.Action));
+    internal static IQueryable<AuditLog> ApplyTaxAuditScope(IQueryable<AuditLog> query)
+    {
+        var allowedActions = TaxAuditRules.AllowedActionValues;
+        return query.Where(x => x.AffectedEntity == TaxAuditRules.TaxClassificationEntity && x.AffectedRecordId.HasValue && allowedActions.Contains(x.Action));
+    }
 
     private static IQueryable<AuditLog> ApplyFilters(IQueryable<AuditLog> query, ValidatedTaxAuditQuery filter)
     {
