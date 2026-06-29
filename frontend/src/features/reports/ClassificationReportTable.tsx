@@ -1,0 +1,6 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import type { Classification } from '../../types/classification';
+import type { ReportSortState } from '../../types/report';
+import { money } from '../dashboard/dashboardUtils';
+const cols = [['ejercicio','Ejercicio'],['instrumento','Instrumento'],['fechaPago','Fecha de pago'],['monto','Monto'],['estado','Estado']] as const;
+export function ClassificationReportTable({ rows, sort, onSort }: { rows: Classification[]; sort: ReportSortState; onSort:(k:ReportSortState['key'])=>void }) { const aria=(k:string)=>sort.key===k?(sort.direction==='asc'?'ascending':'descending'):'none'; return <div className="table-scroll"><table className="data-table"><caption>Reporte de calificaciones filtrado</caption><thead><tr><th>ID</th>{cols.map(([k,l])=><th key={k} aria-sort={aria(k)}><button className="sortable-heading" type="button" onClick={()=>onSort(k)}>{l}<span>{sort.key===k?sort.direction:'ordenar'}</span></button></th>)}<th>Mercado</th><th>Origen</th><th>Secuencia</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.id}</td><td>{r.ejercicio}</td><td>{r.instrumento}</td><td>{r.fechaPago}</td><td>{money.format(r.monto)}</td><td><StatusBadge status={r.estado} /></td><td>{r.mercado}</td><td>{r.origen}</td><td>{r.secuenciaEvento}</td></tr>)}</tbody></table></div>; }
