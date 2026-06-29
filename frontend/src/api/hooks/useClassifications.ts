@@ -1,0 +1,5 @@
+import { useEffect, useState } from 'react';
+import type { PagedResult, TaxClassification } from '../../types';
+import type { ClassificationFilters } from '../contracts/classifications';
+import { useApiServices } from '../context/ApiServicesProvider';
+export function useClassifications(filters: ClassificationFilters) { const { classifications } = useApiServices(); const [data,setData]=useState<PagedResult<TaxClassification>>({items:[],total:0,page:filters.page,pageSize:filters.pageSize}); const [loading,setLoading]=useState(true); const [error,setError]=useState<string>(); useEffect(()=>{ const controller=new AbortController(); setLoading(true); setError(undefined); classifications.list(filters, controller.signal).then(setData).catch((err: unknown)=>{ if(!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Error inesperado'); }).finally(()=>{ if(!controller.signal.aborted) setLoading(false); }); return ()=>controller.abort(); },[classifications, filters]); return { data, loading, error }; }

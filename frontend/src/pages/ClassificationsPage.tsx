@@ -1,12 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { listClassifications } from '../api/services';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useClassifications } from '../api/hooks/useClassifications';
+import { DataTableShell } from '../components/DataTableShell';
+import { DemoNotice } from '../components/DemoNotice';
+import { PageHeader } from '../components/PageHeader';
+import { Pagination } from '../components/Pagination';
 import { ClassificationsTable } from '../features/classifications/ClassificationsTable';
-import type { Classification } from '../types';
-
-export function ClassificationsPage() {
-  const [rows, setRows] = useState<Classification[]>([]);
-  const [query, setQuery] = useState('');
-  useEffect(() => { void listClassifications().then(setRows); }, []);
-  const filtered = useMemo(() => rows.filter((row) => `${row.instrument} ${row.description} ${row.market}`.toLowerCase().includes(query.toLowerCase())), [query, rows]);
-  return <section className="page"><h1>Calificaciones tributarias</h1><div className="actions"><input placeholder="Buscar instrumento, mercado o descripción" value={query} onChange={(event) => setQuery(event.target.value)} /><button type="button">Nueva calificación visual</button><button type="button">Carga masiva mock</button></div><ClassificationsTable rows={filtered} /></section>;
-}
+export function ClassificationsPage() { const [text,setText]=useState(''); const [market,setMarket]=useState(''); const [page,setPage]=useState(1); const [pageSize,setPageSize]=useState(5); const filters=useMemo(()=>({text,market,page,pageSize,sortBy:'instrument' as const,sortDirection:'asc' as const}),[text,market,page,pageSize]); const { data, loading, error }=useClassifications(filters); return <section className="page"><PageHeader title="Calificaciones tributarias" description="Listado administrativo con filtros, estados y acciones por registro." /><DemoNotice /><div className="actions"><input placeholder="Buscar secuencia, instrumento o descripción" value={text} onChange={e=>{setText(e.target.value);setPage(1);}} /><select value={market} onChange={e=>{setMarket(e.target.value);setPage(1);}}><option value="">Todos los mercados</option><option>Chile</option><option>Colombia</option><option>Perú</option></select><Link className="button" to="/calificaciones/nueva">Ingresar</Link><Link className="button" to="/cargas/x-factor">Carga X Factor</Link><Link className="button" to="/cargas/x-monto">Carga X Monto</Link></div><DataTableShell loading={loading} error={error} empty={data.items.length===0}><ClassificationsTable rows={data.items} /></DataTableShell><Pagination page={page} pageSize={pageSize} total={data.total} onPageChange={setPage} onPageSizeChange={size=>{setPageSize(size);setPage(1);}} /></section>; }

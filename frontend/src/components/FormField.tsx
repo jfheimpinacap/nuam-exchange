@@ -1,0 +1,1 @@
+export function FormField({ label, error, children }: { label:string; error?:string; children:React.ReactNode }) { return <label className="form-field"><span>{label}</span>{children}{error ? <small className="field-error">{error}</small> : null}</label>; }

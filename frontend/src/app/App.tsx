@@ -1,6 +1,5 @@
-import { NavigationProvider } from './navigation';
-import { SessionProvider } from './session';
-import { AdminLayout } from '../layouts/AdminLayout';
+import { BrowserRouter } from 'react-router-dom';
+import { ApiServicesProvider } from '../api/context/ApiServicesProvider';
 import { AppRoutes } from '../routes/AppRoutes';
-
-export function App() { return <SessionProvider><NavigationProvider><AdminLayout><AppRoutes /></AdminLayout></NavigationProvider></SessionProvider>; }
+import { SessionProvider } from './session/SessionProvider';
+export function App() { return <BrowserRouter><ApiServicesProvider><SessionProvider><AppRoutes /></SessionProvider></ApiServicesProvider></BrowserRouter>; }

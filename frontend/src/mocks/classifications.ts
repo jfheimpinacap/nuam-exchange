@@ -1,14 +1,10 @@
-import type { AuditEvent, Classification } from '../types';
-
-export const mockClassifications: Classification[] = [
-  { id: 'CL-001', market: 'Chile', instrument: 'NUAM-CLP-01', description: 'Dividendo local serie A', fiscalYear: 2026, paymentDate: '2026-03-18', amount: 18500000, status: 'Aprobada' },
-  { id: 'CO-014', market: 'Colombia', instrument: 'NUAM-COP-14', description: 'Interés corporativo trimestral', fiscalYear: 2026, paymentDate: '2026-04-07', amount: 32100000, status: 'Pendiente' },
-  { id: 'PE-008', market: 'Perú', instrument: 'NUAM-PEN-08', description: 'Evento tributario mercado integrado', fiscalYear: 2025, paymentDate: '2025-12-20', amount: 12650000, status: 'Borrador' },
-  { id: 'CL-032', market: 'Chile', instrument: 'NUAM-CLP-32', description: 'Corrección histórica de factor', fiscalYear: 2025, paymentDate: '2025-10-02', amount: 8300000, status: 'Rechazada' }
+import type { AuditEvent, BackupRecord, TaxClassification, UploadReview } from '../types';
+export const mockClassifications: TaxClassification[] = [
+ { id:'1', sequence:'EVT-2026-001', market:'Chile', source:'Dividendos', instrument:'NUAM-CLP-01', description:'Dividendo local serie A', fiscalYear:2026, paymentDate:'2026-03-18', amount:18500000, factor:1.042, status:'Aprobada', updatedAt:'2026-06-18' },
+ { id:'2', sequence:'EVT-2026-014', market:'Colombia', source:'Intereses', instrument:'NUAM-COP-14', description:'Interés corporativo trimestral', fiscalYear:2026, paymentDate:'2026-04-07', amount:32100000, factor:1.018, status:'Pendiente', updatedAt:'2026-06-19' },
+ { id:'3', sequence:'EVT-2025-008', market:'Perú', source:'Eventos integrados', instrument:'NUAM-PEN-08', description:'Evento tributario mercado integrado', fiscalYear:2025, paymentDate:'2025-12-20', amount:12650000, factor:1.096, status:'Borrador', updatedAt:'2026-06-20' },
+ { id:'4', sequence:'EVT-2025-032', market:'Chile', source:'Correcciones', instrument:'NUAM-CLP-32', description:'Corrección histórica de factor', fiscalYear:2025, paymentDate:'2025-10-02', amount:8300000, factor:1.131, status:'Rechazada', updatedAt:'2026-06-21' }
 ];
-
-export const mockAuditEvents: AuditEvent[] = [
-  { id: 'AUD-1001', date: '2026-06-20 09:14', user: 'admin.demo', module: 'Calificaciones', action: 'Consulta', result: 'OK', severity: 'Info' },
-  { id: 'AUD-1002', date: '2026-06-21 15:42', user: 'supervisor.demo', module: 'Cargas', action: 'Revisión', result: 'Observada', severity: 'Advertencia' },
-  { id: 'AUD-1003', date: '2026-06-22 11:03', user: 'admin.demo', module: 'Respaldos', action: 'Simulación', result: 'OK', severity: 'Info' }
-];
+export const uploadReviews: UploadReview[] = [ { id:'UP-01', type:'X_FACTOR', fileName:'x_factor_junio.csv', status:'Procesada', validRows:98, errorRows:2, createdAt:'2026-06-20' }, { id:'UP-02', type:'X_MONTO', fileName:'x_monto_junio.csv', status:'Con errores', validRows:74, errorRows:11, createdAt:'2026-06-21' } ];
+export const auditEvents: AuditEvent[] = [ { id:'AUD-1', date:'2026-06-20 09:14', user:'admin.demo', role:'Administrador', module:'Calificaciones', action:'Consulta', result:'OK', severity:'Info', detail:'Consulta paginada mock' }, { id:'AUD-2', date:'2026-06-21 15:42', user:'supervisor.demo', role:'Supervisor', module:'Cargas', action:'Revisión', result:'Observada', severity:'Advertencia', detail:'Archivo con filas inválidas' } ];
+export const backupRecords: BackupRecord[] = [ { id:'BKP-1', name:'respaldo_diario_20260621', date:'2026-06-21 03:00', status:'Completado', size:'248 MB', createdBy:'Sistema' }, { id:'BKP-2', name:'respaldo_manual_20260622', date:'2026-06-22 10:30', status:'Programado', size:'Pendiente', createdBy:'admin.demo' } ];

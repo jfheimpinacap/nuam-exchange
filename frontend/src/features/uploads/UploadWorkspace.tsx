@@ -1,0 +1,3 @@
+import { useState } from 'react';
+import { DemoNotice } from '../../components/DemoNotice';
+export function UploadWorkspace({ kind }: { kind:'X Factor'|'X Monto' }) { const [file,setFile]=useState<File>(); return <section className="form-card"><DemoNotice /><h2>Carga {kind}</h2><input type="file" accept=".csv" onChange={e=>setFile(e.target.files?.[0])} /><div className="dropzone">{file ? `Archivo seleccionado: ${file.name} (${file.size} bytes)` : 'Seleccione o arrastre un CSV para previsualizarlo localmente.'}</div><ul><li>Validación de extensión y archivo no vacío.</li><li>Vista previa, progreso y reporte de errores simulados.</li><li>No se envía información a servidor.</li></ul></section>; }

@@ -1,0 +1,3 @@
+import { PageHeader } from '../components/PageHeader';
+import { downloadCsv } from '../utils/formatters';
+export function UploadTemplatesPage() { return <section className="page"><PageHeader title="Plantillas de carga" description="Plantillas CSV provisionales generadas en navegador." /><div className="cards"><button type="button" onClick={()=>downloadCsv('plantilla_x_factor.csv', [['instrumento','ejercicio','mes','factor']])}>Descargar X Factor</button><button type="button" onClick={()=>downloadCsv('plantilla_x_monto.csv', [['instrumento','fecha_pago','monto']])}>Descargar X Monto</button></div></section>; }

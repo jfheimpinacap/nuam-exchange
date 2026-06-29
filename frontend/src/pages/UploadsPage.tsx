@@ -1,1 +1,0 @@
-export function UploadsPage() { return <section className="page"><h1>Cargas masivas</h1><p>Validación visual de CSV en modo demostración. No se envían archivos ni se persisten datos.</p><div className="dropzone">Arrastra un CSV o selecciona un archivo para simular la previsualización.</div></section>; }

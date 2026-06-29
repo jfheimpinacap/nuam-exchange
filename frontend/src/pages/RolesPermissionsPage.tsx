@@ -1,0 +1,3 @@
+import { PageHeader } from '../components/PageHeader';
+const roles=['Administrador','Analista Tributario','Supervisor'];
+export function RolesPermissionsPage() { return <section className="page"><PageHeader title="Roles y permisos" description="Matriz demostrativa editable solo en memoria." /><table><thead><tr><th>Rol</th><th>Calificaciones</th><th>Administración</th><th>Auditoría</th></tr></thead><tbody>{roles.map(role=><tr key={role}><td>{role}</td><td>Lectura/según rol</td><td>{role==='Administrador'?'Permitido':'Restringido'}</td><td>{role==='Administrador'?'Permitido':'Restringido'}</td></tr>)}</tbody></table></section>; }

@@ -1,45 +1,63 @@
-# Prompt 041 — Importación curada del frontend React
+# Prompt 041 / 042 — Importación curada del frontend React
 
-- Fecha de importación: 2026-06-29.
+- Fecha de importación inicial: 2026-06-29.
+- Corrección Prompt 042: 2026-06-29.
 - Repositorio fuente: `Rodbrok/Nuam-Exchange`.
 - Rama fuente: `main`.
-- SHA fuente inspeccionado: no disponible desde `git clone` por bloqueo HTTP 403 del proxy; se inspeccionó la rama pública `main` mediante la vista web de GitHub, incluyendo estructura `src/`, metadatos de dependencias y README visible.
-- Decisión: importación curada de la interfaz React dentro de `frontend/`, sin `subtree`, `submodule`, merge de historiales ni remote externo.
+- Commit fuente obligatorio: `9f86c36636bd9a73dee3ac16901129c11db77bde`.
+- Obtención: se inspeccionó contenido público del commit fuente desde GitHub web/raw porque el `git clone` directo desde shell quedó bloqueado por proxy HTTP 403.
+- Decisión: importación curada dentro de `frontend/`, sin `subtree`, `submodule`, merge de historiales ni remote externo.
 
-## Rutas importadas y adaptadas
+## Corrección aplicada por Prompt 042
 
-- `frontend/src/**`: se reemplazó la aplicación mínima por una interfaz administrativa curada con carpetas `api`, `app`, `components`, `features`, `layouts`, `mocks`, `pages`, `routes`, `styles`, `types` y `utils`.
-- `frontend/index.html`.
-- `frontend/package.json` y `frontend/package-lock.json`.
-- `frontend/tsconfig.json`, `frontend/tsconfig.app.json` y `frontend/tsconfig.node.json`.
-- `frontend/eslint.config.js`.
-- `frontend/.env.example`.
-- `frontend/src/vite-env.d.ts`.
+Prompt 042 corrige la importación simplificada inicial y sustituye la navegación manual por una estructura compatible con la arquitectura del frontend fuente: `BrowserRouter`, Login demostrativo, `SessionProvider` en memoria, `ProtectedRoute`, layout administrativo, rutas URL reales, módulos visuales completos y capa API tipada con modo mock predeterminado.
 
-## Rutas excluidas
+## Árbol frontend importado/adaptado
+
+- `frontend/src/api/client/`.
+- `frontend/src/api/config/`.
+- `frontend/src/api/context/`.
+- `frontend/src/api/contracts/`.
+- `frontend/src/api/hooks/`.
+- `frontend/src/api/mappers/`.
+- `frontend/src/api/services/`.
+- `frontend/src/app/session/`.
+- `frontend/src/components/`.
+- `frontend/src/features/`.
+- `frontend/src/layouts/`.
+- `frontend/src/mocks/`.
+- `frontend/src/pages/`.
+- `frontend/src/routes/`.
+- `frontend/src/styles/`.
+- `frontend/src/types/`.
+- `frontend/src/utils/`.
+- `frontend/src/main.tsx` y `frontend/src/vite-env.d.ts`.
+- `frontend/index.html`, `frontend/package.json`, `frontend/package-lock.json`, TypeScript, ESLint y `.env.example`.
+
+## Rutas reales conservadas
+
+El frontend conserva rutas URL para `/login`, `/inicio`, `/calificaciones`, `/calificaciones/nueva`, `/calificaciones/:id/editar`, `/calificaciones/:id/copiar`, `/cargas/x-factor`, `/cargas/x-monto`, `/plantillas-carga`, `/reportes`, `/administracion/usuarios`, `/administracion/roles-permisos`, `/auditoria` y `/respaldos`.
+
+## Exclusiones
 
 No se incorporaron desde el repositorio externo: `backend/`, `.github/`, `docs/api/`, `global.json`, README externo, `.gitignore` externo, `node_modules/`, `dist/`, `coverage/`, archivos `.env` reales, migraciones, seeds, scripts backend, workflows ni artefactos generados.
 
-## Razón para no usar subtree
+## Preservación de Vite
 
-No se usó `git subtree` porque el objetivo aprobado fue una importación curada dentro del monorepo principal, sin arrastrar historial externo, backend externo, CI externo ni contratos provisionales. El backend principal continúa siendo la fuente de verdad para rutas, DTOs, políticas, roles y autorización.
-
-## Preservación de Vite del repositorio principal
-
-Se conservó `frontend/vite.config.ts` del repositorio principal con puerto `5173`, proxy local para `/api`, proxy local para `/health`, destino `http://localhost:5000` y salida de build principal hacia `../backend-dotnet/src/NuamExchange.Api/wwwroot`. La validación de este prompt usó un `outDir` temporal para no escribir en el backend.
+Se conserva `frontend/vite.config.ts` del repositorio principal con puerto `5173`, proxy `/api`, proxy `/health`, destino `http://localhost:5000` y salida principal a `../backend-dotnet/src/NuamExchange.Api/wwwroot`. La validación usó `--outDir .tmp-dist-prompt042` para no escribir en backend.
 
 ## Estado funcional temporal
 
-El frontend queda temporalmente en modo mock (`VITE_DATA_SOURCE=mock`). La capa API preparada conserva `VITE_API_BASE_URL=/api/v1`, pero la normalización e integración real con backend comienzan recién desde Prompt 042. No se conectaron login real, JWT, endpoints reales, formularios reales ni módulos backend.
+El frontend continúa en modo mock (`VITE_DATA_SOURCE=mock`) con `VITE_API_BASE_URL=/api/v1` y `VITE_API_TIMEOUT_MS=10000`. No se conectó API real, JWT, credenciales, backend, persistencia ni endpoints reales.
 
 ## Validaciones ejecutadas
 
 - `npm ci`: exitoso.
 - `npm run lint`: exitoso con advertencias Fast Refresh no bloqueantes.
 - `./node_modules/.bin/tsc -b --pretty false`: exitoso.
-- `./node_modules/.bin/vite build --outDir .tmp-dist-prompt041 --emptyOutDir`: exitoso.
-- `rm -rf .tmp-dist-prompt041`: ejecutado; el directorio temporal fue eliminado.
+- `./node_modules/.bin/vite build --outDir .tmp-dist-prompt042 --emptyOutDir`: exitoso.
+- `rm -rf .tmp-dist-prompt042`: ejecutado; directorio temporal eliminado.
 
 ## Seguridad y alcance
 
-No se importaron backend externo, CI externo, `global.json`, contratos API provisionales, `node_modules`, `.env` real ni secretos. No se modificaron archivos bajo `backend-dotnet/`, `.github/` ni `docs/api/`.
+No hubo cambios bajo `backend-dotnet/`, `.github/` ni `docs/api/`. No se importaron backend externo, CI externo, `global.json`, contratos API provisionales, `node_modules`, `.env` real ni secretos.

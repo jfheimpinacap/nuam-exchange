@@ -444,3 +444,13 @@ Validaciones locales obligatorias posteriores al merge:
 - Preservación: `frontend/vite.config.ts` mantiene puerto `5173`, proxy `/api`, proxy `/health`, destino `http://localhost:5000` y build target `../backend-dotnet/src/NuamExchange.Api/wwwroot`.
 - Estado: frontend temporalmente en modo mock; integración real con backend queda para Prompt 042.
 - Validación: `npm ci`, `npm run lint`, TypeScript y build temporal con `.tmp-dist-prompt041` ejecutados; el directorio temporal fue eliminado.
+
+## Prompt 042 — Corrección de importación curada frontend — 2026-06-29
+
+- Alcance: corrección del Prompt 041 para preservar la arquitectura del frontend fuente `Rodbrok/Nuam-Exchange@9f86c36636bd9a73dee3ac16901129c11db77bde`.
+- Corrección: se elimina la navegación simplificada basada en `NavigationProvider` y se incorpora flujo con `BrowserRouter`, rutas URL, login demo, sesión en memoria, control visual por rol y `ProtectedRoute`.
+- Estructura: se amplía `src/api` con `client`, `config`, `context`, `contracts`, `hooks`, `mappers` y `services`; se mantienen páginas de calificaciones, cargas, plantillas, reportes, administración, auditoría y respaldos.
+- Estado: modo mock predeterminado; no se conectó API real, JWT, backend, credenciales ni persistencia.
+- Preservación: `frontend/vite.config.ts` mantiene puerto `5173`, proxy `/api`, proxy `/health`, destino `http://localhost:5000` y build target `../backend-dotnet/src/NuamExchange.Api/wwwroot`.
+- Validación: `npm ci`, `npm run lint`, TypeScript y build temporal `.tmp-dist-prompt042` ejecutados; el directorio temporal fue eliminado.
+- Restricciones: sin cambios bajo `backend-dotnet/`, `.github/` ni `docs/api/`; sin backend externo, CI externo, `global.json`, `node_modules`, `.env` real ni secretos.
