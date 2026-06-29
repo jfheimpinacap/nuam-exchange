@@ -412,3 +412,19 @@ Las pruebas usan exclusivamente EF Core InMemory dentro del proyecto de pruebas.
 - La causa real fue una expectativa desactualizada frente a la fixture adicional incorporada en Prompt 035: ID 4 satisface todos los filtros enviados y no corresponde excluirlo.
 - La decisión aplicada fue corregir la expectativa a `[2, 3, 4]`, `totalCount = 3`, `totalPages = 1`, y agregar una aserción explícita que demuestra el criterio de inclusión del ID 4.
 - Se conserva la cobertura de filtros, orden, paginación y exclusión de campos sensibles sin modificar entidades, `BackupRecord`, Fluent API, migraciones, snapshot, endpoints, DTOs públicos, políticas, autorización, frontend ni contrato funcional seguro.
+
+## Actualización Prompt 037: CI backend con GitHub Actions
+
+Se incorpora el workflow `Backend CI` en `.github/workflows/backend-ci.yml` para automatizar la validación de la solución backend .NET 8 `backend-dotnet/NuamExchange.sln`.
+
+La evidencia esperada del Pull Request es que GitHub Actions ejecute automáticamente:
+
+- `dotnet restore NuamExchange.sln`.
+- `dotnet build NuamExchange.sln --configuration Release --no-restore`.
+- `dotnet test NuamExchange.sln --configuration Release --no-build --logger "console;verbosity=normal"`.
+
+El workflow se dispara en Pull Requests hacia `main`, pushes a `main` y ejecución manual, siempre limitado a cambios bajo `backend-dotnet/**` o al propio archivo del workflow.
+
+Continúan siendo manuales las validaciones con API local, revisión funcional de endpoints, validaciones contra SQL Server real o de desarrollo, y cualquier prueba operacional que requiera configuración externa.
+
+No se agregó CI frontend ni jobs Node.js. La revisión de frontend queda pendiente para una etapa posterior cuando exista una integración formal del repositorio correspondiente.

@@ -426,3 +426,14 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios funcionales:** no se modificaron servicios productivos, endpoints, DTOs públicos, políticas, entidades, Fluent API, migraciones, snapshot, modelo físico, frontend, JWT, login, usuarios, roles ni permisos.
 - **Sin operaciones reales:** no hubo backup, restore, archivos, SQL dinámico, migraciones, SQL Server remoto, Plesk, credenciales reales, merge manual ni push manual.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
+
+## Prompt 037 — GitHub Actions CI exclusivo para backend .NET (2026-06-29)
+
+- **Objetivo:** incorporar un workflow GitHub Actions exclusivo para validar el backend .NET 8 antes del merge.
+- **Workflow:** `.github/workflows/backend-ci.yml` con nombre visible `Backend CI`.
+- **Validaciones automatizadas:** restore, build y test sobre `backend-dotnet/NuamExchange.sln`.
+- **Triggers:** Pull Request hacia `main`, push a `main` y ejecución manual mediante `workflow_dispatch`, limitados a cambios de backend o del propio workflow.
+- **Seguridad:** permisos mínimos `contents: read`, sin secretos, sin credenciales, sin despliegues y sin configuración de ambientes.
+- **Base de datos:** sin SQL Server, sin migraciones, sin `dotnet ef` y sin `database update`.
+- **Frontend:** no se implementa CI frontend, no se agregan jobs Node.js y no se valida frontend en esta etapa.
+- **Validación local posterior obligatoria:** revisar el Pull Request, confirmar ejecución de `Backend CI`, verificar restore/build/test exitosos en GitHub Actions, hacer merge solo si el workflow pasa, sincronizar `main` y ejecutar localmente restore, build y test confirmando 0 advertencias, 0 errores y todas las pruebas aprobadas.
