@@ -412,3 +412,12 @@ Las pruebas usan exclusivamente EF Core InMemory dentro del proyecto de pruebas.
 - La causa real fue una expectativa desactualizada frente a la fixture adicional incorporada en Prompt 035: ID 4 satisface todos los filtros enviados y no corresponde excluirlo.
 - La decisión aplicada fue corregir la expectativa a `[2, 3, 4]`, `totalCount = 3`, `totalPages = 1`, y agregar una aserción explícita que demuestra el criterio de inclusión del ID 4.
 - Se conserva la cobertura de filtros, orden, paginación y exclusión de campos sensibles sin modificar entidades, `BackupRecord`, Fluent API, migraciones, snapshot, endpoints, DTOs públicos, políticas, autorización, frontend ni contrato funcional seguro.
+
+## Prompt 039 — Backend CI y pruebas HTTP sin SQL Server (2026-06-29)
+
+- Se agrega Backend CI exclusivo para backend .NET con restore, build y test automáticos sobre `backend-dotnet/NuamExchange.sln`.
+- El workflow se dispara por PR hacia `main`, push a `main` y ejecución manual, con filtros `paths` que incluyen `backend-dotnet/**`, `global.json` y el propio workflow.
+- Se corrige la falla previa de DI en pruebas HTTP/integración donde `WebApplicationFactory<Program>` no encontraba `NuamExchangeDbContext` cuando no existía connection string.
+- La corrección registra EF Core InMemory exclusivamente dentro de `NuamExchange.Api.Tests` y desde `ConfigureTestServices`.
+- No se agrega fallback InMemory productivo, SQL Server, migraciones, secretos, despliegues, Plesk, credenciales ni frontend.
+- Si Cloud no dispone de `dotnet`, la evidencia real de ejecución de restore, build y test será GitHub Actions.

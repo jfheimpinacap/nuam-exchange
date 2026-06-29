@@ -138,6 +138,7 @@ public sealed class TaxClassificationCopyTests
     {
         builder.ConfigureTestServices(services =>
         {
+            services.AddNuamExchangeInMemoryDatabase();
             services.RemoveAll<ITaxClassificationCommandService>();
             services.AddScoped<ITaxClassificationCommandService, FakeCopyCommandService>();
             services.AddAuthentication(options =>

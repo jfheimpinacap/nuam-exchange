@@ -24,6 +24,7 @@ public sealed class TaxClassificationsEndpointBindingTests
         {
             builder.ConfigureTestServices(services =>
             {
+                services.AddNuamExchangeInMemoryDatabase();
                 services.RemoveAll<ITaxClassificationCommandService>();
                 services.AddScoped<ITaxClassificationCommandService, CapturingTaxClassificationCommandService>();
                 services.AddAuthentication(options =>

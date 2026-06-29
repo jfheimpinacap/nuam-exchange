@@ -426,3 +426,11 @@ Validaciones locales obligatorias posteriores al merge:
 - **Sin cambios funcionales:** no se modificaron servicios productivos, endpoints, DTOs públicos, políticas, entidades, Fluent API, migraciones, snapshot, modelo físico, frontend, JWT, login, usuarios, roles ni permisos.
 - **Sin operaciones reales:** no hubo backup, restore, archivos, SQL dinámico, migraciones, SQL Server remoto, Plesk, credenciales reales, merge manual ni push manual.
 - **Validación local posterior obligatoria:** ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
+
+## Prompt 039 — Reimplementar CI backend y pruebas CI sin SQL Server (2026-06-29)
+
+- Se crea un nuevo workflow `Backend CI` para validar exclusivamente backend .NET con restore, build y test en GitHub Actions.
+- Se corrigen los filtros `paths` para incluir `global.json` además de `backend-dotnet/**` y `.github/workflows/backend-ci.yml`.
+- Se agrega un helper interno de pruebas para registrar `NuamExchangeDbContext` con EF Core InMemory desde `ConfigureTestServices`.
+- Se actualizan fixtures HTTP afectadas por la ausencia de `NuamExchangeDbContext` sin modificar código productivo ni requerir SQL Server.
+- Se documenta que no hay frontend, Node, npm, migraciones, secretos, despliegues, Plesk, credenciales ni fallback InMemory productivo.
