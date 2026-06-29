@@ -403,3 +403,12 @@ Las pruebas usan exclusivamente EF Core InMemory dentro del proyecto de pruebas.
 - La fixture usa valores centinela inequívocos para `BackupPath` y `Observation`; las respuestas reales de listado y detalle se validan contra esos valores exactos para impedir que una ruta u observación textual se filtren a través de cualquier campo permitido.
 - Se conserva la protección frente a exposición accidental de `Observation` y `BackupPath` sin cambiar endpoints, DTOs públicos, política `BackupMetadataRead`, entidad `BackupRecord`, Fluent API, migraciones, snapshot, modelo físico, frontend ni servicios de consulta.
 - Validación local posterior obligatoria: ejecutar `dotnet restore ./backend-dotnet/NuamExchange.sln`, `dotnet build ./backend-dotnet/NuamExchange.sln --no-restore` y `dotnet test ./backend-dotnet/NuamExchange.sln --no-build`; confirmar 0 advertencias, 0 errores y todas las pruebas aprobadas.
+
+## Evidencia de corrección — Prompt 036
+
+- Después del merge y sincronización de Prompt 035 se reprodujo el fallo local de `BackupMetadataQueryTests.List_PaginatesSortsFiltersAndExcludesSensitiveFields`: la consulta por fecha esperaba `[2, 3]`, pero el servicio devolvía `[2, 3, 4]`.
+- La inspección de la fixture confirmó que los registros 2, 3 y 4 tienen `BackupAt` dentro del rango `2026-06-02T00:00:00Z` a `2026-06-03T23:59:59Z`; el registro 4 comparte fecha con el 3 (`2026-06-03T12:00:00Z`), usa `BackupType = BASE_DATOS`, `BackupStatus = RESTAURADO`, `Observation = null` y un `BackupPath` centinela no expuesto.
+- La solicitud exacta de la prueba para ese escenario es `GET /api/backup-metadata?dateFrom=2026-06-02T00:00:00Z&dateTo=2026-06-03T23:59:59Z&sortBy=id&sortDirection=asc`; no envía `backupType`, `status`, `page` ni `pageSize`, por lo que aplica solo rango de fechas, orden por `id asc` y paginación por defecto `page=1`, `pageSize=20`.
+- La causa real fue una expectativa desactualizada frente a la fixture adicional incorporada en Prompt 035: ID 4 satisface todos los filtros enviados y no corresponde excluirlo.
+- La decisión aplicada fue corregir la expectativa a `[2, 3, 4]`, `totalCount = 3`, `totalPages = 1`, y agregar una aserción explícita que demuestra el criterio de inclusión del ID 4.
+- Se conserva la cobertura de filtros, orden, paginación y exclusión de campos sensibles sin modificar entidades, `BackupRecord`, Fluent API, migraciones, snapshot, endpoints, DTOs públicos, políticas, autorización, frontend ni contrato funcional seguro.
