@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -23,6 +24,18 @@ namespace NuamExchange.Api.Tests;
 
 public sealed class BackupMetadataQueryTests
 {
+    private const string SentinelBackupPath = "SENTINEL_BACKUP_PATH_DO_NOT_EXPOSE_035";
+    private const string SentinelObservation = "SENTINEL_OBSERVATION_DO_NOT_EXPOSE_035";
+    private static readonly string[] SentinelSensitiveValues =
+    [
+        SentinelBackupPath,
+        SentinelObservation,
+        "SENTINEL_BACKUP_PATH_TWO_DO_NOT_EXPOSE_035",
+        "SENTINEL_BACKUP_PATH_THREE_DO_NOT_EXPOSE_035",
+        "SENTINEL_OBSERVATION_THREE_DO_NOT_EXPOSE_035",
+        "SENTINEL_BACKUP_PATH_FOUR_DO_NOT_EXPOSE_035"
+    ];
+
     [Fact]
     public async Task Administrator_CanListBackupMetadata()
     {
@@ -61,7 +74,7 @@ public sealed class BackupMetadataQueryTests
         Assert.Equal(2, page.TotalPages);
         Assert.Equal(2, page.Items.Count);
         Assert.Equal(new[] { 4, 3 }, page.Items.Select(x => x.Id).ToArray());
-        AssertSensitiveFieldsExcluded(body);
+        AssertSensitiveFieldsExcluded(body, SentinelBackupPath, SentinelObservation);
 
         var byType = await client.GetFromJsonAsync<PagedResult<BackupMetadataListItemDto>>("/api/backup-metadata?backupType=BASE_DATOS");
         Assert.Equal(new[] { 4, 1 }, byType!.Items.Select(x => x.Id).ToArray());
@@ -98,9 +111,21 @@ public sealed class BackupMetadataQueryTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(1, detail!.Id);
         Assert.True(detail.HasObservation);
-        AssertSensitiveFieldsExcluded(body);
+        AssertSensitiveFieldsExcluded(body, SentinelBackupPath, SentinelObservation);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/backup-metadata/9999")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/backup-metadata/0")).StatusCode);
+    }
+
+
+    [Fact]
+    public void AssertSensitiveFieldsExcluded_AllowsHasObservationAndRejectsExactSensitivePropertiesAndSentinels()
+    {
+        AssertSensitiveFieldsExcluded("{ \"hasObservation\": true, \"items\": [{ \"hasObservation\": false }] }");
+
+        Assert.NotNull(Record.Exception(() => AssertSensitiveFieldsExcluded("{ \"observation\": \"text\" }")));
+        Assert.NotNull(Record.Exception(() => AssertSensitiveFieldsExcluded("{ \"observacion\": \"text\" }")));
+        Assert.NotNull(Record.Exception(() => AssertSensitiveFieldsExcluded($"{{ \"backupType\": \"{SentinelBackupPath}\" }}")));
+        Assert.NotNull(Record.Exception(() => AssertSensitiveFieldsExcluded($"{{ \"status\": \"{SentinelObservation}\" }}")));
     }
 
     [Fact]
@@ -132,16 +157,47 @@ public sealed class BackupMetadataQueryTests
         db.UploadTemplates.Add(new UploadTemplate { Id = 1, UploadType = "X_FACTOR", TemplateName = "Plantilla X Factor", RequiredColumns = "market,classification_type,currency,tax_period,valid_from,factor", AllowedFormat = "CSV", TemplateVersion = "1.0", CreatedAt = DateTime.UtcNow });
         db.UploadFiles.Add(new UploadFile { Id = 1, UserId = 1, UploadTemplateId = 1, UploadType = "X_FACTOR", FileName = "archivo.csv", Extension = "CSV", FilePath = "/private/archivo.csv", FileHash = "hash", UploadStatus = "PROCESADO", UploadedAt = DateTime.UtcNow });
         db.BackupRecords.AddRange(
-            Backup(1, "BASE_DATOS", "EJECUTADO", new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc), "C:/secret/db.bak", "No exponer observación"),
-            Backup(2, "ARCHIVOS", "PROGRAMADO", new DateTime(2026, 6, 2, 12, 0, 0, DateTimeKind.Utc), "//srv/share/files.zip", null),
-            Backup(3, "COMPLETO", "FALLIDO", new DateTime(2026, 6, 3, 12, 0, 0, DateTimeKind.Utc), "/var/backups/full.bak", "Texto sensible"),
-            Backup(4, "BASE_DATOS", "RESTAURADO", new DateTime(2026, 6, 3, 12, 0, 0, DateTimeKind.Utc), "D:/db/newer.bak", null));
+            Backup(1, "BASE_DATOS", "EJECUTADO", new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc), SentinelBackupPath, SentinelObservation),
+            Backup(2, "ARCHIVOS", "PROGRAMADO", new DateTime(2026, 6, 2, 12, 0, 0, DateTimeKind.Utc), "SENTINEL_BACKUP_PATH_TWO_DO_NOT_EXPOSE_035", null),
+            Backup(3, "COMPLETO", "FALLIDO", new DateTime(2026, 6, 3, 12, 0, 0, DateTimeKind.Utc), "SENTINEL_BACKUP_PATH_THREE_DO_NOT_EXPOSE_035", "SENTINEL_OBSERVATION_THREE_DO_NOT_EXPOSE_035"),
+            Backup(4, "BASE_DATOS", "RESTAURADO", new DateTime(2026, 6, 3, 12, 0, 0, DateTimeKind.Utc), "SENTINEL_BACKUP_PATH_FOUR_DO_NOT_EXPOSE_035", null));
     }
 
     private static BackupRecord Backup(int id, string type, string status, DateTime date, string path, string? observation) => new() { Id = id, UserId = 1, BackupType = type, BackupStatus = status, BackupAt = date, BackupPath = path, Observation = observation };
-    private static void AssertSensitiveFieldsExcluded(string body)
+    private static void AssertSensitiveFieldsExcluded(string body, params string[] sentinelValues)
     {
-        foreach (var forbidden in new[] { "ruta_respaldo", "BackupPath", "ruta", "path", "file", "observacion", "observation", "email", "password", "token", "JWT", "connection string", "hash", "tamaño", "size", "secret", "archivo.csv", ".bak", ".zip" }) Assert.DoesNotContain(forbidden, body, StringComparison.OrdinalIgnoreCase);
+        using var document = JsonDocument.Parse(body);
+        AssertNoForbiddenJsonProperties(document.RootElement);
+
+        foreach (var sentinel in SentinelSensitiveValues.Concat(sentinelValues).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.Ordinal))
+        {
+            Assert.DoesNotContain(sentinel, body, StringComparison.Ordinal);
+        }
+    }
+
+    private static void AssertNoForbiddenJsonProperties(JsonElement element)
+    {
+        var forbiddenProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "observation", "observacion", "backupPath", "rutaRespaldo", "ruta_respaldo", "ruta",
+            "user", "userId", "usuario", "usuarioId", "usuario_id", "email", "password",
+            "token", "jwt", "connectionString", "connection string", "hash", "size", "tamaño",
+            "file", "filePath", "fileName", "archivo", "path", "secret"
+        };
+
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (var property in element.EnumerateObject())
+                {
+                    Assert.DoesNotContain(property.Name, forbiddenProperties);
+                    AssertNoForbiddenJsonProperties(property.Value);
+                }
+                break;
+            case JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray()) AssertNoForbiddenJsonProperties(item);
+                break;
+        }
     }
     private static async Task<Snapshot> SnapshotAsync(IServiceProvider services) { await using var scope = services.CreateAsyncScope(); var db = scope.ServiceProvider.GetRequiredService<NuamExchangeDbContext>(); return new(await db.BackupRecords.CountAsync(), await db.AuditLogs.CountAsync(), await db.TaxClassifications.CountAsync(), await db.UploadFiles.CountAsync(), await db.Users.CountAsync()); }
     private sealed record Snapshot(int BackupRecords, int AuditLogs, int TaxClassifications, int UploadFiles, int Users);
