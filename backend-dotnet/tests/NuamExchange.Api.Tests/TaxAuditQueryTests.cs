@@ -73,6 +73,23 @@ public sealed class TaxAuditQueryTests
     }
 
     [Fact]
+    public void TaxAuditScope_CanGenerateRelationalSqlWithoutConnectingToDatabase()
+    {
+        var options = new DbContextOptionsBuilder<NuamExchangeDbContext>()
+            .UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=NuamExchangeSqlTranslationOnly;Trusted_Connection=True;TrustServerCertificate=True")
+            .Options;
+        using var db = new NuamExchangeDbContext(options);
+
+        var sql = TaxAuditQueryService.ApplyTaxAuditScope(db.AuditLogs.AsNoTracking()).ToQueryString();
+
+        Assert.Contains("[a].[entidad_afectada] = N'CalificacionTributaria'", sql);
+        Assert.Contains("[a].[registro_afectado_id] IS NOT NULL", sql);
+        Assert.Contains("[a].[accion]", sql);
+        Assert.Contains("TAX_CLASSIFICATION_CREATED", sql);
+        Assert.Contains("TAX_CLASSIFICATION_AMOUNT_BULK_UPDATED", sql);
+    }
+
+    [Fact]
     public async Task EmptyList_ReturnsNonNullItemsAndZeroPages()
     {
         using var factory = CreateFactory(SecuritySeedService.AdministratorRole, seedTaxAudits: false);
