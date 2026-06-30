@@ -1,10 +1,12 @@
 import { createContext } from 'react';
 import type { ClassificationsService } from '../services/ClassificationsService';
 import type { AuthService } from '../services/AuthService';
+import type { TaxClassificationsReadService } from '../services/TaxClassificationsReadService';
 
 export interface ApiServicesContextValue {
   dataSource: 'mock' | 'api';
   classificationsService: ClassificationsService;
+  taxClassificationsReadService: TaxClassificationsReadService;
   authService: AuthService;
   apiBaseUrl: string;
   isMock: boolean;
