@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserFriendlyApiMessage, isApiError, ApiError } from '../api/client/ApiError';
 import type { TaxClassificationDetailDto, TaxClassificationListRequestDto, TaxClassificationReadDto, TaxClassificationSortByDto, TaxClassificationSortState, TaxClassificationUiSortKey } from '../api/contracts/taxClassificationsRead';
@@ -27,6 +27,25 @@ function display(value: string | null | undefined) { return value?.trim() || das
 function formatDate(value: string | null | undefined) { return value?.trim() ? formatIsoDateForDisplay(value, { includeTime: value.includes('T') }) : dash; }
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 6) { return value === null || value === undefined ? dash : value.toLocaleString('es-CL', { maximumFractionDigits }); }
 function formatMoney(value: number | null | undefined, currency: string | null | undefined) { return value === null || value === undefined ? dash : new Intl.NumberFormat('es-CL', { style: 'currency', currency: currency || 'CLP', maximumFractionDigits: currency === 'CLP' ? 0 : 2 }).format(value); }
+
+type DetailField = { label: string; value: ReactNode };
+function getDetailFields(detail: TaxClassificationDetailDto): DetailField[] {
+  return [
+    { label: 'Mercado', value: detail.market },
+    { label: 'Código y nombre del instrumento', value: `${display(detail.instrumentCode)} / ${display(detail.instrumentName)}` },
+    { label: 'Tipo de clasificación', value: detail.classificationType },
+    { label: 'Descripción', value: display(detail.description) },
+    { label: 'Porcentaje de actualización', value: formatNumber(detail.updatePercentage) },
+    { label: 'Factor aplicado', value: formatNumber(detail.appliedFactor) },
+    { label: 'Monto de referencia y moneda', value: formatMoney(detail.referenceAmount, detail.currency) },
+    { label: 'Período tributario', value: detail.taxPeriod },
+    { label: 'Vigencia desde', value: formatDate(detail.validFrom) },
+    { label: 'Vigencia hasta', value: formatDate(detail.validTo) },
+    { label: 'Estado', value: statusLabel(detail.status) },
+    { label: 'Creado en', value: formatDate(detail.createdAt) },
+    { label: 'Actualizado en', value: formatDate(detail.updatedAt) },
+  ];
+}
 
 export function ClassificationsPage() {
   const navigate = useNavigate();
@@ -102,6 +121,6 @@ export function ClassificationsPage() {
     </div>
     <InlineMessage message={`${message} Mostrando ${from}–${to} de ${data.totalCount} registros.`} />
     {demoState === 'Error' && !isApi ? <ErrorState title="Error de demostración" description="Estado temporal para validar la vista de error antes de integrar la API." /> : demoState === 'Cargando' && !isApi || isLoading ? <LoadingState /> : error ? <div className="view-state view-state-error" role="alert"><strong>No fue posible cargar calificaciones</strong><span>{getUserFriendlyApiMessage(error)}</span><Button onClick={reload}>Reintentar</Button></div> : data.totalCount === 0 ? <EmptyState title="Sin resultados" description="No existen calificaciones para los filtros aplicados." actionLabel="Limpiar filtros" onAction={clearFilters} /> : <><DataTableShell records={data.items} selectedId={selected?.id ?? null} sort={sort} onSort={handleSort} onSelect={loadDetail} /><Pagination pagination={pagination} totalItems={data.totalCount} onPageChange={(page) => setPagination((current) => ({ ...current, page }))} onPageSizeChange={(pageSize) => setPagination({ page: 1, pageSize })} /></>}
-    {selected ? <section className="detail-panel" aria-live="polite"><div className="detail-header"><h2>Detalle de calificación tributaria</h2><Button variant="ghost" onClick={closeDetail}>Cerrar</Button></div>{detailLoading ? <LoadingState /> : detailError ? <div className="view-state view-state-error" role="alert"><strong>No fue posible cargar el detalle</strong><span>{getUserFriendlyApiMessage(detailError)}</span></div> : detail ? <dl className="detail-grid"><dt>Mercado</dt><dd>{detail.market}</dd><dt>Código y nombre del instrumento</dt><dd>{display(detail.instrumentCode)} / {display(detail.instrumentName)}</dd><dt>Tipo de clasificación</dt><dd>{detail.classificationType}</dd><dt>Descripción</dt><dd>{display(detail.description)}</dd><dt>Porcentaje de actualización</dt><dd>{formatNumber(detail.updatePercentage)}</dd><dt>Factor aplicado</dt><dd>{formatNumber(detail.appliedFactor)}</dd><dt>Monto de referencia y moneda</dt><dd>{formatMoney(detail.referenceAmount, detail.currency)}</dd><dt>Período tributario</dt><dd>{detail.taxPeriod}</dd><dt>Vigencia desde</dt><dd>{formatDate(detail.validFrom)}</dd><dt>Vigencia hasta</dt><dd>{formatDate(detail.validTo)}</dd><dt>Estado</dt><dd>{statusLabel(detail.status)}</dd><dt>Creado en</dt><dd>{formatDate(detail.createdAt)}</dd><dt>Actualizado en</dt><dd>{formatDate(detail.updatedAt)}</dd></dl> : null}</section> : null}
+    {selected ? <section className="detail-panel" aria-live="polite"><div className="detail-header"><h2>Detalle de calificación tributaria</h2><Button variant="ghost" onClick={closeDetail}>Cerrar</Button></div>{detailLoading ? <LoadingState /> : detailError ? <div className="view-state view-state-error" role="alert"><strong>No fue posible cargar el detalle</strong><span>{getUserFriendlyApiMessage(detailError)}</span></div> : detail ? <dl className="detail-grid">{getDetailFields(detail).map((field) => <div className="detail-item" key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl> : null}</section> : null}
   </section>;
 }
