@@ -1,5 +1,6 @@
 import type { TaxClassificationReadDto } from '../api/contracts/taxClassificationsRead';
 import type { TaxClassificationSortState, TaxClassificationUiSortKey } from '../api/contracts/taxClassificationsRead';
+import { formatIsoDateForDisplay } from '../utils/dateFormatting';
 import { Button } from './Button';
 import { StatusBadge } from './StatusBadge';
 
@@ -20,7 +21,7 @@ const sortableColumns: Array<{ key: TaxClassificationUiSortKey; label: string }>
 ];
 
 const dash = '—';
-function formatDate(value: string | null | undefined) { if (!value) return dash; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' }).format(date); }
+function formatDate(value: string | null | undefined) { return value?.trim() ? formatIsoDateForDisplay(value) : dash; }
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 6) { return value === null || value === undefined ? dash : value.toLocaleString('es-CL', { maximumFractionDigits }); }
 function formatMoney(value: number | null, currency: string) { return value === null ? dash : new Intl.NumberFormat('es-CL', { style: 'currency', currency, maximumFractionDigits: currency === 'CLP' ? 0 : 2 }).format(value); }
 function display(value: string | null | undefined) { return value?.trim() || dash; }

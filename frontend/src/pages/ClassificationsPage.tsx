@@ -12,6 +12,7 @@ import { FormField } from '../components/FormField';
 import { InlineMessage } from '../components/InlineMessage';
 import { PageHeader } from '../components/PageHeader';
 import { Pagination } from '../components/Pagination';
+import { formatIsoDateForDisplay } from '../utils/dateFormatting';
 import type { PaginationState } from '../types/classification';
 
 interface TaxClassificationReadFilters { mercado: string; ejercicio: string; estado: string; texto: string; }
@@ -23,7 +24,7 @@ function optionalFilter(value: string) { return value === 'Todos' ? undefined : 
 function selectOptions(values: Array<string | number>) { return ['Todos', ...values.map(String)]; }
 function statusLabel(status: string) { return status.toLowerCase().replace(/(^|\s|_|-)(\p{L})/gu, (_match, separator: string, letter: string) => `${separator === '_' || separator === '-' ? ' ' : separator}${letter.toUpperCase()}`); }
 function display(value: string | null | undefined) { return value?.trim() || dash; }
-function formatDate(value: string | null | undefined) { if (!value) return dash; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: value.includes('T') ? 'short' : undefined }).format(date); }
+function formatDate(value: string | null | undefined) { return value?.trim() ? formatIsoDateForDisplay(value, { includeTime: value.includes('T') }) : dash; }
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 6) { return value === null || value === undefined ? dash : value.toLocaleString('es-CL', { maximumFractionDigits }); }
 function formatMoney(value: number | null | undefined, currency: string | null | undefined) { return value === null || value === undefined ? dash : new Intl.NumberFormat('es-CL', { style: 'currency', currency: currency || 'CLP', maximumFractionDigits: currency === 'CLP' ? 0 : 2 }).format(value); }
 
@@ -63,6 +64,21 @@ export function ClassificationsPage() {
   function applyFilters(event: FormEvent) { event.preventDefault(); setAppliedFilters(draftFilters); setPagination((current) => ({ ...current, page: 1 })); setSelected(null); setDetail(null); setMessage('Filtros aplicados mediante servicio de lectura.'); }
   function clearFilters() { setDraftFilters(emptyFilters); setAppliedFilters(emptyFilters); setPagination((current) => ({ ...current, page: 1 })); setSelected(null); setDetail(null); setMessage('Filtros limpiados.'); }
   function handleSort(key: TaxClassificationUiSortKey) { setSort((current) => ({ key, direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc' })); setPagination((current) => ({ ...current, page: 1 })); }
+  async function navigateToMockWrite(pathSegment: 'editar' | 'copiar') {
+    if (!selected) {
+      setMessage('Seleccione un registro antes de continuar.');
+      return;
+    }
+
+    const { mockClassifications } = await import('../mocks/classifications');
+    const mockRecord = mockClassifications[selected.id - 1];
+    if (!mockRecord) {
+      setMessage('No fue posible resolver el identificador histórico del registro mock seleccionado.');
+      return;
+    }
+
+    navigate(`/calificaciones/${mockRecord.id}/${pathSegment}`);
+  }
   function closeDetail() { detailControllerRef.current?.abort(); setDetail(null); setDetailError(null); setDetailLoading(false); setSelected(null); setMessage('Detalle cerrado.'); }
 
   return <section className="content-card classifications-page">
@@ -78,9 +94,9 @@ export function ClassificationsPage() {
     </form>
     <div className="actions-bar" aria-label="Acciones principales">
       {canEnter ? <Button variant="primary" onClick={() => navigate('/calificaciones/nueva')}>Ingresar</Button> : null}
-      {canEdit ? <Button disabled={!selected} onClick={() => selected && navigate(`/calificaciones/${selected.id}/editar`)}>Modificar</Button> : null}
+      {canEdit ? <Button disabled={!selected} onClick={() => { void navigateToMockWrite('editar'); }}>Modificar</Button> : null}
       {canEdit ? <Button disabled={!selected} onClick={() => setMessage('La eliminación real se implementará posteriormente.')}>Eliminar</Button> : null}
-      {canEdit ? <Button disabled={!selected} onClick={() => selected && navigate(`/calificaciones/${selected.id}/copiar`)}>Copiar</Button> : null}
+      {canEdit ? <Button disabled={!selected} onClick={() => { void navigateToMockWrite('copiar'); }}>Copiar</Button> : null}
       {canMassLoad ? <Button onClick={() => navigate('/cargas/x-factor')}>Carga X Factor</Button> : null}
       {canMassLoad ? <Button onClick={() => navigate('/cargas/x-monto')}>Carga X Monto</Button> : null}
     </div>
