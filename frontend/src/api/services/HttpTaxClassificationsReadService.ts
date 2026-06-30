@@ -19,7 +19,7 @@ function parseReadItem(value: unknown): TaxClassificationReadDto {
   return { id, market, instrumentCode, instrumentName, classificationType, description, updatePercentage, appliedFactor, referenceAmount, currency, taxPeriod, validFrom, validTo, status };
 }
 
-function parseDetail(value: unknown): TaxClassificationDetailDto {
+export function parseTaxClassificationDetail(value: unknown): TaxClassificationDetailDto {
   const base = parseReadItem(value);
   if (!isRecord(value)) throw invalid('Respuesta inválida del detalle de calificación tributaria.');
   const { createdAt, updatedAt, creatorUserId } = value;
@@ -45,5 +45,5 @@ export class HttpTaxClassificationsReadService implements TaxClassificationsRead
   constructor(private readonly http: HttpClient) {}
   async list(request: TaxClassificationListRequestDto, signal?: AbortSignal) { return parseList(await this.http.get<unknown>('/tax-classifications', { query: { ...request }, signal })); }
   async getFilterOptions(signal?: AbortSignal) { return parseOptions(await this.http.get<unknown>('/tax-classifications/filter-options', { signal })); }
-  async getById(id: number, signal?: AbortSignal) { return parseDetail(await this.http.get<unknown>(`/tax-classifications/${encodeURIComponent(String(id))}`, { signal })); }
+  async getById(id: number, signal?: AbortSignal) { return parseTaxClassificationDetail(await this.http.get<unknown>(`/tax-classifications/${encodeURIComponent(String(id))}`, { signal })); }
 }
