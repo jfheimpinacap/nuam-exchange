@@ -131,12 +131,13 @@ public sealed class TaxClassificationsController(IServiceProvider services, ITax
 
     [HttpPost("bulk-loads/x-factor")]
     [Authorize(Policy = "TaxClassificationWrite")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(BulkLoadXFactorResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<IActionResult> BulkLoadXFactor([FromForm] IFormFile? file, CancellationToken cancellationToken)
+    public async Task<IActionResult> BulkLoadXFactor(IFormFile? file, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized(new { message = "No fue posible identificar al usuario autenticado." });
         var validation = await ValidateCsvFileAsync(file, "market;instrumentCode;taxPeriod;appliedFactor", cancellationToken);
@@ -148,12 +149,13 @@ public sealed class TaxClassificationsController(IServiceProvider services, ITax
 
     [HttpPost("bulk-loads/x-amount")]
     [Authorize(Policy = "TaxClassificationWrite")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(BulkLoadXAmountResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<IActionResult> BulkLoadXAmount([FromForm] IFormFile? file, CancellationToken cancellationToken)
+    public async Task<IActionResult> BulkLoadXAmount(IFormFile? file, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized(new { message = "No fue posible identificar al usuario autenticado." });
         var validation = await ValidateCsvFileAsync(file, "market;instrumentCode;taxPeriod;referenceAmount", cancellationToken);
