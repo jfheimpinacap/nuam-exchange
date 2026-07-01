@@ -222,4 +222,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .x-factor-required-header code { white-space: normal; overflow-wrap: anywhere; }
 .x-factor-upload-controls .review-summary { flex: 0 0 100%; }
 .x-factor-upload-controls .button { flex: 0 0 auto; }
+.x-factor-confirmation { width: 100%; max-width: none; }
+.x-factor-confirmation-summary { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+.x-factor-confirmation-summary div { min-width: 0; }
+.x-factor-confirmation-summary dd { font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; word-break: normal; }
+.x-factor-confirmation .filter-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 @media (max-width: 760px) { .x-factor-upload-controls { align-items: stretch; flex-direction: column; } .x-factor-required-header { min-width: 0; } .x-factor-upload-controls .button { width: 100%; } }
+@media (max-width: 900px) { .x-factor-confirmation-summary { grid-template-columns: repeat(2, minmax(180px, 1fr)); } }
+@media (max-width: 560px) { .x-factor-confirmation-summary { grid-template-columns: 1fr; } .x-factor-confirmation .filter-actions { align-items: stretch; flex-direction: column; } }
