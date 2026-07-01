@@ -109,11 +109,12 @@ export function ClassificationsPage() {
     navigate(`/calificaciones/${mockRecord.id}/${pathSegment}`);
   }
   function navigateToApiEdit() { if (!selected) { setMessage('Seleccione un registro antes de modificar.'); return; } navigate(`/calificaciones/${selected.id}/editar`); }
+  function navigateToApiCopy() { if (!selected) { setMessage('Seleccione un registro antes de copiar.'); return; } navigate(`/calificaciones/${selected.id}/copiar`); }
   function closeDetail() { detailControllerRef.current?.abort(); setDetail(null); setDetailError(null); setDetailLoading(false); setSelected(null); setMessage('Detalle cerrado.'); }
 
   return <section className="content-card classifications-page">
     <PageHeader title="Calificaciones Tributarias" description="Consulta de registros tributarios y detalle desde el servicio configurado." />
-    {isApi ? <InlineMessage message="Esta etapa integra creación y modificación reales desde la API. Eliminar, copiar y cargas masivas se integrarán posteriormente." /> : null}
+    {isApi ? <InlineMessage message="Esta etapa integra creación, modificación y copia reales desde la API. Eliminar y cargas masivas se integrarán posteriormente." /> : null}
     {!isApi ? <div className="demo-panel"><FormField id="demo-state" label="Estado de demostración"><select id="demo-state" value={demoState} onChange={(event) => setDemoState(event.target.value as DemoState)}><option>Normal</option><option>Cargando</option><option>Error</option></select></FormField><span>Control temporal para simular estados visuales sin cambiar la fuente de datos.</span></div> : null}
     <form className="filters-panel" onSubmit={applyFilters}>
       <FormField id="mercado" label="Mercado"><select id="mercado" value={draftFilters.mercado} onChange={(e) => setDraftFilters({ ...draftFilters, mercado: e.target.value })}>{selectOptions(filterOptions.markets).map((item) => <option key={item}>{item}</option>)}</select></FormField>
@@ -126,7 +127,7 @@ export function ClassificationsPage() {
       {canEnter ? <Button variant="primary" onClick={() => navigate('/calificaciones/nueva')}>Ingresar</Button> : null}
       {canEdit ? <Button disabled={!selected} onClick={() => { if (isApi) navigateToApiEdit(); else void navigateToMockWrite('editar'); }}>Modificar</Button> : null}
       {!isApi && canEdit ? <Button disabled={!selected} onClick={() => setMessage('La eliminación real se implementará posteriormente.')}>Eliminar</Button> : null}
-      {!isApi && canEdit ? <Button disabled={!selected} onClick={() => { void navigateToMockWrite('copiar'); }}>Copiar</Button> : null}
+      {canEdit ? <Button disabled={!selected} onClick={() => { if (isApi) navigateToApiCopy(); else void navigateToMockWrite('copiar'); }}>Copiar</Button> : null}
       {canMassLoad ? <Button onClick={() => navigate('/cargas/x-factor')}>Carga X Factor</Button> : null}
       {canMassLoad ? <Button onClick={() => navigate('/cargas/x-monto')}>Carga X Monto</Button> : null}
     </div>

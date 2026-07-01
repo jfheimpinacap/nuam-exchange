@@ -14,4 +14,8 @@ export class HttpTaxClassificationsWriteService implements TaxClassificationsWri
   async update(id: number, request: TaxClassificationWriteRequestDto, signal?: AbortSignal): Promise<TaxClassificationDetailDto> {
     return parseTaxClassificationDetail(await this.http.put<unknown>(`/tax-classifications/${encodeURIComponent(String(id))}`, request, { signal }));
   }
+
+  async copy(id: number, signal?: AbortSignal): Promise<TaxClassificationDetailDto> {
+    return parseTaxClassificationDetail(await this.http.post<unknown>(`/tax-classifications/${encodeURIComponent(String(id))}/copy`, undefined, { signal }));
+  }
 }

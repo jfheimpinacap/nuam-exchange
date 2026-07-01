@@ -4,4 +4,5 @@ import type { TaxClassificationWriteRequestDto } from '../contracts/taxClassific
 export interface TaxClassificationsWriteService {
   create(request: TaxClassificationWriteRequestDto, signal?: AbortSignal): Promise<TaxClassificationDetailDto>;
   update(id: number, request: TaxClassificationWriteRequestDto, signal?: AbortSignal): Promise<TaxClassificationDetailDto>;
+  copy(id: number, signal?: AbortSignal): Promise<TaxClassificationDetailDto>;
 }
