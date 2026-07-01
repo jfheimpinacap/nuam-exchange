@@ -208,3 +208,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .copy-confirmation-grid { margin-top: var(--space-4); }
 .copy-confirmation-panel { display: grid; gap: var(--space-2); margin-top: var(--space-4); border: 1px solid var(--color-warning); border-radius: var(--radius-md); background: #fff8e6; padding: var(--space-4); }
 .copy-confirmation-panel p { margin: 0; color: var(--color-text-muted); }
+.supervision-panel { display: grid; gap: var(--space-3); margin-top: var(--space-4); border: 1px solid var(--color-primary); border-radius: var(--radius-md); background: #f8fbff; padding: var(--space-4); }
+.supervision-form, .supervision-confirmation { display: grid; gap: var(--space-3); }
+.supervision-form textarea { min-height: 110px; }
+.supervision-confirmation h3 { margin: 0; color: var(--color-primary-dark); font-size: 16px; }
