@@ -20,6 +20,7 @@ import type {
   TaxClassificationSortState,
   TaxClassificationUiSortKey,
 } from "../api/contracts/taxClassificationsRead";
+import type { TaxClassificationHistoryDto } from "../api/contracts/taxClassificationsHistory";
 import type { TaxClassificationSupervisorDecisionDto } from "../api/contracts/taxClassificationsSupervision";
 import { useTaxClassificationsReadQuery } from "../api/hooks/useTaxClassificationsReadQuery";
 import { useApiServices } from "../api/context/useApiServices";
@@ -89,6 +90,15 @@ function formatDate(value: string | null | undefined) {
     ? formatIsoDateForDisplay(value, { includeTime: value.includes("T") })
     : dash;
 }
+function formatDateTimeLocal(value: string | null | undefined) {
+  if (!value?.trim()) return dash;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return dash;
+  return new Intl.DateTimeFormat("es-CL", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(parsed);
+}
 function formatNumber(
   value: number | null | undefined,
   maximumFractionDigits = 6,
@@ -146,6 +156,7 @@ export function ClassificationsPage() {
     isApi,
     taxClassificationsReadService,
     taxClassificationsSupervisionService,
+    taxClassificationsHistoryService,
   } = useApiServices();
   const [draftFilters, setDraftFilters] =
     useState<TaxClassificationReadFilters>(emptyFilters);
@@ -172,6 +183,8 @@ export function ClassificationsPage() {
   const detailRequestRef = useRef(0);
   const detailControllerRef = useRef<AbortController | null>(null);
   const supervisionControllerRef = useRef<AbortController | null>(null);
+  const historyControllerRef = useRef<AbortController | null>(null);
+  const historyRequestRef = useRef(0);
   const [isSupervisionOpen, setIsSupervisionOpen] = useState(false);
   const [supervisionStep, setSupervisionStep] =
     useState<SupervisionStep>("form");
@@ -183,6 +196,10 @@ export function ClassificationsPage() {
   const [supervisionApiError, setSupervisionApiError] =
     useState<ApiError | null>(null);
   const [supervisionSubmitting, setSupervisionSubmitting] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<TaxClassificationHistoryDto[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<ApiError | null>(null);
   const request = useMemo<TaxClassificationListRequestDto>(
     () => ({
       page: pagination.page,
@@ -214,6 +231,7 @@ export function ClassificationsPage() {
       setSelected(null);
       setDetail(null);
       closeSupervisionPanel();
+      closeHistoryPanel();
     }
   }, [data.items, selected]);
 
@@ -223,6 +241,12 @@ export function ClassificationsPage() {
     isApi &&
     user?.rol === "Supervisor" &&
     taxClassificationsSupervisionService !== null;
+  const canViewHistory =
+    isApi &&
+    taxClassificationsHistoryService !== null &&
+    (user?.rol === "Administrador" ||
+      user?.rol === "Analista Tributario" ||
+      user?.rol === "Supervisor");
   const canEdit = canWrite;
   const canEnter = canEdit;
   const canMassLoad = !isApi && Boolean(user);
@@ -243,6 +267,7 @@ export function ClassificationsPage() {
     () => () => {
       detailControllerRef.current?.abort();
       supervisionControllerRef.current?.abort();
+      historyControllerRef.current?.abort();
     },
     [],
   );
@@ -336,6 +361,73 @@ export function ClassificationsPage() {
     }
   }
 
+  function closeHistoryPanel() {
+    historyControllerRef.current?.abort();
+    historyRequestRef.current += 1;
+    setIsHistoryOpen(false);
+    setHistory([]);
+    setHistoryLoading(false);
+    setHistoryError(null);
+  }
+
+  function openHistoryPanel() {
+    if (!selected) {
+      setMessage("Seleccione un registro antes de consultar historial.");
+      return;
+    }
+    if (!taxClassificationsHistoryService) return;
+
+    historyControllerRef.current?.abort();
+    const controller = new AbortController();
+    historyControllerRef.current = controller;
+    const requestId = historyRequestRef.current + 1;
+    historyRequestRef.current = requestId;
+    setIsHistoryOpen(true);
+    setHistory([]);
+    setHistoryError(null);
+    setHistoryLoading(true);
+    setMessage(`Registro seleccionado: ${selected.id}. Consultando historial real.`);
+
+    taxClassificationsHistoryService
+      .getHistory(selected.id, controller.signal)
+      .then((value) => {
+        if (
+          !controller.signal.aborted &&
+          historyRequestRef.current === requestId
+        ) {
+          setHistory(
+            [...value].sort(
+              (left, right) =>
+                new Date(right.changedAt).getTime() -
+                new Date(left.changedAt).getTime(),
+            ),
+          );
+        }
+      })
+      .catch((err: unknown) => {
+        if (
+          !controller.signal.aborted &&
+          historyRequestRef.current === requestId
+        )
+          setHistoryError(
+            isApiError(err)
+              ? err
+              : new ApiError({
+                  code: "INVALID_RESPONSE",
+                  message: "Respuesta inválida.",
+                  cause: err,
+                }),
+          );
+      })
+      .finally(() => {
+        if (
+          !controller.signal.aborted &&
+          historyRequestRef.current === requestId
+        )
+          setHistoryLoading(false);
+      });
+  }
+
   function loadDetail(record: TaxClassificationReadDto) {
     setSelected(record);
     setMessage(
@@ -345,6 +437,7 @@ export function ClassificationsPage() {
     setDetailError(null);
     setDetailLoading(true);
     closeSupervisionPanel();
+    closeHistoryPanel();
     detailControllerRef.current?.abort();
     const controller = new AbortController();
     detailControllerRef.current = controller;
@@ -594,6 +687,11 @@ export function ClassificationsPage() {
             Validar calificación
           </Button>
         ) : null}
+        {canViewHistory ? (
+          <Button disabled={!selected} onClick={openHistoryPanel}>
+            Ver historial
+          </Button>
+        ) : null}
       </div>
       <InlineMessage
         message={`${message} Mostrando ${from}–${to} de ${data.totalCount} registros.`}
@@ -783,6 +881,77 @@ export function ClassificationsPage() {
                   Cancelar
                 </Button>
               </div>
+            </div>
+          )}
+        </section>
+      ) : null}
+      {isHistoryOpen && selected ? (
+        <section className="history-panel" aria-live="polite">
+          <div className="detail-header">
+            <h2>Historial de calificación tributaria</h2>
+            <Button variant="ghost" onClick={closeHistoryPanel}>
+              Cerrar historial
+            </Button>
+          </div>
+          <dl className="detail-grid">
+            <div className="detail-item">
+              <dt>ID</dt>
+              <dd>{selected.id}</dd>
+            </div>
+            <div className="detail-item">
+              <dt>Mercado</dt>
+              <dd>{selected.market}</dd>
+            </div>
+            <div className="detail-item">
+              <dt>Código de instrumento</dt>
+              <dd>{display(selected.instrumentCode)}</dd>
+            </div>
+            <div className="detail-item">
+              <dt>Estado actual</dt>
+              <dd>{statusLabel(selected.status)}</dd>
+            </div>
+          </dl>
+          {historyLoading ? (
+            <LoadingState />
+          ) : historyError ? (
+            <div className="view-state view-state-error" role="alert">
+              <strong>No fue posible cargar el historial</strong>
+              <span>{getUserFriendlyApiMessage(historyError)}</span>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="view-state">
+              <strong>Sin historial</strong>
+              <span>No existen eventos de historial para esta calificación tributaria.</span>
+            </div>
+          ) : (
+            <div className="table-scroll">
+              <table className="data-table history-table">
+                <caption>Eventos del historial de calificación tributaria</caption>
+                <thead>
+                  <tr>
+                    <th>Fecha y hora</th>
+                    <th>Tipo de cambio</th>
+                    <th>Campo modificado</th>
+                    <th>Valor anterior</th>
+                    <th>Valor nuevo</th>
+                    <th>Observación</th>
+                    <th>Usuario</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((event) => (
+                    <tr key={event.id}>
+                      <td>{formatDateTimeLocal(event.changedAt)}</td>
+                      <td>{display(event.changeType)}</td>
+                      <td>{display(event.modifiedField)}</td>
+                      <td>{display(event.previousValue)}</td>
+                      <td>{display(event.newValue)}</td>
+                      <td>{display(event.observation)}</td>
+                      <td>Usuario #{event.userId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </section>

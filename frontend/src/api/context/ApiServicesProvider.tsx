@@ -9,6 +9,7 @@ import { HttpTaxClassificationsReadService } from "../services/HttpTaxClassifica
 import { MockTaxClassificationsReadService } from "../services/MockTaxClassificationsReadService";
 import { HttpTaxClassificationsWriteService } from "../services/HttpTaxClassificationsWriteService";
 import { HttpTaxClassificationsSupervisionService } from "../services/HttpTaxClassificationsSupervisionService";
+import { HttpTaxClassificationsHistoryService } from "../services/HttpTaxClassificationsHistoryService";
 import { ApiServicesContext } from "./ApiServicesContext";
 
 export function ApiServicesProvider({ children }: { children: ReactNode }) {
@@ -31,6 +32,9 @@ export function ApiServicesProvider({ children }: { children: ReactNode }) {
     const taxClassificationsSupervisionService = apiConfig.isApi
       ? new HttpTaxClassificationsSupervisionService(http)
       : null;
+    const taxClassificationsHistoryService = apiConfig.isApi
+      ? new HttpTaxClassificationsHistoryService(http)
+      : null;
 
     return {
       dataSource: apiConfig.dataSource,
@@ -38,6 +42,7 @@ export function ApiServicesProvider({ children }: { children: ReactNode }) {
       taxClassificationsReadService,
       taxClassificationsWriteService,
       taxClassificationsSupervisionService,
+      taxClassificationsHistoryService,
       authService,
       apiBaseUrl: apiConfig.baseUrl,
       isMock: apiConfig.isMock,
