@@ -5,6 +5,7 @@ import type { TaxClassificationsReadService } from "../services/TaxClassificatio
 import type { TaxClassificationsWriteService } from "../services/TaxClassificationsWriteService";
 import type { TaxClassificationsSupervisionService } from "../services/TaxClassificationsSupervisionService";
 import type { TaxClassificationsHistoryService } from "../services/TaxClassificationsHistoryService";
+import type { TaxClassificationsBulkLoadService } from "../services/TaxClassificationsBulkLoadService";
 
 export interface ApiServicesContextValue {
   dataSource: "mock" | "api";
@@ -13,6 +14,7 @@ export interface ApiServicesContextValue {
   taxClassificationsWriteService: TaxClassificationsWriteService | null;
   taxClassificationsSupervisionService: TaxClassificationsSupervisionService | null;
   taxClassificationsHistoryService: TaxClassificationsHistoryService | null;
+  taxClassificationsBulkLoadService: TaxClassificationsBulkLoadService | null;
   authService: AuthService;
   apiBaseUrl: string;
   isMock: boolean;
