@@ -212,3 +212,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .supervision-form, .supervision-confirmation { display: grid; gap: var(--space-3); }
 .supervision-form textarea { min-height: 110px; }
 .supervision-confirmation h3 { margin: 0; color: var(--color-primary-dark); font-size: 16px; }
+.history-panel { display: grid; gap: var(--space-3); margin-top: var(--space-4); border: 1px solid var(--color-primary); border-radius: var(--radius-md); background: #f8fbff; padding: var(--space-4); }
+.history-table { min-width: 1040px; }
+.history-table td { overflow-wrap: anywhere; }
