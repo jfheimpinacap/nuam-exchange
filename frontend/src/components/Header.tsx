@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../app/session/useSession';
+import { useApiServices } from '../api/context/useApiServices';
 
 interface HeaderProps {
   isCollapsed: boolean;
@@ -10,6 +11,7 @@ interface HeaderProps {
 export function Header({ isCollapsed, onToggleSidebar, onToggleMobile }: HeaderProps) {
   const navigate = useNavigate();
   const { logout, user } = useSession();
+  const { isApi } = useApiServices();
 
   const handleLogout = () => {
     logout();
@@ -27,7 +29,7 @@ export function Header({ isCollapsed, onToggleSidebar, onToggleMobile }: HeaderP
         </button>
         <div>
           <strong>Nuam Exchange</strong>
-          <span>Sistema de Gestión Tributaria</span><span className="demo-chip">Modo demostración</span>
+          <span>Sistema de Gestión Tributaria</span><span className="demo-chip">{isApi ? 'Modo API' : 'Modo demostración'}</span>
         </div>
       </div>
       <div className="user-area">
