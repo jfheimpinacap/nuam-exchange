@@ -215,18 +215,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .history-panel { display: grid; gap: var(--space-3); margin-top: var(--space-4); border: 1px solid var(--color-primary); border-radius: var(--radius-md); background: #f8fbff; padding: var(--space-4); }
 .history-table { min-width: 1040px; }
 .history-table td { overflow-wrap: anywhere; }
-.x-factor-upload-controls { display: flex; align-items: end; flex-wrap: wrap; }
-.x-factor-upload-controls label { flex: 0 0 100%; }
-.x-factor-upload-controls input[type="file"] { flex: 1 1 220px; min-width: 0; }
-.x-factor-required-header { flex: 1 1 360px; min-width: min(100%, 360px); margin: 0; overflow-wrap: anywhere; }
-.x-factor-required-header code { white-space: normal; overflow-wrap: anywhere; }
-.x-factor-upload-controls .review-summary { flex: 0 0 100%; }
-.x-factor-upload-controls .button { flex: 0 0 auto; }
-.x-factor-confirmation { width: 100%; max-width: none; }
-.x-factor-confirmation-summary { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
-.x-factor-confirmation-summary div { min-width: 0; }
-.x-factor-confirmation-summary dd { font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; word-break: normal; }
-.x-factor-confirmation .filter-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
-@media (max-width: 760px) { .x-factor-upload-controls { align-items: stretch; flex-direction: column; } .x-factor-required-header { min-width: 0; } .x-factor-upload-controls .button { width: 100%; } }
-@media (max-width: 900px) { .x-factor-confirmation-summary { grid-template-columns: repeat(2, minmax(180px, 1fr)); } }
-@media (max-width: 560px) { .x-factor-confirmation-summary { grid-template-columns: 1fr; } .x-factor-confirmation .filter-actions { align-items: stretch; flex-direction: column; } }
+.x-factor-upload-controls, .x-amount-upload-controls { display: flex; align-items: end; flex-wrap: wrap; }
+.x-factor-upload-controls label, .x-amount-upload-controls label { flex: 0 0 100%; }
+.x-factor-upload-controls input[type="file"], .x-amount-upload-controls input[type="file"] { flex: 1 1 220px; min-width: 0; }
+.x-factor-required-header, .x-amount-required-header { flex: 1 1 360px; min-width: min(100%, 360px); margin: 0; overflow-wrap: anywhere; }
+.x-factor-required-header code, .x-amount-required-header code { white-space: normal; overflow-wrap: anywhere; }
+.x-factor-upload-controls .review-summary, .x-amount-upload-controls .review-summary { flex: 0 0 100%; }
+.x-factor-upload-controls .button, .x-amount-upload-controls .button { flex: 0 0 auto; }
+.x-factor-confirmation, .x-amount-confirmation { width: 100%; max-width: none; }
+.x-factor-confirmation-summary, .x-amount-confirmation-summary { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+.x-factor-confirmation-summary div, .x-amount-confirmation-summary div { min-width: 0; }
+.x-factor-confirmation-summary dd, .x-amount-confirmation-summary dd { font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; word-break: normal; }
+.x-factor-confirmation .filter-actions, .x-amount-confirmation .filter-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+@media (max-width: 760px) { .x-factor-upload-controls, .x-amount-upload-controls { align-items: stretch; flex-direction: column; } .x-factor-required-header, .x-amount-required-header { min-width: 0; } .x-factor-upload-controls .button, .x-amount-upload-controls .button { width: 100%; } }
+@media (max-width: 900px) { .x-factor-confirmation-summary, .x-amount-confirmation-summary { grid-template-columns: repeat(2, minmax(180px, 1fr)); } }
+@media (max-width: 560px) { .x-factor-confirmation-summary, .x-amount-confirmation-summary { grid-template-columns: 1fr; } .x-factor-confirmation .filter-actions, .x-amount-confirmation .filter-actions { align-items: stretch; flex-direction: column; } }
