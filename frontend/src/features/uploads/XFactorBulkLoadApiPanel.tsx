@@ -128,9 +128,9 @@ export function XFactorBulkLoadApiPanel({ role, service }: { role: UserRole | un
       {file ? <dl className="review-summary"><div><dt>Nombre</dt><dd>{file.name}</dd></div><div><dt>Tamaño</dt><dd>{formatBytes(file.size)}</dd></div></dl> : null}
       <Button type="button" variant="primary" onClick={validateAndContinue}>Continuar a confirmación</Button>
     </div> : null}
-    {stage === 'confirmation' || stage === 'submitting' ? <div className="confirm-dialog inline-confirmation">
+    {stage === 'confirmation' || stage === 'submitting' ? <div className="confirm-dialog inline-confirmation x-factor-confirmation">
       <h2>Archivo seleccionado</h2>
-      <dl className="review-summary"><div><dt>Nombre</dt><dd>{file?.name}</dd></div><div><dt>Tamaño</dt><dd>{file ? formatBytes(file.size) : ''}</dd></div><div><dt>Encabezado validado</dt><dd>{REQUIRED_HEADER}</dd></div></dl>
+      <dl className="review-summary x-factor-confirmation-summary"><div><dt>Nombre</dt><dd>{file?.name}</dd></div><div><dt>Tamaño</dt><dd>{file ? formatBytes(file.size) : ''}</dd></div><div><dt>Encabezado validado</dt><dd>{REQUIRED_HEADER}</dd></div></dl>
       <InlineMessage tone="warning" message="Esta acción procesará el archivo y puede modificar calificaciones tributarias existentes." />
       {stage === 'submitting' ? <div className="view-state"><div className="spinner" />Procesando carga...</div> : null}
       <div className="filter-actions"><Button type="button" variant="primary" onClick={submit} disabled={stage === 'submitting'}>Confirmar carga X Factor</Button><Button type="button" onClick={() => setStage('selection')} disabled={stage === 'submitting'}>Volver</Button><Button type="button" onClick={reset} disabled={stage === 'submitting'}>Cancelar</Button></div>
