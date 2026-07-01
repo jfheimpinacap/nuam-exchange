@@ -121,10 +121,10 @@ export function XFactorBulkLoadApiPanel({ role, service }: { role: UserRole | un
     <InlineMessage tone="warning" message="Esta carga modificará datos reales de calificaciones tributarias existentes." />
     {error ? <InlineMessage tone="error" message={error} /> : null}
     {success ? <InlineMessage tone="success" message={success} /> : null}
-    {stage === 'selection' ? <div className="filters-panel">
+    {stage === 'selection' ? <div className="filters-panel x-factor-upload-controls">
       <label htmlFor="x-factor-file">Archivo CSV</label>
       <input id="x-factor-file" ref={inputRef} type="file" accept=".csv" onChange={onFileChange} />
-      <p>Encabezado requerido: <code>{REQUIRED_HEADER}</code></p>
+      <p className="x-factor-required-header">Encabezado requerido: <code>{REQUIRED_HEADER}</code></p>
       {file ? <dl className="review-summary"><div><dt>Nombre</dt><dd>{file.name}</dd></div><div><dt>Tamaño</dt><dd>{formatBytes(file.size)}</dd></div></dl> : null}
       <Button type="button" variant="primary" onClick={validateAndContinue}>Continuar a confirmación</Button>
     </div> : null}

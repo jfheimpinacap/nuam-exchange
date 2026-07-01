@@ -215,3 +215,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .history-panel { display: grid; gap: var(--space-3); margin-top: var(--space-4); border: 1px solid var(--color-primary); border-radius: var(--radius-md); background: #f8fbff; padding: var(--space-4); }
 .history-table { min-width: 1040px; }
 .history-table td { overflow-wrap: anywhere; }
+.x-factor-upload-controls { display: flex; align-items: end; flex-wrap: wrap; }
+.x-factor-upload-controls label { flex: 0 0 100%; }
+.x-factor-upload-controls input[type="file"] { flex: 1 1 220px; min-width: 0; }
+.x-factor-required-header { flex: 1 1 360px; min-width: min(100%, 360px); margin: 0; overflow-wrap: anywhere; }
+.x-factor-required-header code { white-space: normal; overflow-wrap: anywhere; }
+.x-factor-upload-controls .review-summary { flex: 0 0 100%; }
+.x-factor-upload-controls .button { flex: 0 0 auto; }
+@media (max-width: 760px) { .x-factor-upload-controls { align-items: stretch; flex-direction: column; } .x-factor-required-header { min-width: 0; } .x-factor-upload-controls .button { width: 100%; } }
