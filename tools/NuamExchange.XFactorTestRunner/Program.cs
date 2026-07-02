@@ -11,7 +11,8 @@ if (args.Length == 0 || IsHelp(args[0]))
 string command = args[0];
 if (!string.Equals(command, "preflight", StringComparison.OrdinalIgnoreCase) &&
     !string.Equals(command, "inspect", StringComparison.OrdinalIgnoreCase) &&
-    !string.Equals(command, "run", StringComparison.OrdinalIgnoreCase))
+    !string.Equals(command, "run", StringComparison.OrdinalIgnoreCase) &&
+    !string.Equals(command, "candidates", StringComparison.OrdinalIgnoreCase))
 {
     Console.Error.WriteLine("Comando no reconocido.");
     PrintHelp();
@@ -26,12 +27,19 @@ if (args.Skip(1).Any(IsHelp))
 
 try
 {
-    RunnerOptions options = ParseOptions(args.Skip(1).ToArray(), command);
+    object parsedOptions = ParseOptions(args.Skip(1).ToArray(), command);
+    if (string.Equals(command, "candidates", StringComparison.OrdinalIgnoreCase))
+    {
+        return await new CandidatesRunner((CandidatesOptions)parsedOptions).RunAsync();
+    }
+
+    RunnerOptions options = (RunnerOptions)parsedOptions;
     if (string.Equals(command, "preflight", StringComparison.OrdinalIgnoreCase))
     {
         PrintPreflightSummary(options);
         return 0;
     }
+
 
     if (string.Equals(command, "run", StringComparison.OrdinalIgnoreCase))
     {
@@ -48,7 +56,7 @@ catch (ArgumentException ex)
     return 1;
 }
 
-static RunnerOptions ParseOptions(string[] args, string command)
+static object ParseOptions(string[] args, string command)
 {
     string? apiBaseUrl = null;
     string? recordId = null;
@@ -57,6 +65,7 @@ static RunnerOptions ParseOptions(string[] args, string command)
     string? expectedInstrumentCode = null;
     string? expectedTaxPeriod = null;
     bool confirmWrite = false;
+    string? limit = null;
 
     for (int index = 0; index < args.Length; index++)
     {
@@ -83,6 +92,9 @@ static RunnerOptions ParseOptions(string[] args, string command)
             case "--expected-tax-period":
                 expectedTaxPeriod = value;
                 break;
+            case "--limit":
+                limit = value;
+                break;
             case "--confirm-write":
                 confirmWrite = true;
                 break;
@@ -92,8 +104,18 @@ static RunnerOptions ParseOptions(string[] args, string command)
     }
 
     Uri uri = LocalExecutionGuard.ValidateLocalApiBaseUrl(apiBaseUrl);
-    int parsedRecordId = LocalExecutionGuard.ValidateRecordId(recordId);
+    int parsedRecordId = string.Equals(command, "candidates", StringComparison.OrdinalIgnoreCase) ? 0 : LocalExecutionGuard.ValidateRecordId(recordId);
     string outputPath = ArtifactPathResolver.Resolve(outputDirectory, Directory.GetCurrentDirectory());
+
+    if (string.Equals(command, "candidates", StringComparison.OrdinalIgnoreCase))
+    {
+        if (!int.TryParse(limit ?? "20", out int parsedLimit) || parsedLimit < 1) throw new ArgumentException("El argumento --limit debe ser entero mayor que cero.");
+        if (recordId is not null || expectedMarket is not null || expectedInstrumentCode is not null || expectedTaxPeriod is not null || confirmWrite)
+        {
+            throw new ArgumentException("candidates solo acepta --api-base-url, --limit y --output-dir.");
+        }
+        return new CandidatesOptions(uri, parsedLimit, outputPath);
+    }
 
     if (string.Equals(command, "run", StringComparison.OrdinalIgnoreCase))
     {
@@ -102,6 +124,8 @@ static RunnerOptions ParseOptions(string[] args, string command)
         if (!int.TryParse(expectedTaxPeriod, out int parsedExpectedTaxPeriod)) throw new ArgumentException("El argumento --expected-tax-period es obligatorio y debe ser entero para run.");
         return new RunOptions(uri, parsedRecordId, outputPath, expectedMarket, expectedInstrumentCode, parsedExpectedTaxPeriod, confirmWrite);
     }
+
+    if (limit is not null) throw new ArgumentException("El argumento --limit solo aplica al comando candidates.");
 
     if (expectedMarket is not null || expectedInstrumentCode is not null || expectedTaxPeriod is not null || confirmWrite)
     {
@@ -151,16 +175,19 @@ static void PrintHelp()
     Console.WriteLine("  dotnet run --project ./tools/NuamExchange.XFactorTestRunner/NuamExchange.XFactorTestRunner.csproj -- preflight --api-base-url http://localhost:5000 --record-id 123");
     Console.WriteLine("  dotnet run --project ./tools/NuamExchange.XFactorTestRunner/NuamExchange.XFactorTestRunner.csproj -- inspect --api-base-url http://localhost:5000 --record-id 123");
     Console.WriteLine("  dotnet run --project ./tools/NuamExchange.XFactorTestRunner/NuamExchange.XFactorTestRunner.csproj -- run --api-base-url http://localhost:5000 --record-id 123 --expected-market BOLSA --expected-instrument-code NUEX-PRUEBA --expected-tax-period 2026 --confirm-write");
+    Console.WriteLine("  dotnet run --project ./tools/NuamExchange.XFactorTestRunner/NuamExchange.XFactorTestRunner.csproj -- candidates --api-base-url http://localhost:5000 --limit 20");
     Console.WriteLine();
     Console.WriteLine("Comandos:");
     Console.WriteLine("  preflight                  Valida configuración local sin ejecutar llamadas HTTP.");
     Console.WriteLine("  inspect                    Autentica contra API local, consulta usuario y registro, y genera evidencia externa sin modificar datos.");
     Console.WriteLine("  run                        Ejecuta XF-01 a XF-09, consulta trazabilidad y restaura AppliedFactor.");
+    Console.WriteLine("  candidates                 Lista candidatos locales elegibles con identidad única sin modificar datos.");
     Console.WriteLine();
     Console.WriteLine("Argumentos:");
     Console.WriteLine("  --api-base-url <url>       Obligatorio. URL absoluta HTTP/HTTPS local.");
-    Console.WriteLine("  --record-id <int>          Obligatorio. Entero mayor que cero.");
+    Console.WriteLine("  --record-id <int>          Obligatorio para preflight, inspect y run. Entero mayor que cero.");
     Console.WriteLine("  --output-dir <path>        Opcional. Carpeta externa para evidencias futuras.");
+    Console.WriteLine("  --limit <int>              Opcional para candidates. Default 20.");
     Console.WriteLine("  --expected-market <texto>  Obligatorio para run. Mercado esperado exacto.");
     Console.WriteLine("  --expected-instrument-code <texto> Obligatorio para run. Código esperado exacto.");
     Console.WriteLine("  --expected-tax-period <int> Obligatorio para run. Período esperado exacto.");

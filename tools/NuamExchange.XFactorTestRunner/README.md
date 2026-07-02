@@ -113,3 +113,39 @@ La restauración se ejecuta en `finally` si pudo existir una modificación real 
 ## Seguridad
 
 El cliente HTTP desactiva redirecciones automáticas. El runner solo acepta credenciales desde `NUAM_XFACTOR_TEST_EMAIL` y `NUAM_XFACTOR_TEST_PASSWORD`; no acepta correo, contraseña ni token por argumentos. No crea ni elimina calificaciones y no llama rutas de creación, edición, copia, validación supervisora ni X Amount.
+
+## Candidatos elegibles para X Factor
+
+Use `candidates` para buscar registros locales seguros antes de elegir manualmente un `recordId`:
+
+```powershell
+$env:NUAM_XFACTOR_TEST_EMAIL = "usuario.local@example.com"
+$env:NUAM_XFACTOR_TEST_PASSWORD = "contraseña-local"
+dotnet run --project .\tools\NuamExchange.XFactorTestRunner\NuamExchange.XFactorTestRunner.csproj -- `
+  candidates `
+  --api-base-url http://localhost:5000 `
+  --limit 20
+```
+
+El comando autentica contra la API local, valida rol `Administrador` o `Analista Tributario`, lee todas las páginas de `GET /api/tax-classifications` con `page` y `pageSize`, agrupa por la identidad lógica `market + instrumentCode + taxPeriod` y muestra/exporta solo registros con `id`, `market`, `instrumentCode`, `taxPeriod` y `appliedFactor` válidos cuya identidad aparece exactamente una vez. No selecciona registros automáticamente, no invoca endpoints de carga y no modifica datos.
+
+Las evidencias externas se crean fuera del repositorio, por defecto bajo el Escritorio en `NuamExchangeTestRuns`, e incluyen `candidate-summary.md`, `eligible-x-factor-candidates.csv`, `results.json` y `execution.log`. El CSV contiene únicamente `id`, `market`, `instrumentCode`, `taxPeriod`, `appliedFactor` y `status`.
+
+## Identidad única y AMBIGUOUS_MATCH
+
+Para X Factor, el backend identifica el registro objetivo por `market + instrumentCode + taxPeriod`. Si más de una calificación comparte esa combinación, una carga puede devolver `AMBIGUOUS_MATCH`: significa que el backend no puede determinar un único registro local para actualizar de manera segura.
+
+`inspect` ahora consulta también la colección paginada, genera `identity-matches.json` con campos sanitizados y termina con código distinto de cero cuando la identidad no es única. En ese caso se debe elegir otro ID mediante `candidates` antes de ejecutar `run`.
+
+`run` valida la precondición antes de crear CSV o llamar `POST /api/tax-classifications/bulk-loads/x-factor`. Si la identidad no es única, registra `RUN-PRECONDITION | Identidad única requerida | FAIL`, marca XF-01 a XF-09 y RESTORE como `NOT_EXECUTED`, conserva evidencia externa de precondición y sale con código distinto de cero sin escribir datos.
+
+## Estados de matriz y restauración
+
+- `FAIL`: el caso se ejecutó o la precondición se evaluó y el resultado no cumplió lo esperado.
+- `NOT_EXECUTED`: el caso no se ejecutó por una razón segura, por ejemplo una precondición fallida antes de escribir.
+- Restauración no requerida: no hubo modificación exitosa confirmada. El runner no llama la carga de restauración; consulta el estado final y no marca fallo si el factor final y los campos de negocio permanecen en baseline.
+- Restauración crítica: solo aplica cuando una carga X Factor exitosa modificó realmente el `AppliedFactor` del `recordId`. En ese caso el runner intenta `RESTORE-factor-original.csv` en `finally` y falla si no vuelve al baseline.
+
+## Codificación de reportes
+
+Los reportes legibles en Windows PowerShell (`run-summary.md`, `candidate-summary.md`, `execution.log` y `test-matrix.csv`) se escriben en UTF-8 con BOM para evitar texto corrupto en palabras como `Propósito`, `Restauración` y `Ejecución`. Los archivos JSON se mantienen en UTF-8 estándar.

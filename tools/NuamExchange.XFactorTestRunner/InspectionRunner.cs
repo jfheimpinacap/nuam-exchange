@@ -22,6 +22,7 @@ internal sealed class InspectionRunner(RunnerOptions options)
         JsonObject? baseline = null;
         JsonObject? authenticatedUser = null;
         string? authorizedRole = null;
+        IReadOnlyList<JsonObject> identityMatches = Array.Empty<JsonObject>();
 
         try
         {
@@ -53,15 +54,30 @@ internal sealed class InspectionRunner(RunnerOptions options)
             ValidateBaseline(baseline);
             AddStep("tax-classification", true, "Registro de prueba consultado sin cambios.");
 
+            IReadOnlyList<JsonObject> records = await TaxClassificationHelpers.GetAllTaxClassificationsAsync(client, cancellationToken);
+            identityMatches = TaxClassificationHelpers.FindIdentityMatches(records, baseline);
+            await File.WriteAllTextAsync(Path.Combine(runDirectory, "identity-matches.json"), JsonSerializer.Serialize(identityMatches, JsonOptions), cancellationToken);
+            bool uniqueIdentity = identityMatches.Count == 1 && identityMatches[0]["id"]?.GetValue<int>() == options.RecordId;
+            AddStep("unique-identity", uniqueIdentity, uniqueIdentity ? "Identidad lógica única." : $"Identidad lógica no única: {identityMatches.Count} coincidencias.");
+
             Console.WriteLine("API local validada");
             Console.WriteLine("Usuario autenticado: rol autorizado");
             Console.WriteLine($"Registro de prueba: {baseline["id"]}");
             Console.WriteLine($"Identidad: {baseline["market"]} / {baseline["instrumentCode"]} / {baseline["taxPeriod"]}");
             Console.WriteLine($"AppliedFactor inicial: {baseline["appliedFactor"]}");
+            if (uniqueIdentity)
+            {
+                Console.WriteLine("Identidad única: registro elegible para X Factor.");
+            }
+            else
+            {
+                Console.WriteLine($"Identidad no única: se encontraron {identityMatches.Count} registros con la misma combinación market + instrumentCode + taxPeriod.");
+                Console.WriteLine("No ejecute run con este registro.");
+            }
             Console.WriteLine("Estado: inspección preparada sin cambios de datos");
 
-            await WriteArtifactsAsync(runDirectory, runId, startedAt, DateTime.UtcNow, true, baseline, authenticatedUser, authorizedRole, cancellationToken);
-            return 0;
+            await WriteArtifactsAsync(runDirectory, runId, startedAt, DateTime.UtcNow, uniqueIdentity, baseline, authenticatedUser, authorizedRole, cancellationToken);
+            return uniqueIdentity ? 0 : 1;
         }
         catch (SafeFailureException ex)
         {
@@ -176,11 +192,11 @@ internal sealed class InspectionRunner(RunnerOptions options)
     {
         var results = new JsonObject { ["runId"] = runId, ["startedAt"] = startedAt, ["finishedAt"] = finishedAt, ["command"] = "inspect", ["apiBaseUrl"] = options.ApiBaseUrl.ToString(), ["recordId"] = options.RecordId, ["success"] = success, ["steps"] = JsonSerializer.SerializeToNode(steps, JsonOptions), ["errors"] = JsonSerializer.SerializeToNode(errors, JsonOptions) };
         await File.WriteAllTextAsync(Path.Combine(runDirectory, "results.json"), results.ToJsonString(JsonOptions), cancellationToken);
-        await File.WriteAllTextAsync(Path.Combine(runDirectory, "execution.log"), string.Join(Environment.NewLine, logLines), cancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(runDirectory, "execution.log"), string.Join(Environment.NewLine, logLines), TaxClassificationHelpers.Utf8Bom, cancellationToken);
         await File.WriteAllTextAsync(Path.Combine(runDirectory, "baseline-tax-classification.json"), (baseline ?? new JsonObject()).ToJsonString(JsonOptions), cancellationToken);
         await File.WriteAllTextAsync(Path.Combine(runDirectory, "authenticated-user.json"), (user ?? new JsonObject()).ToJsonString(JsonOptions), cancellationToken);
         string summary = $"# X Factor inspect\n\n- Objetivo: preparar inspección segura de un registro X Factor sin cambios de datos.\n- API local utilizada: {options.ApiBaseUrl}\n- Registro de prueba: {options.RecordId}\n- Resultado de login: {(success || user is not null ? "exitoso sin exponer secretos" : "no completado")}\n- Rol autorizado detectado: {(role is not null && AllowedRoles.Contains(role) ? role : "no autorizado/no disponible")}\n- Identidad y AppliedFactor inicial: {(baseline is not null ? $"{baseline["market"]} / {baseline["instrumentCode"]} / {baseline["taxPeriod"]}; AppliedFactor {baseline["appliedFactor"]}" : "no disponible")}\n- Ubicación de evidencias: {runDirectory}\n- Confirmación: no se ejecutaron cargas CSV ni cambios de datos.\n";
-        await File.WriteAllTextAsync(Path.Combine(runDirectory, "run-summary.md"), summary, cancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(runDirectory, "run-summary.md"), summary, TaxClassificationHelpers.Utf8Bom, cancellationToken);
     }
 
     private void AddStep(string name, bool success, string message) { steps.Add(new { name, success, message, at = DateTime.UtcNow }); Log($"{name}: {message}"); }
