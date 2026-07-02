@@ -7,7 +7,7 @@ internal static class ArtifactPathResolver
     public static string Resolve(string? outputDirectory, string repositoryRoot)
     {
         string requestedPath = string.IsNullOrWhiteSpace(outputDirectory)
-            ? Path.Combine(GetDocumentsDirectory(), DefaultDirectoryName)
+            ? Path.Combine(GetDesktopOrSafeDirectory(repositoryRoot), DefaultDirectoryName)
             : outputDirectory;
 
         string fullPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(requestedPath));
@@ -22,19 +22,27 @@ internal static class ArtifactPathResolver
         return fullPath;
     }
 
-    private static string GetDocumentsDirectory()
+    private static string GetDesktopOrSafeDirectory(string repositoryRoot)
     {
-        string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
 
-        if (string.IsNullOrWhiteSpace(documents))
+        if (!string.IsNullOrWhiteSpace(desktop) &&
+            !IsInsideRepository(Path.GetFullPath(desktop), Path.GetFullPath(repositoryRoot)))
         {
-            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            documents = string.IsNullOrWhiteSpace(profile)
-                ? Environment.CurrentDirectory
-                : Path.Combine(profile, "Documents");
+            return desktop;
         }
 
-        return documents;
+        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string fallback = string.IsNullOrWhiteSpace(profile)
+            ? Path.Combine(Path.GetTempPath(), "NuamExchangeExternalArtifacts")
+            : Path.Combine(profile, ".nuam-exchange-test-runs");
+
+        if (IsInsideRepository(Path.GetFullPath(fallback), Path.GetFullPath(repositoryRoot)))
+        {
+            fallback = Path.Combine(Path.GetTempPath(), "NuamExchangeExternalArtifacts");
+        }
+
+        return fallback;
     }
 
     private static bool IsInsideRepository(string candidatePath, string repositoryRoot)
