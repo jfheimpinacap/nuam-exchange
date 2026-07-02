@@ -204,7 +204,7 @@ internal sealed class RunRunner(RunOptions options)
         await Csv("XF-05-factor-invalido.csv", [$"{options.ExpectedMarket};{options.ExpectedInstrumentCode};{options.ExpectedTaxPeriod};texto-invalido"], ct);
         await Csv("XF-06-no-encontrado.csv", [$"{options.ExpectedMarket};{no};{options.ExpectedTaxPeriod};{f[0].ToString(CultureInfo.InvariantCulture)}"], ct);
         await Csv("XF-07-duplicado.csv", [Row(f[1]), Row(9.87654321m)], ct);
-        await Csv("XF-08-mixto.csv", [Row(f[2]), $"{options.ExpectedMarket};{no}-MIXTO;{options.ExpectedTaxPeriod};{f[0].ToString(CultureInfo.InvariantCulture)}", $"{options.ExpectedMarket};{options.ExpectedInstrumentCode};{options.ExpectedTaxPeriod};texto-invalido"], ct);
+        await Csv("XF-08-mixto.csv", [$"{options.ExpectedMarket};{options.ExpectedInstrumentCode};{options.ExpectedTaxPeriod};texto-invalido", $"{options.ExpectedMarket};{no}-MIXTO;{options.ExpectedTaxPeriod};{f[2].ToString(CultureInfo.InvariantCulture)}", Row(f[2])], ct);
         await Csv("RESTORE-factor-original.csv", [Row(GetDecimal(baseline!,"appliedFactor")!.Value)], ct);
     }
     private string Row(decimal f) => $"{options.ExpectedMarket};{options.ExpectedInstrumentCode};{options.ExpectedTaxPeriod};{DecimalText(f)}";
