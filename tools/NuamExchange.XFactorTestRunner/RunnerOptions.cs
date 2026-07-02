@@ -1,6 +1,6 @@
 namespace NuamExchange.XFactorTestRunner;
 
-internal sealed record RunnerOptions(
+internal record RunnerOptions(
     Uri ApiBaseUrl,
     int RecordId,
     string OutputDirectory);
