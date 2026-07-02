@@ -8,7 +8,9 @@ if (args.Length == 0 || IsHelp(args[0]))
     return 0;
 }
 
-if (!string.Equals(args[0], "preflight", StringComparison.OrdinalIgnoreCase))
+string command = args[0];
+if (!string.Equals(command, "preflight", StringComparison.OrdinalIgnoreCase) &&
+    !string.Equals(command, "inspect", StringComparison.OrdinalIgnoreCase))
 {
     Console.Error.WriteLine("Comando no reconocido.");
     PrintHelp();
@@ -23,9 +25,14 @@ if (args.Skip(1).Any(IsHelp))
 
 try
 {
-    RunnerOptions options = ParsePreflightOptions(args.Skip(1).ToArray());
-    PrintPreflightSummary(options);
-    return 0;
+    RunnerOptions options = ParseOptions(args.Skip(1).ToArray());
+    if (string.Equals(command, "preflight", StringComparison.OrdinalIgnoreCase))
+    {
+        PrintPreflightSummary(options);
+        return 0;
+    }
+
+    return await new InspectionRunner(options).RunAsync();
 }
 catch (ArgumentException ex)
 {
@@ -35,7 +42,7 @@ catch (ArgumentException ex)
     return 1;
 }
 
-static RunnerOptions ParsePreflightOptions(string[] args)
+static RunnerOptions ParseOptions(string[] args)
 {
     string? apiBaseUrl = null;
     string? recordId = null;
@@ -107,9 +114,11 @@ static void PrintHelp()
     Console.WriteLine();
     Console.WriteLine("Uso:");
     Console.WriteLine("  dotnet run --project ./tools/NuamExchange.XFactorTestRunner/NuamExchange.XFactorTestRunner.csproj -- preflight --api-base-url http://localhost:5000 --record-id 123");
+    Console.WriteLine("  dotnet run --project ./tools/NuamExchange.XFactorTestRunner/NuamExchange.XFactorTestRunner.csproj -- inspect --api-base-url http://localhost:5000 --record-id 123");
     Console.WriteLine();
     Console.WriteLine("Comandos:");
     Console.WriteLine("  preflight                  Valida configuración local sin ejecutar llamadas HTTP.");
+    Console.WriteLine("  inspect                    Autentica contra API local, consulta usuario y registro, y genera evidencia externa sin modificar datos.");
     Console.WriteLine();
     Console.WriteLine("Argumentos:");
     Console.WriteLine("  --api-base-url <url>       Obligatorio. URL absoluta HTTP/HTTPS local.");
@@ -118,5 +127,6 @@ static void PrintHelp()
     Console.WriteLine("  --help                     Muestra esta ayuda y ejemplos.");
     Console.WriteLine();
     Console.WriteLine("Hosts permitidos: localhost, 127.0.0.1, ::1.");
-    Console.WriteLine("C001 no ejecuta pruebas reales, no modifica datos y no solicita credenciales.");
+    Console.WriteLine("preflight no ejecuta llamadas HTTP, no modifica datos y no solicita credenciales.");
+    Console.WriteLine("inspect lee credenciales solo desde NUAM_XFACTOR_TEST_EMAIL y NUAM_XFACTOR_TEST_PASSWORD.");
 }
