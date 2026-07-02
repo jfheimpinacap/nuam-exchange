@@ -21,6 +21,7 @@ internal sealed class RunRunner(RunOptions options)
     private JsonObject? baseline;
     private bool mayNeedRestore;
     private bool restorationOk;
+    private bool noModificationRestoreNotRequired;
     private string baselineFactor = string.Empty;
 
     public async Task<int> RunAsync(CancellationToken cancellationToken = default)
@@ -60,15 +61,28 @@ internal sealed class RunRunner(RunOptions options)
             await WriteJsonAsync("baseline-tax-classification.json", baseline, cancellationToken);
             ValidateIdentityAndFactor(baseline);
             baselineFactor = DecimalText(GetDecimal(baseline, "appliedFactor")!.Value);
+            IReadOnlyList<JsonObject> records = await TaxClassificationHelpers.GetAllTaxClassificationsAsync(client, cancellationToken);
+            IReadOnlyList<JsonObject> identityMatches = TaxClassificationHelpers.FindIdentityMatches(records, baseline);
+            await WriteJsonAsync("run-precondition-identity-matches.json", JsonSerializer.SerializeToNode(identityMatches, JsonOptions) ?? new JsonArray(), cancellationToken);
+            bool uniqueIdentity = identityMatches.Count == 1 && identityMatches[0]["id"]?.GetValue<int>() == options.RecordId;
+            if (!uniqueIdentity)
+            {
+                AddMatrix("RUN-PRECONDITION", "Identidad única requerida", "Una coincidencia exacta para recordId", $"Coincidencias={identityMatches.Count}", "FAIL", null, null, "No hubo modificación porque la identidad del registro no era única.");
+                AddNotExecutedCases("No ejecutado por precondición fallida de identidad única.");
+                noModificationRestoreNotRequired = true;
+                throw new SafeFailureException("Identidad no única: no se ejecutan cargas X Factor.");
+            }
             historyBefore = await GetJsonAsync(client, $"/api/tax-classifications/{options.RecordId}/history", cancellationToken);
             await WriteJsonAsync("history-before.json", historyBefore, cancellationToken);
 
             var factors = PickFactors(GetDecimal(baseline, "appliedFactor")!.Value);
             await WriteCsvFilesAsync(factors, runId, cancellationToken);
 
-            string f01 = await CaseUpload(client, "XF-01", "archivo válido", "XF-01-valido.csv", HttpStatusCode.OK, cancellationToken, expectedTotal:1, expectedOk:1, expectedFail:0, expectUpdated:true);
-            mayNeedRestore = true;
+            var f01Upload = await CaseUpload(client, "XF-01", "archivo válido", "XF-01-valido.csv", HttpStatusCode.OK, cancellationToken, expectedTotal:1, expectedOk:1, expectedFail:0, expectUpdated:true);
+            string f01 = f01Upload.UploadId;
             await ExpectFactorAsync(client, "XF-01", factors[0], cancellationToken);
+            var afterXf01 = await GetTaxClassificationAsync(client, cancellationToken);
+            mayNeedRestore = f01Upload.Status == HttpStatusCode.OK && Int(f01Upload.Body, "successfulRows") > 0 && ContainsUpdatedId(f01Upload.Body, options.RecordId) && !SameFactor(afterXf01, GetDecimal(baseline, "appliedFactor")!.Value);
             await TraceUploadAsync(client, "XF-01", f01, 1, 0, cancellationToken);
 
             await CaseNoFile(client, cancellationToken); await ExpectFactorAsync(client, "XF-02", factors[0], cancellationToken);
@@ -77,8 +91,8 @@ internal sealed class RunRunner(RunOptions options)
             await CaseUpload(client, "XF-05", "factor inválido", "XF-05-factor-invalido.csv", HttpStatusCode.OK, cancellationToken, expectedTotal:1, expectedOk:0, expectedFail:1, expectedCodes:["INVALID_APPLIED_FACTOR"]); await ExpectFactorAsync(client, "XF-05", factors[0], cancellationToken);
             await CaseUpload(client, "XF-06", "registro inexistente", "XF-06-no-encontrado.csv", HttpStatusCode.OK, cancellationToken, expectedTotal:1, expectedOk:0, expectedFail:1, expectedCodes:["NOT_FOUND"]); await ExpectFactorAsync(client, "XF-06", factors[0], cancellationToken);
             await CaseUpload(client, "XF-07", "identidad duplicada", "XF-07-duplicado.csv", HttpStatusCode.OK, cancellationToken, expectedTotal:2, expectedOk:1, expectedFail:1, expectedCodes:["DUPLICATE_ROW"]); await ExpectFactorAsync(client, "XF-07", factors[1], cancellationToken);
-            string f08 = await CaseUpload(client, "XF-08", "archivo mixto", "XF-08-mixto.csv", HttpStatusCode.OK, cancellationToken, expectedTotal:3, expectedOk:1, expectedFail:2, expectedCodes:["NOT_FOUND","INVALID_APPLIED_FACTOR"]); await ExpectFactorAsync(client, "XF-08", factors[2], cancellationToken);
-            await TraceUploadAsync(client, "XF-08", f08, 3, 2, cancellationToken);
+            var f08Upload = await CaseUpload(client, "XF-08", "archivo mixto", "XF-08-mixto.csv", HttpStatusCode.OK, cancellationToken, expectedTotal:3, expectedOk:1, expectedFail:2, expectedCodes:["NOT_FOUND","INVALID_APPLIED_FACTOR"]); await ExpectFactorAsync(client, "XF-08", factors[2], cancellationToken);
+            await TraceUploadAsync(client, "XF-08", f08Upload.UploadId, 3, 2, cancellationToken);
             await CaseNoToken(cancellationToken); await ExpectFactorAsync(client, "XF-09", factors[2], cancellationToken);
             AddMatrix("XF-10", "Supervisor sin permiso", "NO EJECUTADO MANUALMENTE", "Cubierto por pruebas xUnit existentes; no se creó una cuenta local solo para probar permisos.", "NOT_EXECUTED", null, null, "Pendiente de cuenta Supervisor autorizada.");
         }
@@ -96,6 +110,17 @@ internal sealed class RunRunner(RunOptions options)
                 {
                     restoration = await RestoreAsync(restoration, cancellationToken);
                 }
+                else if (baseline is not null && !matrix.Any(r => r.CaseId == "RESTORE"))
+                {
+                    JsonObject? current = await TryWithAuthTaxClassificationAsync(cancellationToken);
+                    if (current is not null) await WriteJsonAsync("post-run-tax-classification.json", current, cancellationToken);
+                    bool unchanged = current is not null && SameFactor(current, GetDecimal(baseline, "appliedFactor")!.Value) && SameBusinessFields(baseline, current);
+                    noModificationRestoreNotRequired = unchanged;
+                    restoration["attempted"] = false;
+                    restoration["success"] = unchanged;
+                    restoration["reason"] = "No hubo modificación exitosa; restauración no requerida.";
+                    AddMatrix("RESTORE", "Restauración factor original", "No requerida sin modificación exitosa", unchanged ? "Factor final coincide con baseline" : "Estado final no confirmado", unchanged ? "NOT_EXECUTED" : "FAIL", null, null, unchanged ? "No hubo modificación exitosa." : "No se pudo confirmar estado final sin cambios.");
+                }
                 historyAfter = await TryWithAuthJsonAsync($"/api/tax-classifications/{options.RecordId}/history", cancellationToken);
                 await WriteJsonAsync("history-after.json", historyAfter ?? new JsonArray(), cancellationToken);
                 await WriteJsonAsync("authenticated-user.json", user ?? new JsonObject(), cancellationToken);
@@ -103,7 +128,7 @@ internal sealed class RunRunner(RunOptions options)
                 await WriteJsonAsync("results.json", BuildResults(started, DateTime.UtcNow, restoration), cancellationToken);
                 await WriteMatrixAsync(cancellationToken);
                 await WriteSummaryAsync(cancellationToken);
-                await File.WriteAllTextAsync(Path.Combine(runDirectory, "execution.log"), string.Join(Environment.NewLine, log), cancellationToken);
+                await File.WriteAllTextAsync(Path.Combine(runDirectory, "execution.log"), string.Join(Environment.NewLine, log), TaxClassificationHelpers.Utf8Bom, cancellationToken);
             }
         }
 
@@ -136,7 +161,7 @@ internal sealed class RunRunner(RunOptions options)
         return restoration;
     }
 
-    private async Task<string> CaseUpload(HttpClient client, string id, string name, string file, HttpStatusCode status, CancellationToken ct, int? expectedTotal=null, int? expectedOk=null, int? expectedFail=null, string[]? expectedCodes=null, bool expectUpdated=false)
+    private async Task<UploadResult> CaseUpload(HttpClient client, string id, string name, string file, HttpStatusCode status, CancellationToken ct, int? expectedTotal=null, int? expectedOk=null, int? expectedFail=null, string[]? expectedCodes=null, bool expectUpdated=false)
     {
         var r = await UploadAsync(client, file, true, ct);
         bool ok = r.Status == status;
@@ -145,7 +170,7 @@ internal sealed class RunRunner(RunOptions options)
         if (expectUpdated) ok &= ContainsText(r.Body, options.RecordId.ToString(CultureInfo.InvariantCulture));
         if (id is "XF-01" or "XF-05" or "XF-06" or "XF-07" or "XF-08") await SaveResponseAsync(id, r.Body, ct);
         AddMatrix(id, name, status.ToString(), Summ(r.Body), ok ? "PASS" : "FAIL", (int)r.Status, Str(r.Body,"uploadId"), null);
-        return Str(r.Body,"uploadId") ?? string.Empty;
+        return new UploadResult(r.Status, r.Body, Str(r.Body,"uploadId") ?? string.Empty);
     }
     private async Task CaseNoFile(HttpClient client, CancellationToken ct) { using var form = new MultipartFormDataContent(); using var resp = await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", form, ct); AddMatrix("XF-02","falta el campo file","HTTP 400",((int)resp.StatusCode).ToString(),resp.StatusCode==HttpStatusCode.BadRequest?"PASS":"FAIL",(int)resp.StatusCode,null,null); }
     private async Task CaseNoToken(CancellationToken ct) { using HttpClient c=CreateHttpClient(options.ApiBaseUrl); var r=await UploadAsync(c,"XF-01-valido.csv",true,ct); AddMatrix("XF-09","sin token","HTTP 401",((int)r.Status).ToString(),r.Status==HttpStatusCode.Unauthorized?"PASS":"FAIL",(int)r.Status,null,null); }
@@ -158,7 +183,7 @@ internal sealed class RunRunner(RunOptions options)
         var errors = await GetJsonAsync(client, $"/api/bulk-loads/{uploadId}/errors?page=1&pageSize=100", ct);
         var list = await GetJsonAsync(client, "/api/bulk-loads?uploadType=X_FACTOR&page=1&pageSize=20", ct);
         await WriteJsonAsync($"responses/{id}-trace.json", new JsonObject { ["summary"] = summary.DeepClone(), ["details"] = details.DeepClone(), ["errors"] = errors.DeepClone(), ["list"] = list.DeepClone() }, ct);
-        bool ok = CountItems(details) >= detailCount && CountItems(errors) >= errorCount && ContainsText(list, uploadId);
+        bool ok = CountItems(details) == detailCount && CountItems(errors) == errorCount && ContainsText(list, uploadId);
         AddMatrix(id+"-TRACE", "Trazabilidad", $"{detailCount} detalles y {errorCount} errores", $"details={CountItems(details)}, errors={CountItems(errors)}", ok?"PASS":"FAIL", 200, uploadId, null);
     }
 
@@ -169,6 +194,7 @@ internal sealed class RunRunner(RunOptions options)
     { using var form = new MultipartFormDataContent(); if (fileField) { var bytes = await File.ReadAllBytesAsync(Path.Combine(csvDirectory!, file), ct); var content = new ByteArrayContent(bytes); content.Headers.ContentType = MediaTypeHeaderValue.Parse("text/csv"); form.Add(content, "file", file); } using var resp = await client.PostAsync("/api/tax-classifications/bulk-loads/x-factor", form, ct); JsonNode body = await ReadJsonOrMessageAsync(resp, ct); return (resp.StatusCode, body); }
     private async Task<JsonNode> GetJsonAsync(HttpClient client, string path, CancellationToken ct) { using var resp = await client.GetAsync(path, ct); if (!resp.IsSuccessStatusCode) throw new SafeFailureException($"GET {path} HTTP {(int)resp.StatusCode}"); return (await resp.Content.ReadFromJsonAsync<JsonNode>(JsonOptions, ct)) ?? new JsonObject(); }
     private async Task<JsonNode?> TryWithAuthJsonAsync(string path, CancellationToken ct) { try { using HttpClient c=CreateHttpClient(options.ApiBaseUrl); var l=await LoginAsync(c,Env("NUAM_XFACTOR_TEST_EMAIL"),Env("NUAM_XFACTOR_TEST_PASSWORD"),ct); c.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue(l.TokenType,l.AccessToken); return await GetJsonAsync(c,path,ct);} catch { return null; } }
+    private async Task<JsonObject?> TryWithAuthTaxClassificationAsync(CancellationToken ct) { try { using HttpClient c=CreateHttpClient(options.ApiBaseUrl); var l=await LoginAsync(c,Env("NUAM_XFACTOR_TEST_EMAIL"),Env("NUAM_XFACTOR_TEST_PASSWORD"),ct); c.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue(l.TokenType,l.AccessToken); return await GetTaxClassificationAsync(c,ct);} catch { return null; } }
 
     private async Task WriteCsvFilesAsync(decimal[] f, string runId, CancellationToken ct)
     {
@@ -198,8 +224,9 @@ internal sealed class RunRunner(RunOptions options)
     private async Task SaveResponseAsync(string id, JsonNode body, CancellationToken ct) => await WriteJsonAsync($"responses/{id}.json", body, ct);
     private async Task WriteJsonAsync(string relative, JsonNode node, CancellationToken ct) { string path=Path.Combine(runDirectory!, relative); Directory.CreateDirectory(Path.GetDirectoryName(path)!); await File.WriteAllTextAsync(path, node.ToJsonString(JsonOptions), ct); }
     private async Task WriteMatrixAsync(CancellationToken ct) { var sb=new StringBuilder("caseId,caseName,expected,actual,status,httpStatus,uploadId,notes\r\n"); foreach(var r in matrix) sb.AppendJoin(',', [Q(r.CaseId),Q(r.CaseName),Q(r.Expected),Q(r.Actual),Q(r.Status),Q(r.HttpStatus?.ToString()??""),Q(r.UploadId??""),Q(r.Notes??"")]).Append("\r\n"); await WriteBomAsync(Path.Combine(runDirectory!,"test-matrix.csv"), sb.ToString(), ct); }
-    private async Task WriteSummaryAsync(CancellationToken ct) { var sb=new StringBuilder($"# X Factor run\n\n- Propósito: ejecutar pruebas controladas XF-01 a XF-09 y restaurar AppliedFactor.\n- API local utilizada: {options.ApiBaseUrl}\n- Registro probado: {options.RecordId}; identidad {options.ExpectedMarket} / {options.ExpectedInstrumentCode} / {options.ExpectedTaxPeriod}\n- Factor baseline: {baselineFactor}\n- Evidencias: {runDirectory}\n- CSV: {csvDirectory}\n- Respuestas sanitizadas: {responsesDirectory}\n- Restauración: {(restorationOk?"exitosa":"fallida/no requerida antes de modificación")}\n- XF-10: NOT_EXECUTED - Cubierto por pruebas xUnit existentes; no se creó una cuenta local solo para probar permisos.\n- Confirmación: no se creó ni eliminó ninguna calificación; solo se usó la carga X Factor para modificar temporalmente AppliedFactor del registro confirmado.\n\n## Matriz\n\n"); foreach(var r in matrix) sb.AppendLine($"- {r.CaseId} | {r.CaseName} | {r.Status} | HTTP {r.HttpStatus?.ToString()??"n/a"} | {r.Notes}"); await File.WriteAllTextAsync(Path.Combine(runDirectory!,"run-summary.md"), sb.ToString(), ct); }
+    private async Task WriteSummaryAsync(CancellationToken ct) { var sb=new StringBuilder($"# X Factor run\n\n- Propósito: ejecutar pruebas controladas XF-01 a XF-09 y restaurar AppliedFactor.\n- API local utilizada: {options.ApiBaseUrl}\n- Registro probado: {options.RecordId}; identidad {options.ExpectedMarket} / {options.ExpectedInstrumentCode} / {options.ExpectedTaxPeriod}\n- Factor baseline: {baselineFactor}\n- Evidencias: {runDirectory}\n- CSV: {csvDirectory}\n- Respuestas sanitizadas: {responsesDirectory}\n- Restauración: {(restorationOk?"exitosa":"fallida/no requerida antes de modificación")}\n- XF-10: NOT_EXECUTED - Cubierto por pruebas xUnit existentes; no se creó una cuenta local solo para probar permisos.\n- Confirmación: no se creó ni eliminó ninguna calificación; solo se usó la carga X Factor para modificar temporalmente AppliedFactor del registro confirmado.\n\n## Matriz\n\n"); foreach(var r in matrix) sb.AppendLine($"- {r.CaseId} | {r.CaseName} | {r.Status} | HTTP {r.HttpStatus?.ToString()??"n/a"} | {r.Notes}"); await File.WriteAllTextAsync(Path.Combine(runDirectory!,"run-summary.md"), sb.ToString(), TaxClassificationHelpers.Utf8Bom, ct); }
     private JsonObject BuildResults(DateTime s, DateTime f, JsonObject restoration) => new() { ["command"]="run", ["startedAt"]=s, ["finishedAt"]=f, ["apiBaseUrl"]=options.ApiBaseUrl.ToString(), ["recordId"]=options.RecordId, ["matrix"]=JsonSerializer.SerializeToNode(matrix, JsonOptions), ["restoration"]=restoration };
+    private void AddNotExecutedCases(string note) { foreach (string id in new[]{"XF-01","XF-02","XF-03","XF-04","XF-05","XF-06","XF-07","XF-08","XF-09"}) AddMatrix(id, id, "Precondición requerida", "No ejecutado", "NOT_EXECUTED", null, null, note); AddMatrix("RESTORE", "Restauración factor original", "No requerida", "No ejecutado", "NOT_EXECUTED", null, null, "No hubo modificación porque la identidad del registro no era única."); }
     private void AddMatrix(string id,string name,string expected,string actual,string status,int? http,string? upload,string? notes) { matrix.Add(new(id,name,expected,actual,status,http,upload,notes)); Log($"{id}: {status} {actual}"); }
     private void Log(string m)=>log.Add($"{DateTime.UtcNow:O} {Safe(m)}");
     private static string Q(string s)=>"\""+s.Replace("\"","\"\"")+"\"";
@@ -210,9 +237,11 @@ internal sealed class RunRunner(RunOptions options)
     private static string DecimalText(decimal d)=>d.ToString("0.########", CultureInfo.InvariantCulture);
     private static bool SameFactor(JsonObject o, decimal d)=>GetDecimal(o,"appliedFactor") == d;
     private static bool SameBusinessFields(JsonObject a, JsonObject b) { foreach (var f in new[]{"id","market","instrumentCode","instrumentName","classificationType","description","updatePercentage","referenceAmount","currency","taxPeriod","validFrom","validTo","status","creatorUserId","createdAt"}) if ((a[f]?.ToJsonString()??"")!=(b[f]?.ToJsonString()??"")) return false; return true; }
+    private static bool ContainsUpdatedId(JsonNode? n, int id) => n?["updatedTaxClassificationIds"] is JsonArray a && a.Any(x => x?.ToString() == id.ToString(CultureInfo.InvariantCulture));
     private static bool ContainsText(JsonNode? n,string text)=>n?.ToJsonString().Contains(text,StringComparison.OrdinalIgnoreCase)==true;
     private static int CountItems(JsonNode? n)=> n?["items"] is JsonArray a ? a.Count : n is JsonArray b ? b.Count : 0;
     private static string Summ(JsonNode? n)=> n is null ? "" : n.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+    private sealed record UploadResult(HttpStatusCode Status, JsonNode Body, string UploadId);
     private sealed record MatrixRow(string CaseId,string CaseName,string Expected,string Actual,string Status,int? HttpStatus,string? UploadId,string? Notes);
     private sealed record LoginResponse(string AccessToken, string TokenType, DateTime ExpiresAt);
     private sealed record MeResponse(int Id, string Role);
