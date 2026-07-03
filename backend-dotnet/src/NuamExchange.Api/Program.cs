@@ -65,7 +65,7 @@ app.Run();
 
 static void ValidateProductionConfiguration(IConfiguration configuration, IWebHostEnvironment environment)
 {
-    if (environment.IsDevelopment())
+    if (!environment.IsProduction())
     {
         return;
     }

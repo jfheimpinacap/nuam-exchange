@@ -1,3 +1,4 @@
+using System.Data;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
@@ -83,54 +84,68 @@ public sealed class SetupController(IServiceProvider services, IWebHostEnvironme
 
         try
         {
-            if (migrateDatabase && dbContext.Database.IsRelational())
+            var isRelationalBootstrap = migrateDatabase && dbContext.Database.IsRelational();
+            if (isRelationalBootstrap)
             {
                 await dbContext.Database.MigrateAsync(cancellationToken);
+                await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+                var result = await CreateInitialAdministratorCoreAsync(request, dbContext, seedService, auditDetail, cancellationToken);
+                if (result is CreatedAtActionResult)
+                {
+                    await transaction.CommitAsync(cancellationToken);
+                }
+
+                return result;
             }
 
-            await seedService.SeedAsync(cancellationToken);
-
-            if (await dbContext.Users.AnyAsync(cancellationToken))
-            {
-                return Conflict(new { message = "El bootstrap inicial no está disponible porque ya existen usuarios." });
-            }
-
-            var administratorRole = await dbContext.Roles.SingleAsync(x => x.Name == SecuritySeedService.AdministratorRole, cancellationToken);
-            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-            var now = DateTime.UtcNow;
-            var user = new ApplicationUser
-            {
-                RoleId = administratorRole.Id,
-                FullName = request.FullName.Trim(),
-                Email = normalizedEmail,
-                PasswordHash = passwordHasher.Hash(request.Password),
-                JobTitle = string.IsNullOrWhiteSpace(request.JobTitle) ? null : request.JobTitle.Trim(),
-                IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            dbContext.Users.Add(user);
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            dbContext.AuditLogs.Add(new AuditLog
-            {
-                UserId = user.Id,
-                AffectedEntity = "Authentication",
-                AffectedRecordId = user.Id,
-                Action = "BOOTSTRAP_ADMIN_CREATED",
-                Detail = auditDetail,
-                OriginIp = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                ActionAt = DateTime.UtcNow
-            });
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            return CreatedAtAction(nameof(BootstrapAdmin), new { id = user.Id }, new BootstrapAdminResponse(user.Id, user.FullName, user.Email, administratorRole.Name, "Bootstrap de administrador creado."));
+            return await CreateInitialAdministratorCoreAsync(request, dbContext, seedService, auditDetail, cancellationToken);
         }
         catch (Exception) when (!HttpContext.RequestAborted.IsCancellationRequested)
         {
             return DatabaseUnavailable();
         }
+    }
+
+    private async Task<IActionResult> CreateInitialAdministratorCoreAsync(BootstrapAdminRequest request, NuamExchangeDbContext dbContext, ISecuritySeedService seedService, string auditDetail, CancellationToken cancellationToken)
+    {
+        await seedService.SeedAsync(cancellationToken);
+
+        if (await dbContext.Users.AnyAsync(cancellationToken))
+        {
+            return Conflict(new { message = "El bootstrap inicial no está disponible porque ya existen usuarios." });
+        }
+
+        var administratorRole = await dbContext.Roles.SingleAsync(x => x.Name == SecuritySeedService.AdministratorRole, cancellationToken);
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var now = DateTime.UtcNow;
+        var user = new ApplicationUser
+        {
+            RoleId = administratorRole.Id,
+            FullName = request.FullName.Trim(),
+            Email = normalizedEmail,
+            PasswordHash = passwordHasher.Hash(request.Password),
+            JobTitle = string.IsNullOrWhiteSpace(request.JobTitle) ? null : request.JobTitle.Trim(),
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        dbContext.AuditLogs.Add(new AuditLog
+        {
+            UserId = user.Id,
+            AffectedEntity = "Authentication",
+            AffectedRecordId = user.Id,
+            Action = "BOOTSTRAP_ADMIN_CREATED",
+            Detail = auditDetail,
+            OriginIp = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            ActionAt = DateTime.UtcNow
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return CreatedAtAction(nameof(BootstrapAdmin), new { id = user.Id }, new BootstrapAdminResponse(user.Id, user.FullName, user.Email, administratorRole.Name, "Bootstrap de administrador creado."));
     }
 
     private ObjectResult DatabaseUnavailable() => StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "La base de datos no está disponible para procesar la solicitud." });

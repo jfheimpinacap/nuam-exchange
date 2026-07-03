@@ -85,7 +85,7 @@ public sealed class ProductionBootstrapTests
         var databaseName = TestInMemoryDatabase.CreateDatabaseName();
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
-            builder.UseEnvironment("Production");
+            builder.UseEnvironment("Testing");
             builder.ConfigureAppConfiguration((_, configurationBuilder) =>
             {
                 configurationBuilder.AddInMemoryCollection(new Dictionary<string, string?>
