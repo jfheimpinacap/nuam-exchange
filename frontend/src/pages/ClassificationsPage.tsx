@@ -539,9 +539,6 @@ export function ClassificationsPage() {
 
   return (
     <section className="content-card classifications-page">
-      {isApi ? (
-        <InlineMessage message="Esta etapa integra creación, modificación y copia reales desde la API. Eliminar y cargas masivas se integrarán posteriormente." />
-      ) : null}
       <form className="filters-panel" onSubmit={applyFilters}>
         <FormField id="mercado" label="Mercado">
           <select
