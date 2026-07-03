@@ -11,6 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+ValidateProductionConfiguration(builder.Configuration, builder.Environment);
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
@@ -61,6 +62,31 @@ app.MapControllers();
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+static void ValidateProductionConfiguration(IConfiguration configuration, IWebHostEnvironment environment)
+{
+    if (!environment.IsProduction())
+    {
+        return;
+    }
+
+    var missingOrInvalid = new List<string>();
+    if (string.IsNullOrWhiteSpace(configuration.GetConnectionString("NuamTributariaDb")))
+    {
+        missingOrInvalid.Add("ConnectionStrings:NuamTributariaDb");
+    }
+
+    var signingKey = configuration["Jwt:SigningKey"];
+    if (string.IsNullOrWhiteSpace(signingKey) || System.Text.Encoding.UTF8.GetByteCount(signingKey) < 32)
+    {
+        missingOrInvalid.Add("Jwt:SigningKey");
+    }
+
+    if (missingOrInvalid.Count > 0)
+    {
+        throw new InvalidOperationException($"Production configuration is missing or invalid: {string.Join(", ", missingOrInvalid)}.");
+    }
+}
 
 public partial class Program
 {
