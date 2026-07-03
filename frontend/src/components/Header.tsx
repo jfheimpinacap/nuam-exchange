@@ -1,17 +1,16 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../app/session/useSession';
-import { useApiServices } from '../api/context/useApiServices';
+import { getSectionMetadata } from '../routes/navigation';
 
 interface HeaderProps {
-  isCollapsed: boolean;
-  onToggleSidebar: () => void;
   onToggleMobile: () => void;
 }
 
-export function Header({ isCollapsed, onToggleSidebar, onToggleMobile }: HeaderProps) {
+export function Header({ onToggleMobile }: HeaderProps) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { logout, user } = useSession();
-  const { isApi } = useApiServices();
+  const section = getSectionMetadata(pathname);
 
   const handleLogout = () => {
     logout();
@@ -21,15 +20,12 @@ export function Header({ isCollapsed, onToggleSidebar, onToggleMobile }: HeaderP
   return (
     <header className="app-header">
       <div className="header-actions">
-        <button className="icon-button desktop-only" type="button" onClick={onToggleSidebar} aria-pressed={isCollapsed}>
-          {isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
-        </button>
         <button className="icon-button mobile-only" type="button" onClick={onToggleMobile}>
           Abrir menú
         </button>
-        <div>
-          <strong>Nuam Exchange</strong>
-          <span>Sistema de Gestión Tributaria</span><span className="demo-chip">{isApi ? 'Modo API' : 'Modo demostración'}</span>
+        <div className="section-heading">
+          <strong>{section.title}</strong>
+          <span>{section.description}</span>
         </div>
       </div>
       <div className="user-area">

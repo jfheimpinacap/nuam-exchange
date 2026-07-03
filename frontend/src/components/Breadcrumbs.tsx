@@ -1,43 +1,37 @@
 import { Link, useLocation } from 'react-router-dom';
 import type { BreadcrumbItem } from '../types/navigation';
 
-const labels: Record<string, string> = {
-  inicio: 'Inicio',
-  calificaciones: 'Calificaciones',
-  nueva: 'Nueva',
-  editar: 'Editar',
-  cargas: 'Cargas',
-  'x-factor': 'X Factor',
-  'x-monto': 'X Monto',
-  'plantillas-carga': 'Plantillas de carga',
-  reportes: 'Reportes',
-  administracion: 'Administración',
-  usuarios: 'Usuarios',
-  'roles-permisos': 'Roles y Permisos',
-  auditoria: 'Auditoría',
-  respaldos: 'Respaldos',
-};
+const mainRoutes = new Set([
+  '/inicio',
+  '/calificaciones',
+  '/cargas/x-factor',
+  '/cargas/x-monto',
+  '/plantillas-carga',
+  '/reportes',
+  '/administracion/usuarios',
+  '/administracion/roles-permisos',
+  '/auditoria',
+  '/respaldos',
+]);
 
 function buildBreadcrumbs(pathname: string): BreadcrumbItem[] {
-  const segments = pathname.split('/').filter(Boolean);
-  return segments.map((segment, index) => ({
-    label: labels[segment] ?? segment,
-    path: index < segments.length - 1 ? `/${segments.slice(0, index + 1).join('/')}` : undefined,
-  }));
+  if (mainRoutes.has(pathname)) return [];
+  const edit = pathname.match(/^\/calificaciones\/([^/]+)\/editar$/);
+  if (edit) return [{ label: 'Calificaciones Tributarias', path: '/calificaciones' }, { label: 'Editar calificación' }, { label: edit[1] }];
+  const copy = pathname.match(/^\/calificaciones\/([^/]+)\/copiar$/);
+  if (copy) return [{ label: 'Calificaciones Tributarias', path: '/calificaciones' }, { label: 'Copiar calificación' }, { label: copy[1] }];
+  if (pathname === '/calificaciones/nueva') return [{ label: 'Calificaciones Tributarias', path: '/calificaciones' }, { label: 'Nueva calificación' }];
+  return [];
 }
 
 export function Breadcrumbs() {
   const { pathname } = useLocation();
   const breadcrumbs = buildBreadcrumbs(pathname);
-
+  if (!breadcrumbs.length) return null;
   return (
     <nav className="breadcrumbs" aria-label="Ruta de navegación">
-      <Link to="/inicio">Nuam Exchange</Link>
-      {breadcrumbs.map((item) => (
-        <span key={`${item.label}-${item.path ?? 'current'}`}>
-          <span aria-hidden="true">/</span>
-          {item.path ? <Link to={item.path}>{item.label}</Link> : <span>{item.label}</span>}
-        </span>
+      {breadcrumbs.map((item, index) => (
+        item.path ? <Link key={`${item.path}-${item.label}`} to={item.path}>{item.label}</Link> : <span key={`${item.label}-${index}`}>/ {item.label}</span>
       ))}
     </nav>
   );
