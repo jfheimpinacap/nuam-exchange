@@ -9,7 +9,7 @@ export interface MockUser {
 
 export type SessionUser = MockUser;
 
-export type AuthStatus = 'authenticated' | 'anonymous';
+export type AuthStatus = 'restoring' | 'authenticated' | 'anonymous';
 
 export interface ApiLoginCredentials {
   email: string;
