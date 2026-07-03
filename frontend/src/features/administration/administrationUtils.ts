@@ -34,9 +34,14 @@ export function summarizeUsers(users: AdministrationUser[]) {
   };
 }
 
-export function formatDate(value: string | null) {
-  if (!value) return 'Sin acceso registrado';
-  return new Intl.DateTimeFormat('es-CL').format(new Date(`${value}T12:00:00`));
+export function formatDate(value: string | null | undefined, fallback = 'Fecha no disponible') {
+  const dateValue = value?.trim();
+  if (!dateValue) return fallback;
+
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(dateValue) ? `${dateValue}T12:00:00` : dateValue);
+  if (Number.isNaN(date.getTime())) return fallback;
+
+  return new Intl.DateTimeFormat('es-CL').format(date);
 }
 
 export function createUserId(users: AdministrationUser[]) {
