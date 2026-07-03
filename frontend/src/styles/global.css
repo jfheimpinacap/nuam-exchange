@@ -144,6 +144,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .metric-card span, .active-period { color: var(--color-text-muted); font-size: 12px; font-weight: 700; }
 .metric-card strong { display: block; margin: var(--space-2) 0; color: var(--color-primary-dark); font-size: 24px; }
 .metric-card p, .chart-panel p, .activity-panel p { margin: 0; color: var(--color-text-muted); }
+
+.metrics-grid.admin-metrics-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--space-2); }
+.admin-metrics-grid .metric-card { padding: 8px 10px; }
+.admin-metrics-grid .metric-card span { line-height: 1.2; }
+.admin-metrics-grid .metric-card strong { margin: 2px 0 0; font-size: 20px; line-height: 1.2; }
+.admin-metrics-grid .metric-card dd { margin: 0; }
 .charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .chart-panel, .activity-panel, .quick-actions, .report-selector, .reports-summary { background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); }
 .bar-row { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
@@ -160,26 +166,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .reports-summary dd { margin: 4px 0 0; color: var(--color-primary-dark); font-weight: 700; font-size: 20px; }
 .report-filters { grid-template-columns: repeat(4, minmax(130px, 1fr)); }
 @media (max-width: 1100px) { .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .charts-grid, .reports-summary { grid-template-columns: 1fr; } }
-@media (max-width: 560px) { .metrics-grid { grid-template-columns: 1fr; } .bar-row div:first-child { display: grid; } }
-.admin-page { display: grid; gap: var(--space-4); }
-.admin-summary, .role-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
-.admin-summary div, .role-summary div { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); box-shadow: var(--shadow-soft); }
-.admin-summary dt, .role-summary dt { color: var(--color-text-muted); font-size: 12px; font-weight: 700; }
-.admin-summary dd, .role-summary dd { margin: 4px 0 0; color: var(--color-primary-dark); font-weight: 700; }
+@media (max-width: 560px) { .metrics-grid { grid-template-columns: 1fr; } .metrics-grid.admin-metrics-grid { grid-template-columns: 1fr; } .bar-row div:first-child { display: grid; } }
+.admin-page { display: grid; gap: var(--space-3); }
+.admin-summary, .role-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-2); margin: 0; }
+.admin-summary div, .role-summary div { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 8px 10px; box-shadow: var(--shadow-soft); }
+.admin-summary dt, .role-summary dt { color: var(--color-text-muted); font-size: 12px; font-weight: 700; line-height: 1.2; }
+.admin-summary dd, .role-summary dd { margin: 2px 0 0; color: var(--color-primary-dark); font-weight: 700; line-height: 1.25; }
 .admin-filters { grid-template-columns: repeat(3, minmax(160px, 1fr)) auto auto; }
 .admin-table { min-width: 1260px; }
 .row-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .row-actions small { color: var(--color-text-muted); width: 100%; }
 .admin-dialog { width: min(620px, 100%); }
 .dialog-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
-.permissions-panel { display: grid; gap: var(--space-3); background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); }
+.permissions-panel { display: grid; gap: var(--space-2); background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+.permissions-panel h2 { margin: 0; font-size: 20px; line-height: 1.2; }
+.permissions-panel p { margin: 0; line-height: 1.35; }
 .permission-table { min-width: 980px; }
 .permission-table th:first-child { min-width: 180px; }
 .permission-table input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--color-primary); }
 .status-activo::before { background: var(--color-success); }
 .status-inactivo::before { background: var(--color-warning); }
 .status-bloqueado::before { background: var(--color-danger); }
-@media (max-width: 900px) { .admin-summary, .role-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-filters { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .admin-filters { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .admin-summary, .role-summary, .dialog-form { grid-template-columns: 1fr; } }
 .sidebar-group { margin: var(--space-4) 0 var(--space-2); color: #b8c4d2; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .detail-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
