@@ -7,7 +7,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ routePath }: ProtectedRouteProps) {
-  const { isAuthenticated, user } = useSession();
+  const { isAuthenticated, status, user } = useSession();
+
+  if (status === 'restoring') {
+    return <p className="page-status">Restaurando sesión…</p>;
+  }
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;

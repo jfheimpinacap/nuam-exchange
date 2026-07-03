@@ -19,8 +19,8 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { useSession } from '../app/session/useSession';
 
 export function AppRoutes() {
-  const { isAuthenticated } = useSession();
-  const fallbackPath = isAuthenticated ? '/inicio' : '/login';
+  const { isAuthenticated, status } = useSession();
+  const fallbackPath = status === 'restoring' || isAuthenticated ? '/inicio' : '/login';
 
   return (
     <Routes>

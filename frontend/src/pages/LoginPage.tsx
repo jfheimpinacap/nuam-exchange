@@ -9,7 +9,7 @@ const apiLoginErrorMessage = 'No fue posible iniciar sesión. Verifica tus crede
 export function LoginPage() {
   const navigate = useNavigate();
   const { isApi } = useApiServices();
-  const { isAuthenticated, login, loginWithApi } = useSession();
+  const { isAuthenticated, login, loginWithApi, status } = useSession();
   const [selectedUserId, setSelectedUserId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,6 +31,10 @@ export function LoginPage() {
   const isFormValid = isApi
     ? Boolean(trimmedEmail && trimmedPassword)
     : Boolean(selectedUser && trimmedPassword);
+
+  if (status === 'restoring') {
+    return <main className="login-page"><p className="page-status">Restaurando sesión…</p></main>;
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/inicio" replace />;
