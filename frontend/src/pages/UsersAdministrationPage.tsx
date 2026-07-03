@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '../components/Button';
 import { InlineMessage } from '../components/InlineMessage';
 import { Pagination } from '../components/Pagination';
-import { EmptyState } from '../components/ViewStates';
+import { EmptyState, ErrorState, LoadingState } from '../components/ViewStates';
 import { useSession } from '../app/session/useSession';
+import { useApiServices } from '../api/context/useApiServices';
 import { UserFilters } from '../features/administration/UserFilters';
 import { UserFormDialog } from '../features/administration/UserFormDialog';
 import { UserStatusDialog } from '../features/administration/UserStatusDialog';
@@ -15,11 +16,16 @@ import { normalizeUserForm, validateUserForm } from '../features/administration/
 import { administrationUsers } from '../mocks/administrationUsers';
 import type { AdministrationUser, UserAccountStatus, UserFilters as UserFiltersType, UserFormErrors, UserFormValues, UserPaginationState, UserSortKey, UserSortState } from '../types/administration';
 import { dateStamp, downloadCsv } from '../utils/csvExport';
+import { ApiError } from '../api/client/ApiError';
 
-const emptyForm: UserFormValues = { nombre: '', email: '', rol: 'Analista Tributario', estado: 'Activo' };
+const emptyForm: UserFormValues = { nombre: '', email: '', rol: 'Analista Tributario', estado: 'Activo', cargo: '', password: '', confirmPassword: '' };
+const messageOf = (error: unknown) => error instanceof ApiError || error instanceof Error ? error.message : 'No fue posible completar la operación.';
 export function UsersAdministrationPage() {
   const { user } = useSession();
+  const { isApi, administrationService } = useApiServices();
   const [users, setUsers] = useState(administrationUsers);
+  const [loading, setLoading] = useState(isApi);
+  const [apiError, setApiError] = useState('');
   const [draftFilters, setDraftFilters] = useState<UserFiltersType>(initialUserFilters);
   const [filters, setFilters] = useState<UserFiltersType>(initialUserFilters);
   const [pagination, setPagination] = useState<UserPaginationState>({ page: 1, pageSize: 5 });
@@ -29,34 +35,18 @@ export function UsersAdministrationPage() {
   const [formErrors, setFormErrors] = useState<UserFormErrors>({});
   const [statusChange, setStatusChange] = useState<{ user: AdministrationUser; status: UserAccountStatus } | null>(null);
   const [resetUser, setResetUser] = useState<AdministrationUser | null>(null);
+  const loadUsers = useCallback(async () => { if (!isApi || !administrationService) return; setLoading(true); setApiError(''); try { await administrationService.listRoles(); setUsers(await administrationService.listUsers()); } catch (error) { setApiError(messageOf(error)); } finally { setLoading(false); } }, [isApi, administrationService]);
+  useEffect(() => { void loadUsers(); }, [loadUsers]);
   const filtered = useMemo(() => sortUsers(filterUsers(users, filters), sort), [users, filters, sort]);
   const pageUsers = filtered.slice((pagination.page - 1) * pagination.pageSize, pagination.page * pagination.pageSize);
-  const initialValues = formUser && formUser !== 'new' ? { nombre: formUser.nombre, email: formUser.email, rol: formUser.rol, estado: formUser.estado } : emptyForm;
+  const initialValues = formUser && formUser !== 'new' ? { nombre: formUser.nombre, email: formUser.email, rol: formUser.rol, estado: formUser.estado === 'Bloqueado' ? 'Inactivo' : formUser.estado, cargo: formUser.cargo ?? '' } : emptyForm;
   const applyFilters = () => { setFilters(draftFilters); setPagination({ ...pagination, page: 1 }); };
   const clearFilters = () => { setDraftFilters(initialUserFilters); setFilters(initialUserFilters); setPagination({ ...pagination, page: 1 }); };
   const onSort = (key: UserSortKey) => setSort((current) => ({ key, direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc' }));
-  const saveUser = (values: UserFormValues) => { const normalized = normalizeUserForm(values); const currentId = formUser && formUser !== 'new' ? formUser.id : undefined; const errors = validateUserForm(normalized, users, currentId); setFormErrors(errors); if (Object.keys(errors).length) return; if (formUser === 'new') { setUsers([{ id: createUserId(users), ...normalized, fechaCreacion: new Date().toISOString().slice(0, 10), ultimoAcceso: null, creadoPor: user?.nombre ?? 'Sesión demo' }, ...users]); setMessage('Usuario creado en la demostración. El cambio no se guardará al recargar.'); } else if (formUser) { setUsers(users.map((item) => item.id === formUser.id ? { ...item, ...normalized } : item)); setMessage('Usuario actualizado en la demostración. El cambio no se guardará al recargar.'); } setFormUser(null); };
+  const saveUser = async (values: UserFormValues) => { const normalized = normalizeUserForm(values); const currentId = formUser && formUser !== 'new' ? formUser.id : undefined; const errors = validateUserForm(normalized, users, currentId); setFormErrors(errors); if (Object.keys(errors).length) return; try { if (isApi && administrationService) { if (formUser === 'new') await administrationService.createUser(normalized); else if (formUser) await administrationService.updateUser(formUser.id, normalized); await loadUsers(); setMessage(formUser === 'new' ? 'Usuario creado correctamente.' : 'Usuario actualizado correctamente.'); } else if (formUser === 'new') { setUsers([{ id: createUserId(users), ...normalized, fechaCreacion: new Date().toISOString().slice(0, 10), ultimoAcceso: null, creadoPor: user?.nombre ?? 'Sesión mock' }, ...users]); setMessage('Usuario creado en modo mock.'); } else if (formUser) { setUsers(users.map((item) => item.id === formUser.id ? { ...item, ...normalized } : item)); setMessage('Usuario actualizado en modo mock.'); } setFormUser(null); } catch (error) { setApiError(messageOf(error)); } };
+  const changeStatus = async () => { if (!statusChange) return; const next = { ...statusChange.user, estado: statusChange.status }; try { if (isApi && administrationService) { await administrationService.updateUser(statusChange.user.id, next); await loadUsers(); } else setUsers(users.map((item) => item.id === statusChange.user.id ? next : item)); setMessage('Estado actualizado correctamente.'); setStatusChange(null); } catch (error) { setApiError(messageOf(error)); } };
+  const resetPassword = async (password: string) => { if (!resetUser) return; try { if (isApi && administrationService) await administrationService.resetPassword(resetUser.id, password); setMessage('Contraseña restablecida correctamente.'); setResetUser(null); } catch (error) { setApiError(messageOf(error)); } };
   const exportUsers = () => downloadCsv(`usuarios-${dateStamp()}.csv`, filtered, [{ header: 'ID', value: (row) => row.id }, { header: 'Nombre', value: (row) => row.nombre }, { header: 'Correo', value: (row) => row.email }, { header: 'Rol', value: (row) => row.rol }, { header: 'Estado', value: (row) => row.estado }, { header: 'Fecha de creación', value: (row) => row.fechaCreacion }, { header: 'Último acceso', value: (row) => row.ultimoAcceso ?? 'Sin acceso registrado' }, { header: 'Creado por', value: (row) => row.creadoPor }]);
-  return (
-    <section className="admin-page">
-      {message ? <InlineMessage tone="success" message={message} /> : null}
-      <UserSummary users={users} />
-      <div className="actions-bar">
-        <Button variant="primary" onClick={() => { setFormErrors({}); setFormUser('new'); }}>Nuevo usuario</Button>
-        <Button onClick={exportUsers}>Exportar usuarios</Button>
-      </div>
-      <UserFilters draft={draftFilters} total={filtered.length} onChange={setDraftFilters} onSearch={applyFilters} onClear={clearFilters} />
-      {filtered.length === 0 ? (
-        <EmptyState title="Sin usuarios" description="No hay resultados para los filtros aplicados." actionLabel="Limpiar filtros" onAction={clearFilters} />
-      ) : (
-        <>
-          <UsersTable users={pageUsers} sort={sort} activeUserId={user?.id ?? ''} onSort={onSort} onEdit={(selected) => { setFormErrors({}); setFormUser(selected); }} onStatus={(selected, status) => setStatusChange({ user: selected, status })} onReset={setResetUser} />
-          <Pagination pagination={pagination} totalItems={filtered.length} onPageChange={(page) => setPagination({ ...pagination, page })} onPageSizeChange={(pageSize) => setPagination({ page: 1, pageSize })} />
-        </>
-      )}
-      {formUser ? <UserFormDialog title={formUser === 'new' ? 'Nuevo usuario' : 'Editar usuario'} initialValues={initialValues} errors={formErrors} isSelf={formUser !== 'new' && formUser.id === user?.id} onSave={saveUser} onClose={() => setFormUser(null)} /> : null}
-      {statusChange ? <UserStatusDialog user={statusChange.user} status={statusChange.status} onClose={() => setStatusChange(null)} onConfirm={() => { setUsers(users.map((item) => item.id === statusChange.user.id ? { ...item, estado: statusChange.status } : item)); setMessage('Estado actualizado en la sesión actual.'); setStatusChange(null); }} /> : null}
-      {resetUser ? <ResetAccessDialog user={resetUser} onClose={() => setResetUser(null)} onConfirm={() => { setMessage('Restablecimiento registrado en la sesión actual.'); setResetUser(null); }} /> : null}
-    </section>
-  );
+  if (loading) return <LoadingState message="Consultando usuarios administrativos." />;
+  return <section className="admin-page">{message ? <InlineMessage tone="success" message={message} /> : null}{apiError ? <ErrorState title="No fue posible cargar usuarios" description={apiError} /> : null}<UserSummary users={users} /><div className="actions-bar"><Button variant="primary" onClick={() => { setFormErrors({}); setFormUser('new'); }}>Nuevo usuario</Button><Button onClick={exportUsers}>Exportar usuarios</Button></div><UserFilters draft={draftFilters} total={filtered.length} onChange={setDraftFilters} onSearch={applyFilters} onClear={clearFilters} />{filtered.length === 0 ? <EmptyState title="Sin usuarios" description="No hay resultados para los filtros aplicados." actionLabel="Limpiar filtros" onAction={clearFilters} /> : <><UsersTable users={pageUsers} sort={sort} activeUserId={user?.id ?? ''} onSort={onSort} onEdit={(selected) => { setFormErrors({}); setFormUser(selected); }} onStatus={(selected, status) => setStatusChange({ user: selected, status })} onReset={setResetUser} /><Pagination pagination={pagination} totalItems={filtered.length} onPageChange={(page) => setPagination({ ...pagination, page })} onPageSizeChange={(pageSize) => setPagination({ page: 1, pageSize })} /></>}{formUser ? <UserFormDialog title={formUser === 'new' ? 'Nuevo usuario' : 'Editar usuario'} initialValues={initialValues} errors={formErrors} isSelf={formUser !== 'new' && formUser.id === user?.id} requirePassword={formUser === 'new'} onSave={saveUser} onClose={() => setFormUser(null)} /> : null}{statusChange ? <UserStatusDialog user={statusChange.user} status={statusChange.status} onClose={() => setStatusChange(null)} onConfirm={changeStatus} /> : null}{resetUser ? <ResetAccessDialog user={resetUser} onClose={() => setResetUser(null)} onConfirm={resetPassword} /> : null}</section>;
 }

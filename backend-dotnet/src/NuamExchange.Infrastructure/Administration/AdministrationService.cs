@@ -29,7 +29,7 @@ public sealed class AdministrationService(NuamExchangeDbContext dbContext, IPass
         return user is null ? AdministrationResult<AdminUserResponse>.Fail(404, "El usuario indicado no existe.") : AdministrationResult<AdminUserResponse>.Ok(ToUserResponse(user));
     }
 
-    public async Task<AdministrationResult<AdminUserResponse>> CreateUserAsync(string fullName, string email, string password, string? jobTitle, int roleId, int administratorId, string? originIp, CancellationToken cancellationToken)
+    public async Task<AdministrationResult<AdminUserResponse>> CreateUserAsync(string fullName, string email, string password, string? jobTitle, int roleId, bool isActive, int administratorId, string? originIp, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(fullName) || fullName.Trim().Length > 150 || Clean(jobTitle)?.Length > 120) return AdministrationResult<AdminUserResponse>.Fail(400, "Los datos del usuario no cumplen las validaciones requeridas.");
         var normalizedEmail = NormalizeEmail(email);
@@ -38,7 +38,7 @@ public sealed class AdministrationService(NuamExchangeDbContext dbContext, IPass
         if (!passwordPolicy.IsValid(password)) return AdministrationResult<AdminUserResponse>.Fail(400, "La contraseña no cumple los requisitos mínimos de seguridad.");
         if (await dbContext.Users.AnyAsync(u => u.Email == normalizedEmail, cancellationToken)) return AdministrationResult<AdminUserResponse>.Fail(409, "El correo ya está registrado.");
         var now = DateTime.UtcNow;
-        var user = new ApplicationUser { FullName = fullName.Trim(), Email = normalizedEmail, PasswordHash = passwordHasher.Hash(password), JobTitle = Clean(jobTitle), RoleId = roleId, IsActive = true, CreatedAt = now, UpdatedAt = now };
+        var user = new ApplicationUser { FullName = fullName.Trim(), Email = normalizedEmail, PasswordHash = passwordHasher.Hash(password), JobTitle = Clean(jobTitle), RoleId = roleId, IsActive = isActive, CreatedAt = now, UpdatedAt = now };
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
         user.Role = role;
@@ -64,7 +64,7 @@ public sealed class AdministrationService(NuamExchangeDbContext dbContext, IPass
         SetIfChanged(changed, "jobTitle", user.JobTitle, Clean(jobTitle), v => user.JobTitle = v);
         if (user.RoleId != roleId) { changed.Add("roleId"); user.RoleId = roleId; user.Role = role; }
         if (user.IsActive != isActive) { changed.Add("isActive"); user.IsActive = isActive; }
-        if (changed.Count > 0) { user.UpdatedAt = DateTime.UtcNow; await dbContext.SaveChangesAsync(cancellationToken); await AuditAsync(administratorId, "Usuario", user.Id, "USER_UPDATED", $"Usuario actualizado por administración. Campos: {string.Join(", ", changed)}.", originIp, cancellationToken); }
+        if (changed.Count > 0) { user.UpdatedAt = DateTime.UtcNow; await dbContext.SaveChangesAsync(cancellationToken); await AuditAsync(administratorId, "Usuario", user.Id, changed.SequenceEqual(new[] { "isActive" }) ? (isActive ? "USER_ACTIVATED" : "USER_DEACTIVATED") : "USER_UPDATED", $"Usuario actualizado por administración. Campos: {string.Join(", ", changed)}.", originIp, cancellationToken); }
         return AdministrationResult<AdminUserResponse>.Ok(ToUserResponse(user));
     }
 

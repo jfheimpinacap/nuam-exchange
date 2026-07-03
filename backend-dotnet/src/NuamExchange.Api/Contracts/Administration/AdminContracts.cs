@@ -10,6 +10,7 @@ public sealed class CreateAdminUserRequest
     [Required] public string Password { get; set; } = string.Empty;
     [MaxLength(120)] public string? JobTitle { get; set; }
     [Required] public int RoleId { get; set; }
+    public bool IsActive { get; set; } = true;
 }
 
 public sealed class UpdateAdminUserRequest
