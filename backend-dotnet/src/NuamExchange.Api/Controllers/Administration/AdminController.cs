@@ -25,7 +25,7 @@ public sealed class AdminController(IServiceProvider services) : ControllerBase
         if (!TryGetUserId(out var administratorId)) return Unauthorized();
         return await ExecuteAsync(async service =>
         {
-            var result = await service.CreateUserAsync(request.FullName, request.Email, request.Password, request.JobTitle, request.RoleId, administratorId, OriginIp(), cancellationToken);
+            var result = await service.CreateUserAsync(request.FullName, request.Email, request.Password, request.JobTitle, request.RoleId, request.IsActive, administratorId, OriginIp(), cancellationToken);
             return result.Succeeded ? CreatedAtAction(nameof(GetUser), new { id = result.Value!.Id }, result.Value) : Error(result.StatusCode, result.Message!);
         });
     }

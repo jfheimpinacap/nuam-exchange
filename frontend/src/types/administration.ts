@@ -12,6 +12,7 @@ export interface AdministrationUser {
   fechaCreacion: string;
   ultimoAcceso: string | null;
   creadoPor: string;
+  cargo?: string;
 }
 
 export interface UserFormValues {
@@ -19,6 +20,9 @@ export interface UserFormValues {
   email: string;
   rol: UserRole;
   estado: UserAccountStatus;
+  cargo?: string;
+  password?: string;
+  confirmPassword?: string;
 }
 
 export type UserFormErrors = Partial<Record<keyof UserFormValues, string>>;
