@@ -27,10 +27,9 @@ import { useApiServices } from "../api/context/useApiServices";
 import { useSession } from "../app/session/useSession";
 import { Button } from "../components/Button";
 import { DataTableShell } from "../components/DataTableShell";
-import { EmptyState, ErrorState, LoadingState } from "../components/ViewStates";
+import { EmptyState, LoadingState } from "../components/ViewStates";
 import { FormField } from "../components/FormField";
 import { InlineMessage } from "../components/InlineMessage";
-import { PageHeader } from "../components/PageHeader";
 import { Pagination } from "../components/Pagination";
 import { formatIsoDateForDisplay } from "../utils/dateFormatting";
 import type { PaginationState } from "../types/classification";
@@ -47,7 +46,6 @@ const emptyFilters: TaxClassificationReadFilters = {
   estado: "Todos",
   texto: "",
 };
-type DemoState = "Normal" | "Cargando" | "Error";
 const supervisorDecisionOptions: Array<{
   label: string;
   value: TaxClassificationSupervisorDecisionDto;
@@ -176,7 +174,6 @@ export function ClassificationsPage() {
   const [message, setMessage] = useState(
     "Seleccione un registro para consultar su detalle.",
   );
-  const [demoState, setDemoState] = useState<DemoState>("Normal");
   const [detail, setDetail] = useState<TaxClassificationDetailDto | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<ApiError | null>(null);
@@ -542,33 +539,8 @@ export function ClassificationsPage() {
 
   return (
     <section className="content-card classifications-page">
-      <PageHeader
-        title="Calificaciones Tributarias"
-        description="Consulta de registros tributarios y detalle desde el servicio configurado."
-      />
       {isApi ? (
         <InlineMessage message="Esta etapa integra creación, modificación y copia reales desde la API. Eliminar y cargas masivas se integrarán posteriormente." />
-      ) : null}
-      {!isApi ? (
-        <div className="demo-panel">
-          <FormField id="demo-state" label="Estado de demostración">
-            <select
-              id="demo-state"
-              value={demoState}
-              onChange={(event) =>
-                setDemoState(event.target.value as DemoState)
-              }
-            >
-              <option>Normal</option>
-              <option>Cargando</option>
-              <option>Error</option>
-            </select>
-          </FormField>
-          <span>
-            Control temporal para simular estados visuales sin cambiar la fuente
-            de datos.
-          </span>
-        </div>
       ) : null}
       <form className="filters-panel" onSubmit={applyFilters}>
         <FormField id="mercado" label="Mercado">
@@ -696,12 +668,7 @@ export function ClassificationsPage() {
       <InlineMessage
         message={`${message} Mostrando ${from}–${to} de ${data.totalCount} registros.`}
       />
-      {demoState === "Error" && !isApi ? (
-        <ErrorState
-          title="Error de demostración"
-          description="Estado temporal para validar la vista de error antes de integrar la API."
-        />
-      ) : (demoState === "Cargando" && !isApi) || isLoading ? (
+      {isLoading ? (
         <LoadingState />
       ) : error ? (
         <div className="view-state view-state-error" role="alert">

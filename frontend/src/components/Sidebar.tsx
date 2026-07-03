@@ -4,17 +4,16 @@ import { getNavigationForRole } from '../routes/navigation';
 const groupLabels: Record<string, string> = { '/inicio': 'Operación', '/administracion/usuarios': 'Administración' };
 
 interface SidebarProps {
-  isCollapsed: boolean;
   isMobileOpen: boolean;
   onCloseMobile: () => void;
 }
 
-export function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: SidebarProps) {
+export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
   const { user } = useSession();
   const authorizedItems = user ? getNavigationForRole(user.rol) : [];
 
   return (
-    <aside className={`sidebar ${isCollapsed ? 'is-collapsed' : ''} ${isMobileOpen ? 'is-open' : ''}`}>
+    <aside className={`sidebar ${isMobileOpen ? 'is-open' : ''}`}>
       <div className="sidebar-brand">
         <strong>Nuam Exchange</strong>
         <span>Sistema Tributario</span>

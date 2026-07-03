@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { PageHeader } from '../components/PageHeader';
 import { Pagination } from '../components/Pagination';
 import { mockClassifications } from '../mocks/classifications';
 import { uploadReviews } from '../mocks/uploadReview';
@@ -26,7 +25,7 @@ export function ReportsPage() {
   const generateU = () => { if(!validRange(draftU.fechaDesde,draftU.fechaHasta)){setError('Fecha desde no puede ser posterior a Fecha hasta.'); return;} setError(''); setActiveU(draftU); setPagination(p=>({...p,page:1})); };
   const onType = (v: ReportType) => { setType(v); setError(''); setPagination(p=>({...p,page:1})); setSort({ key: v==='classifications'?'fechaPago':'date', direction:'desc' }); };
   const csum=clsSummary(classRows), usum=uploadSummary(uploadRows);
-  return <div className="reports-page"><PageHeader title="Reportes" description="Consulta y exportación simulada de información tributaria." /><ReportTypeSelector value={type} onChange={onType} />
+  return <div className="reports-page"><ReportTypeSelector value={type} onChange={onType} />
     {type==='classifications' ? <><ClassificationFilters draft={draftC} error={error} onChange={setDraftC} onGenerate={generateC} onClear={()=>{setDraftC(initialClassificationFilters); setActiveC(initialClassificationFilters); setPagination(p=>({...p,page:1}));}} onExport={()=>exportClassifications(classRows)} /><ReportsSummary items={[["Total de registros",csum.total],["Monto total",csum.monto],["Vigentes",csum.Vigente],["Pendientes",csum.Pendiente],["Observadas",csum.Observada],["Rechazadas",csum.Rechazada]]} /><p aria-live="polite">Mostrando {info.start}–{info.end} de {currentTotal} registros.</p><ClassificationReportTable rows={pagedClassRows} sort={sort} onSort={(k)=>setSort(nextSort(sort,k))} /></> : <><UploadFilters draft={draftU} error={error} owners={[...new Set(uploadReviews.map(u=>u.owner))]} onChange={setDraftU} onGenerate={generateU} onClear={()=>{setDraftU(initialUploadFilters); setActiveU(initialUploadFilters); setPagination(p=>({...p,page:1}));}} onExport={()=>exportUploads(uploadRows)} /><ReportsSummary items={[["Total de cargas",usum.total],["Total de filas",usum.totalRows],["Filas válidas",usum.valid],["Filas con error",usum.invalid],["Porcentaje válido",usum.pct]]} /><p aria-live="polite">Mostrando {info.start}–{info.end} de {currentTotal} registros.</p><UploadReportTable rows={pagedUploadRows} sort={sort} onSort={(k)=>setSort(nextSort(sort,k))} /></>}
     <Pagination pagination={pagination} totalItems={currentTotal} onPageChange={(page)=>setPagination(p=>({...p,page}))} onPageSizeChange={(pageSize)=>setPagination({page:1,pageSize})} />
   </div>;
