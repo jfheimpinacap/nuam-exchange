@@ -19,6 +19,8 @@ using NuamExchange.Application.TaxAudits;
 using NuamExchange.Infrastructure.TaxAudits;
 using NuamExchange.Application.BackupMetadata;
 using NuamExchange.Infrastructure.BackupMetadata;
+using NuamExchange.Application.DocumentReviews;
+using NuamExchange.Infrastructure.DocumentReviews;
 
 namespace NuamExchange.Infrastructure.DependencyInjection;
 
@@ -53,6 +55,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITaxAuditQueryService, TaxAuditQueryService>();
         services.AddScoped<IBackupMetadataQueryService, BackupMetadataQueryService>();
         services.AddScoped<ITaxClassificationCommandService, TaxClassificationCommandService>();
+        services.AddSingleton<IPdfTaxDocumentTextParser, PdfTaxDocumentTextParser>();
+        services.AddScoped<IPdfDocumentReviewService, PdfDocumentReviewService>();
         services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
         services.AddScoped<ISecuritySeedService, SecuritySeedService>();
 
@@ -90,6 +94,7 @@ public static class ServiceCollectionExtensions
             options.AddPolicy("TaxClassificationWrite", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole));
             options.AddPolicy("TaxClassificationSupervise", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.SupervisorRole));
             options.AddPolicy("BackupMetadataRead", policy => policy.RequireRole(SecuritySeedService.AdministratorRole));
+            options.AddPolicy("DocumentReviewWrite", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole));
         });
 
         return services;

@@ -77,3 +77,24 @@ SQL Server se configurará en una etapa posterior. Esta entrega no contiene migr
 ## Seguridad
 
 No se deben subir credenciales, certificados, tokens, cadenas de conexión reales, archivos `.env` ni configuraciones productivas sensibles.
+
+## Carga PDF Lite
+
+El módulo **Carga PDF** es un prototipo Lite de revisión documental tributaria. Permite subir PDFs con texto seleccionable, extraer texto básico y validar si el documento contiene una estructura mínima con campos tributarios esperados.
+
+Limitaciones y alcance:
+- No realiza OCR sobre documentos escaneados o imágenes.
+- Solo procesa PDFs con texto seleccionable.
+- No actualiza automáticamente calificaciones tributarias ni modifica datos tributarios reales.
+- Procesa el archivo en memoria y no guarda el PDF en disco ni en base de datos.
+- Para documentos oficiales externos o escaneados se requerirían OCR y reglas específicas por organismo/formato.
+
+Endpoint principal: `POST /api/document-reviews/pdf` con `multipart/form-data` y campo `file`.
+
+Para generar documentos ficticios de demostración ejecute en PowerShell:
+
+```powershell
+./tools/generate-demo-pdf-documents.ps1
+```
+
+El script crea la carpeta `NuamExchangePdfDemo` en el Escritorio con PDFs válidos, incompletos y no compatibles listos para cargar en la pantalla **Carga PDF**.
