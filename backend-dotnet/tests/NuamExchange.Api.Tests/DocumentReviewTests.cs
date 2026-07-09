@@ -47,7 +47,7 @@ public sealed class DocumentReviewTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadAsStringAsync();
         using var json = JsonDocument.Parse(content);
-        Assert.Equal("VALID", json.RootElement.GetProperty("status").GetString());
+        Assert.Equal("VALID", GetStatus(json.RootElement));
     }
 
     [Fact]
@@ -107,14 +107,26 @@ public sealed class DocumentReviewTests
         return form;
     }
 
-    private static WebApplicationFactory<Program> CreateFactory(string role, bool authenticated = true) => new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+    private static WebApplicationFactory<Program> CreateFactory(string role, bool authenticated = true) => new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
     {
-        services.AddAuthentication(options => { options.DefaultAuthenticateScheme = RoleAuthenticationHandler.AuthenticationScheme; options.DefaultChallengeScheme = RoleAuthenticationHandler.AuthenticationScheme; })
-            .AddScheme<AuthenticationSchemeOptions, RoleAuthenticationHandler>(RoleAuthenticationHandler.AuthenticationScheme, options => options.ClaimsIssuer = authenticated ? role : string.Empty);
-        services.AddAuthorization(options => options.AddPolicy("DocumentReviewWrite", policy => policy.RequireRole(SecuritySeedService.AdministratorRole, SecuritySeedService.TaxAnalystRole)));
-        services.RemoveAll<IPdfDocumentReviewService>();
-        services.AddScoped<IPdfDocumentReviewService>(_ => new FakePdfService());
-    }));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddNuamExchangeInMemoryDatabase();
+            services.RemoveAll<IPdfDocumentReviewService>();
+            services.AddScoped<IPdfDocumentReviewService>(_ => new FakePdfService());
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = RoleAuthenticationHandler.AuthenticationScheme;
+                options.DefaultChallengeScheme = RoleAuthenticationHandler.AuthenticationScheme;
+            }).AddScheme<AuthenticationSchemeOptions, RoleAuthenticationHandler>(RoleAuthenticationHandler.AuthenticationScheme, options => { options.ClaimsIssuer = authenticated ? role : string.Empty; });
+        });
+    });
+
+    private static string? GetStatus(JsonElement root)
+    {
+        if (root.TryGetProperty("status", out var camelCaseStatus)) return camelCaseStatus.GetString();
+        return root.TryGetProperty("Status", out var pascalCaseStatus) ? pascalCaseStatus.GetString() : null;
+    }
 
     private sealed class FakePdfService : IPdfDocumentReviewService
     {
