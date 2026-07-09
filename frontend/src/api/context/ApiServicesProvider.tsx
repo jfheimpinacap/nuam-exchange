@@ -13,6 +13,7 @@ import { HttpTaxClassificationsHistoryService } from "../services/HttpTaxClassif
 import { HttpTaxClassificationsBulkLoadService } from "../services/HttpTaxClassificationsBulkLoadService";
 import { ApiServicesContext } from "./ApiServicesContext";
 import { HttpAdministrationService } from "../services/HttpAdministrationService";
+import { HttpDocumentReviewService } from "../services/HttpDocumentReviewService";
 
 export function ApiServicesProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => {
@@ -41,6 +42,7 @@ export function ApiServicesProvider({ children }: { children: ReactNode }) {
       ? new HttpTaxClassificationsBulkLoadService(http)
       : null;
     const administrationService = apiConfig.isApi ? new HttpAdministrationService(http) : null;
+    const documentReviewService = apiConfig.isApi ? new HttpDocumentReviewService(http) : null;
 
     return {
       dataSource: apiConfig.dataSource,
@@ -51,6 +53,7 @@ export function ApiServicesProvider({ children }: { children: ReactNode }) {
       taxClassificationsHistoryService,
       taxClassificationsBulkLoadService,
       administrationService,
+      documentReviewService,
       authService,
       apiBaseUrl: apiConfig.baseUrl,
       isMock: apiConfig.isMock,

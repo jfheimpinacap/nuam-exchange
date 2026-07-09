@@ -12,6 +12,7 @@ import { ClassificationEditPage } from '../pages/ClassificationEditPage';
 import { ClassificationCopyPage } from '../pages/ClassificationCopyPage';
 import { XFactorUploadPage } from '../pages/XFactorUploadPage';
 import { XAmountUploadPage } from '../pages/XAmountUploadPage';
+import { PdfUploadPage } from '../pages/PdfUploadPage';
 import { UploadTemplatesPage } from '../pages/UploadTemplatesPage';
 import { AuditPage } from '../pages/AuditPage';
 import { BackupsPage } from '../pages/BackupsPage';
@@ -48,6 +49,9 @@ export function AppRoutes() {
           </Route>
           <Route element={<ProtectedRoute routePath="/cargas/x-monto" />}>
             <Route path="/cargas/x-monto" element={<XAmountUploadPage />} />
+          </Route>
+          <Route element={<ProtectedRoute routePath="/cargas/pdf" />}>
+            <Route path="/cargas/pdf" element={<PdfUploadPage />} />
           </Route>
           <Route element={<ProtectedRoute routePath="/plantillas-carga" />}>
             <Route path="/plantillas-carga" element={<UploadTemplatesPage />} />
