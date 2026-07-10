@@ -425,3 +425,104 @@ input, select, textarea { max-width: 100%; min-width: 0; }
     max-width: max-content;
   }
 }
+
+/* C018: stabilize responsive button sizing across action groups */
+.button,
+.primary-link,
+.primary-button,
+.secondary-button {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 40px;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.button,
+.primary-link {
+  flex: 0 0 auto;
+}
+
+.filter-actions,
+.actions-bar,
+.form-actions,
+.row-actions,
+.pagination-controls,
+.quick-actions div,
+.report-selector,
+.pdf-upload-actions {
+  align-items: center;
+}
+
+.filter-actions > .button,
+.filter-actions > .primary-link,
+.actions-bar > .button,
+.actions-bar > .primary-link,
+.form-actions > .button,
+.row-actions > .button,
+.pagination-controls > .button,
+.quick-actions .button,
+.quick-actions .primary-link,
+.report-selector .button,
+.pdf-upload-actions > .button {
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: auto;
+  min-height: 40px;
+}
+
+.pdf-upload-actions {
+  flex: 0 0 100%;
+}
+
+.pdf-upload-page .x-factor-upload-controls .pdf-upload-actions .button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 767px) {
+  .filter-actions,
+  .actions-bar,
+  .form-actions,
+  .pagination-controls,
+  .quick-actions div,
+  .report-selector,
+  .pdf-upload-actions {
+    align-items: stretch;
+  }
+
+  .filter-actions > .button,
+  .filter-actions > .primary-link,
+  .actions-bar > .button,
+  .actions-bar > .primary-link,
+  .form-actions > .button,
+  .pagination-controls > .button,
+  .quick-actions .button,
+  .quick-actions .primary-link,
+  .report-selector .button,
+  .pdf-upload-actions > .button,
+  .pdf-upload-page .x-factor-upload-controls .pdf-upload-actions .button {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .row-actions {
+    align-items: flex-start;
+  }
+
+  .row-actions > .button {
+    flex: 0 0 auto;
+    width: auto;
+  }
+}
+
+@media (max-width: 479px) {
+  .app-header .mobile-only,
+  .app-header .secondary-button,
+  .pdf-file-button {
+    width: auto;
+    max-width: max-content;
+  }
+}
