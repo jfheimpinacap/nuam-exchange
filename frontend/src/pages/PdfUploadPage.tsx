@@ -78,9 +78,13 @@ export function PdfUploadPage() {
       {error ? <InlineMessage tone="error" message={error} /> : null}
       <div className="filters-panel x-factor-upload-controls">
         <label htmlFor="pdf-file">Archivo PDF</label>
-        <input id="pdf-file" type="file" accept="application/pdf,.pdf" onChange={onFileChange} disabled={isProcessing || !canProcessRole} />
+        <div className="pdf-file-picker">
+          <input id="pdf-file" className="pdf-file-input" type="file" accept="application/pdf,.pdf" onChange={onFileChange} disabled={isProcessing || !canProcessRole} />
+          <label className="button pdf-file-button" htmlFor="pdf-file" aria-disabled={isProcessing || !canProcessRole}>Seleccionar archivo</label>
+          <span className="pdf-file-name" aria-live="polite">{file?.name ?? 'Sin archivos seleccionados'}</span>
+        </div>
         {file ? <dl className="review-summary"><div><dt>Nombre</dt><dd>{file.name}</dd></div><div><dt>Tamaño</dt><dd>{formatBytes(file.size)}</dd></div><div><dt>Validación</dt><dd>{file.name.toLowerCase().endsWith('.pdf') ? 'Archivo PDF seleccionado' : 'Extensión no válida'}</dd></div></dl> : null}
-        <Button type="button" variant="primary" onClick={process} disabled={!file || isProcessing || !canProcessRole || !documentReviewService}>{isProcessing ? 'Procesando...' : 'Procesar PDF'}</Button>
+        <div className="pdf-upload-actions"><Button type="button" variant="primary" onClick={process} disabled={!file || isProcessing || !canProcessRole || !documentReviewService}>{isProcessing ? 'Procesando...' : 'Procesar PDF'}</Button></div>
       </div>
     </section>
 
