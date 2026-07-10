@@ -19,18 +19,66 @@ namespace NuamExchange.Api.Tests;
 public sealed class DocumentReviewTests
 {
     [Fact]
-    public void Parser_ClassifiesValidIncompleteAndUnsupported()
+    public void Parser_ClassifiesValidTextWithLineBreaks()
     {
-        var parser = new PdfTaxDocumentTextParser();
-        var valid = parser.Parse("ok.pdf", 10, 1, "Tipo de documento: Certificado Tributario\nMercado: BOLSA\nInstrumento: NUAM-ACC-001\nPeriodo tributario: 2026\nFactor aplicado: 1.234\nMonto de referencia: 1000000\nFecha de emisión: 04-07-2026");
-        Assert.Equal("VALID", valid.Status);
+        var result = ParseText("Tipo de documento: Certificado Tributario\nMercado: BOLSA\nInstrumento: NUAM-ACC-001\nPeriodo tributario: 2026\nFactor aplicado: 1.23456789\nMonto de referencia: 1000000\nFecha de emisión: 04-07-2026");
 
-        var incomplete = parser.Parse("bad.pdf", 10, 1, "Tipo de documento: Certificado Tributario\nMercado: BOLSA\nInstrumento: NUAM-ACC-001\nPeriodo tributario: 2026\nMonto de referencia: 1000000\nFecha de emisión: 04-07-2026");
-        Assert.Equal("INCOMPLETE", incomplete.Status);
-        Assert.Contains("Factor aplicado", incomplete.MissingFields);
+        Assert.Equal("VALID", result.Status);
+        Assert.Empty(result.MissingFields);
+    }
 
-        var unsupported = parser.Parse("generic.pdf", 10, 1, "Documento generico sin formato esperado");
-        Assert.Equal("UNSUPPORTED", unsupported.Status);
+    [Fact]
+    public void Parser_ClassifiesValidConcatenatedText()
+    {
+        var result = ParseText("Tipo de documento: Certificado TributarioMercado: BOLSAInstrumento: NUAM-ACC-001Periodo tributario: 2026Factor aplicado: 1.23456789Monto de referencia: 1000000Fecha de emisión: 04-07-2026");
+
+        Assert.Equal("VALID", result.Status);
+        Assert.Empty(result.MissingFields);
+        Assert.Equal("Certificado Tributario", result.DetectedFields["documentType"]);
+        Assert.Equal("BOLSA", result.DetectedFields["market"]);
+    }
+
+    [Fact]
+    public void Parser_ClassifiesIncompleteConcatenatedTextWithoutAppliedFactor()
+    {
+        var result = ParseText("Tipo de documento: Certificado TributarioMercado: BOLSAInstrumento: NUAM-ACC-001Periodo tributario: 2026Monto de referencia: 1000000Fecha de emisión: 04-07-2026");
+
+        Assert.Equal("INCOMPLETE", result.Status);
+        Assert.Equal(["Factor aplicado"], result.MissingFields);
+    }
+
+    [Fact]
+    public void Parser_ClassifiesIncompleteConcatenatedTextWithoutTaxPeriod()
+    {
+        var result = ParseText("Tipo de documento: Certificado TributarioMercado: BOLSAInstrumento: NUAM-ACC-001Factor aplicado: 1.23456789Monto de referencia: 1000000Fecha de emisión: 04-07-2026");
+
+        Assert.Equal("INCOMPLETE", result.Status);
+        Assert.Equal(["Periodo tributario"], result.MissingFields);
+    }
+
+    [Fact]
+    public void Parser_ClassifiesNonTaxTextAsUnsupported()
+    {
+        var result = ParseText("Documento generico sin formato esperado");
+
+        Assert.Equal("UNSUPPORTED", result.Status);
+    }
+
+    [Fact]
+    public void Parser_DetectsDamagedIssueDateAccent()
+    {
+        var result = ParseText("Tipo de documento: Certificado TributarioMercado: BOLSAInstrumento: NUAM-ACC-001Período tributario: 2026Factor aplicado: 1.23456789Monto de referencia: 1000000Fecha de emisi??n: 04-07-2026");
+
+        Assert.Equal("VALID", result.Status);
+        Assert.Equal("04-07-2026", result.DetectedFields["issueDate"]);
+    }
+
+    [Fact]
+    public void Parser_DoesNotConsumeFollowingFieldsAsDocumentTypeValue()
+    {
+        var result = ParseText("Tipo de documento: Certificado TributarioMercado: BOLSAInstrumento: NUAM-ACC-001Periodo tributario: 2026Factor aplicado: 1.23456789Monto de referencia: 1000000Fecha de emision: 04-07-2026");
+
+        Assert.Equal("Certificado Tributario", result.DetectedFields["documentType"]);
     }
 
     [Theory]
@@ -96,6 +144,13 @@ public sealed class DocumentReviewTests
         using var response = await client.PostAsync("/api/document-reviews/pdf", form);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+
+    private static PdfDocumentReviewResult ParseText(string text)
+    {
+        var parser = new PdfTaxDocumentTextParser();
+        return parser.Parse("demo.pdf", 10, 1, text);
     }
 
     private static MultipartFormDataContent CreateForm(string fileName, string contentType)
