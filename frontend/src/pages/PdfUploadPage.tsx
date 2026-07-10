@@ -76,15 +76,17 @@ export function PdfUploadPage() {
       {!isApi ? <InlineMessage tone="warning" message="La revisión PDF requiere conexión con la API." /> : null}
       {!canProcessRole ? <InlineMessage tone="warning" message="Solo Administrador y Analista Tributario pueden procesar PDFs. Supervisor no posee permiso de carga." /> : null}
       {error ? <InlineMessage tone="error" message={error} /> : null}
-      <div className="filters-panel x-factor-upload-controls">
-        <label htmlFor="pdf-file">Archivo PDF</label>
-        <div className="pdf-file-picker">
-          <input id="pdf-file" className="pdf-file-input" type="file" accept="application/pdf,.pdf" onChange={onFileChange} disabled={isProcessing || !canProcessRole} />
-          <label className="button pdf-file-button" htmlFor="pdf-file" aria-disabled={isProcessing || !canProcessRole}>Seleccionar archivo</label>
-          <span className="pdf-file-name" aria-live="polite">{file?.name ?? 'Sin archivos seleccionados'}</span>
+      <div className="filters-panel pdf-upload-form">
+        <div className="pdf-file-control">
+          <label htmlFor="pdf-file">Archivo PDF</label>
+          <div className="pdf-file-picker">
+            <input id="pdf-file" className="pdf-file-input" type="file" accept="application/pdf,.pdf" onChange={onFileChange} disabled={isProcessing || !canProcessRole} />
+            <label className="button pdf-file-button" htmlFor="pdf-file" aria-disabled={isProcessing || !canProcessRole}>Seleccionar archivo</label>
+            <span className="pdf-file-name" aria-live="polite">{file?.name ?? 'Sin archivos seleccionados'}</span>
+          </div>
         </div>
         {file ? <dl className="review-summary"><div><dt>Nombre</dt><dd>{file.name}</dd></div><div><dt>Tamaño</dt><dd>{formatBytes(file.size)}</dd></div><div><dt>Validación</dt><dd>{file.name.toLowerCase().endsWith('.pdf') ? 'Archivo PDF seleccionado' : 'Extensión no válida'}</dd></div></dl> : null}
-        <div className="pdf-upload-actions"><Button type="button" variant="primary" onClick={process} disabled={!file || isProcessing || !canProcessRole || !documentReviewService}>{isProcessing ? 'Procesando...' : 'Procesar PDF'}</Button></div>
+        <div className="pdf-submit-row"><Button className="pdf-submit-button" type="button" variant="primary" onClick={process} disabled={!file || isProcessing || !canProcessRole || !documentReviewService}>{isProcessing ? 'Procesando...' : 'Procesar PDF'}</Button></div>
       </div>
     </section>
 
