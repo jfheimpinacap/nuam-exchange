@@ -237,3 +237,61 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width: 560px) { .x-factor-confirmation-summary, .x-amount-confirmation-summary { grid-template-columns: 1fr; } .x-factor-confirmation .filter-actions, .x-amount-confirmation .filter-actions { align-items: stretch; flex-direction: column; } }
 .text-preview { white-space: pre-wrap; background: var(--color-surface-muted, #f6f8fb); border: 1px solid var(--color-border, #d8dee9); border-radius: 12px; padding: 1rem; max-height: 220px; overflow: auto; }
 .pdf-upload-page object { border: 1px solid var(--color-border, #d8dee9); border-radius: 12px; background: #fff; }
+
+/* Responsive hardening for shared application layouts */
+img, svg, video, canvas, iframe, object, embed { max-width: 100%; }
+.app-content, .main-area, .content-card, .review-card, .template-card, .preview-panel, .result-panel, .progress-panel, .review-panel, .chart-panel, .activity-panel, .quick-actions, .report-selector, .reports-summary, .permissions-panel { min-width: 0; }
+.section-heading { min-width: 0; }
+.section-heading strong, .section-heading span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.main-area { overflow-x: hidden; }
+.content-card, .review-card, .template-card, .preview-panel, .result-panel, .progress-panel, .review-panel, .chart-panel, .activity-panel, .quick-actions, .report-selector, .reports-summary, .permissions-panel, .inline-message, .error-summary { overflow-wrap: anywhere; }
+input, select, textarea { max-width: 100%; min-width: 0; }
+.table-scroll { max-width: 100%; -webkit-overflow-scrolling: touch; }
+.table-scroll:focus-within { outline: 2px solid #7db7ea; outline-offset: 2px; }
+.filter-actions .primary-link, .actions-bar .primary-link { flex: 0 1 auto; }
+.confirm-dialog { max-height: calc(100vh - (2 * var(--space-4))); overflow: auto; }
+.dialog-backdrop { overflow: auto; }
+
+/* PDF upload responsive alignment */
+.pdf-upload-page { width: 100%; }
+.pdf-upload-intro { display: grid; gap: var(--space-3); }
+.pdf-upload-intro .page-subtitle { color: var(--color-text-muted); margin: 0; }
+.pdf-upload-page .review-card h2 { margin: 0; color: var(--color-primary-dark); font-size: 20px; }
+.pdf-fields-table { min-width: 520px; }
+.pdf-fields-table td:first-child { width: 38%; font-weight: 700; color: var(--color-primary-dark); }
+.pdf-preview-object { display: block; width: 100%; height: min(62vh, 640px); min-height: 420px; }
+.text-preview { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+
+@media (max-width: 1023px) {
+  .main-area { padding: var(--space-4); }
+  .reports-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pdf-preview-object { height: 52vh; min-height: 340px; }
+}
+
+@media (max-width: 767px) {
+  .app-header { min-height: var(--header-height); height: auto; gap: var(--space-2); padding-block: var(--space-2); }
+  .header-actions { min-width: 0; }
+  .section-heading strong { max-width: 58vw; }
+  .filters-panel, .report-filters, .admin-filters, .audit-filters { grid-template-columns: 1fr; align-items: stretch; }
+  .filter-actions, .actions-bar, .pagination-controls, .quick-actions div, .report-selector { align-items: stretch; }
+  .filter-actions .button, .filter-actions .primary-link, .quick-actions .button, .quick-actions .primary-link, .report-selector .button { flex: 1 1 180px; }
+  .data-table { font-size: 12px; }
+  .data-table th, .data-table td { padding: 6px; }
+  .review-summary dd, .upload-summary dd, .reports-summary dd { font-size: 16px; line-height: 1.3; overflow-wrap: anywhere; }
+  .dialog-backdrop { align-items: start; padding: var(--space-3); }
+  .confirm-dialog { width: 100%; padding: var(--space-4); max-height: calc(100vh - (2 * var(--space-3))); }
+  .pdf-preview-object { height: 46vh; min-height: 280px; }
+}
+
+@media (max-width: 479px) {
+  .main-area { padding: var(--space-3); }
+  .content-card, .review-card, .template-card, .preview-panel, .result-panel, .progress-panel, .review-panel, .chart-panel, .activity-panel, .quick-actions, .report-selector, .reports-summary, .permissions-panel { padding: var(--space-3); }
+  .breadcrumbs { font-size: 12px; }
+  .section-heading strong { max-width: 50vw; }
+  .button, .primary-link, .secondary-button, .primary-button { width: 100%; }
+  .pagination { align-items: stretch; flex-direction: column; }
+  .reports-summary { grid-template-columns: 1fr; }
+  .pdf-fields-table { min-width: 420px; }
+  .pdf-preview-object { height: 42vh; min-height: 220px; }
+  .text-preview { max-height: 180px; padding: var(--space-3); }
+}

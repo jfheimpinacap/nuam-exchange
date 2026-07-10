@@ -70,8 +70,7 @@ export function PdfUploadPage() {
   };
 
   return <div className="uploads-page pdf-upload-page">
-    <section className="page-card">
-      <h1>Carga PDF</h1>
+    <section className="content-card pdf-upload-intro">
       <p className="page-subtitle">Revisión documental tributaria ligera.</p>
       <InlineMessage message="Este módulo revisa PDFs con texto seleccionable. No realiza OCR sobre documentos escaneados." />
       {!isApi ? <InlineMessage tone="warning" message="La revisión PDF requiere conexión con la API." /> : null}
@@ -89,7 +88,7 @@ export function PdfUploadPage() {
       <h2>{statusLabels[result.status] ?? result.status}</h2>
       <InlineMessage tone={statusTone[result.status] ?? 'warning'} message={result.message} />
       <dl className="review-summary"><div><dt>Estado</dt><dd>{result.status}</dd></div><div><dt>Nombre</dt><dd>{result.fileName}</dd></div><div><dt>Tamaño</dt><dd>{formatBytes(result.fileSizeBytes)}</dd></div><div><dt>Páginas</dt><dd>{result.pageCount}</dd></div></dl>
-      <div className="table-scroll"><table className="data-table"><caption>Campos detectados</caption><thead><tr><th>Campo</th><th>Valor</th></tr></thead><tbody>{Object.entries(result.detectedFields).map(([key, value]) => <tr key={key}><td>{getFieldLabel(key)}</td><td className="detected-field-value">{value}</td></tr>)}</tbody></table></div>
+      <div className="table-scroll pdf-fields-scroll"><table className="data-table pdf-fields-table"><caption>Campos detectados</caption><thead><tr><th>Campo</th><th>Valor</th></tr></thead><tbody>{Object.entries(result.detectedFields).map(([key, value]) => <tr key={key}><td>{getFieldLabel(key)}</td><td className="detected-field-value">{value}</td></tr>)}</tbody></table></div>
       {result.missingFields.length ? <div className="error-summary"><strong>Campos faltantes</strong><ul>{result.missingFields.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
       {result.warnings.length ? <div className="error-summary"><strong>Advertencias</strong><ul>{result.warnings.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
       {result.textPreview ? <pre className="text-preview">{result.textPreview}</pre> : null}
@@ -97,7 +96,7 @@ export function PdfUploadPage() {
 
     <section className="review-card">
       <h2>Vista previa del PDF</h2>
-      {previewUrl ? <object data={previewUrl} type="application/pdf" width="100%" height="560"><p>No fue posible previsualizar el PDF en este navegador.</p></object> : <p>Seleccione un PDF para visualizarlo dentro del sistema.</p>}
+      {previewUrl ? <object className="pdf-preview-object" data={previewUrl} type="application/pdf" width="100%" height="560"><p>No fue posible previsualizar el PDF en este navegador.</p></object> : <p>Seleccione un PDF para visualizarlo dentro del sistema.</p>}
     </section>
   </div>;
 }
