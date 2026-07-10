@@ -13,6 +13,19 @@ function formatBytes(bytes: number): string {
 }
 const statusLabels: Record<string, string> = { VALID: 'Documento válido', INCOMPLETE: 'Documento incompleto', UNSUPPORTED: 'Documento no compatible', INVALID_FILE: 'Archivo inválido' };
 const statusTone: Record<string, 'success' | 'warning' | 'error'> = { VALID: 'success', INCOMPLETE: 'warning', UNSUPPORTED: 'warning', INVALID_FILE: 'error' };
+const fieldLabels: Record<string, string> = {
+  documentType: 'Tipo de documento',
+  market: 'Mercado',
+  instrument: 'Instrumento',
+  taxPeriod: 'Periodo tributario',
+  appliedFactor: 'Factor aplicado',
+  referenceAmount: 'Monto de referencia',
+  issueDate: 'Fecha de emisión',
+};
+
+function getFieldLabel(key: string): string {
+  return fieldLabels[key] ?? key;
+}
 
 export function PdfUploadPage() {
   const { documentReviewService, isApi } = useApiServices();
@@ -76,7 +89,7 @@ export function PdfUploadPage() {
       <h2>{statusLabels[result.status] ?? result.status}</h2>
       <InlineMessage tone={statusTone[result.status] ?? 'warning'} message={result.message} />
       <dl className="review-summary"><div><dt>Estado</dt><dd>{result.status}</dd></div><div><dt>Nombre</dt><dd>{result.fileName}</dd></div><div><dt>Tamaño</dt><dd>{formatBytes(result.fileSizeBytes)}</dd></div><div><dt>Páginas</dt><dd>{result.pageCount}</dd></div></dl>
-      <div className="table-scroll"><table className="data-table"><caption>Campos detectados</caption><thead><tr><th>Campo</th><th>Valor</th></tr></thead><tbody>{Object.entries(result.detectedFields).map(([key, value]) => <tr key={key}><td>{key}</td><td>{value}</td></tr>)}</tbody></table></div>
+      <div className="table-scroll"><table className="data-table"><caption>Campos detectados</caption><thead><tr><th>Campo</th><th>Valor</th></tr></thead><tbody>{Object.entries(result.detectedFields).map(([key, value]) => <tr key={key}><td>{getFieldLabel(key)}</td><td className="detected-field-value">{value}</td></tr>)}</tbody></table></div>
       {result.missingFields.length ? <div className="error-summary"><strong>Campos faltantes</strong><ul>{result.missingFields.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
       {result.warnings.length ? <div className="error-summary"><strong>Advertencias</strong><ul>{result.warnings.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
       {result.textPreview ? <pre className="text-preview">{result.textPreview}</pre> : null}

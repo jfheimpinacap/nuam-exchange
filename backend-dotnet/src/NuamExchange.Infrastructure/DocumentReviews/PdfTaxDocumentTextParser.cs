@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using System.Text.RegularExpressions;
 using NuamExchange.Application.DocumentReviews;
 
@@ -7,16 +5,20 @@ namespace NuamExchange.Infrastructure.DocumentReviews;
 
 public sealed class PdfTaxDocumentTextParser : IPdfTaxDocumentTextParser
 {
-    private static readonly (string Key, string Label, Regex Pattern)[] ExpectedFields =
+    private static readonly FieldDefinition[] ExpectedFields =
     [
-        ("documentType", "Tipo de documento", BuildFieldRegex("Tipo\\s+de\\s+documento")),
-        ("market", "Mercado", BuildFieldRegex("Mercado")),
-        ("instrument", "Instrumento", BuildFieldRegex("Instrumento")),
-        ("taxPeriod", "Periodo tributario", BuildFieldRegex("Per[ií]odo\\s+tributario")),
-        ("appliedFactor", "Factor aplicado", BuildFieldRegex("Factor\\s+aplicado")),
-        ("referenceAmount", "Monto de referencia", BuildFieldRegex("Monto\\s+de\\s+referencia")),
-        ("issueDate", "Fecha de emisión", BuildFieldRegex("Fecha\\s+de\\s+emisi[oó]n")),
+        new("documentType", "Tipo de documento", @"Tipo\s+de\s+documento"),
+        new("market", "Mercado", @"Mercado"),
+        new("instrument", "Instrumento", @"Instrumento"),
+        new("taxPeriod", "Periodo tributario", @"Per(?:i|í)odo\s+tributario"),
+        new("appliedFactor", "Factor aplicado", @"Factor\s+aplicado"),
+        new("referenceAmount", "Monto de referencia", @"Monto\s+de\s+referencia"),
+        new("issueDate", "Fecha de emisión", @"Fecha\s+de\s+emisi(?:o|ó|\?\?)n"),
     ];
+
+    private static readonly Regex FieldLabelRegex = new(
+        $@"(?<label>{string.Join('|', ExpectedFields.Select(field => field.LabelPattern))})\s*:",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public PdfDocumentReviewResult Parse(string fileName, long fileSizeBytes, int pageCount, string text)
     {
@@ -25,16 +27,7 @@ public sealed class PdfTaxDocumentTextParser : IPdfTaxDocumentTextParser
             return Result(fileName, fileSizeBytes, pageCount, "UNSUPPORTED", "PDF no compatible: el archivo no contiene texto seleccionable. OCR queda fuera del alcance de esta versión.", new Dictionary<string, string>(), ExpectedFields.Select(x => x.Label).ToArray(), ["No se extrajo texto seleccionable desde el PDF."], string.Empty);
         }
 
-        var detected = new Dictionary<string, string>();
-        foreach (var field in ExpectedFields)
-        {
-            var match = field.Pattern.Match(text);
-            if (match.Success)
-            {
-                detected[field.Key] = CleanValue(match.Groups["value"].Value);
-            }
-        }
-
+        var detected = ExtractDetectedFields(text);
         var missing = ExpectedFields.Where(x => !detected.ContainsKey(x.Key)).Select(x => x.Label).ToArray();
         var preview = BuildPreview(text);
 
@@ -51,7 +44,34 @@ public sealed class PdfTaxDocumentTextParser : IPdfTaxDocumentTextParser
         return Result(fileName, fileSizeBytes, pageCount, "UNSUPPORTED", "PDF no compatible: no se detectó estructura tributaria reconocida.", detected, missing, ["El documento no coincide con la estructura tributaria esperada para esta versión Lite."], preview);
     }
 
-    private static Regex BuildFieldRegex(string labelPattern) => new($@"(?im)^\s*{labelPattern}\s*:\s*(?<value>.+?)\s*$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static Dictionary<string, string> ExtractDetectedFields(string text)
+    {
+        var labels = FieldLabelRegex.Matches(text)
+            .Select(match => new FoundLabel(GetFieldDefinition(match), match.Index, match.Index + match.Length))
+            .OrderBy(label => label.Start)
+            .ToArray();
+
+        var detected = new Dictionary<string, string>();
+        for (var i = 0; i < labels.Length; i++)
+        {
+            var current = labels[i];
+            var valueEnd = i + 1 < labels.Length ? labels[i + 1].Start : text.Length;
+            var value = CleanValue(text[current.ValueStart..valueEnd]);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                detected[current.Field.Key] = value;
+            }
+        }
+
+        return detected;
+    }
+
+    private static FieldDefinition GetFieldDefinition(Match match)
+    {
+        var label = match.Groups["label"].Value;
+        return ExpectedFields.First(field => Regex.IsMatch(label, $@"^{field.LabelPattern}$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
+    }
+
     private static string CleanValue(string value) => Regex.Replace(value.Trim(), "\\s+", " ");
     private static string BuildPreview(string text)
     {
@@ -60,4 +80,7 @@ public sealed class PdfTaxDocumentTextParser : IPdfTaxDocumentTextParser
     }
     private static PdfDocumentReviewResult Result(string fileName, long fileSizeBytes, int pageCount, string status, string message, IReadOnlyDictionary<string, string> detected, IReadOnlyCollection<string> missing, IReadOnlyCollection<string> warnings, string preview)
         => new(null, fileName, fileSizeBytes, pageCount, status, message, detected, missing, warnings, preview);
+
+    private sealed record FieldDefinition(string Key, string Label, string LabelPattern);
+    private sealed record FoundLabel(FieldDefinition Field, int Start, int ValueStart);
 }
