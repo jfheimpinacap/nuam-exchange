@@ -309,3 +309,119 @@ input, select, textarea { max-width: 100%; min-width: 0; }
   .pdf-preview-object { height: 42vh; min-height: 220px; }
   .text-preview { max-height: 180px; padding: var(--space-3); }
 }
+
+/* C017: real mobile fixes for PDF upload controls and topbar actions */
+.pdf-file-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+}
+.pdf-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+.pdf-file-button {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 100%;
+  background: white;
+  text-decoration: none;
+}
+.pdf-file-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .55;
+}
+.pdf-file-name {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  color: var(--color-text-muted);
+}
+.pdf-upload-actions {
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+}
+.pdf-upload-actions .button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.pdf-upload-page .x-factor-upload-controls .pdf-file-picker {
+  flex: 1 1 280px;
+}
+.pdf-upload-page .x-factor-upload-controls .pdf-file-input {
+  flex: 0 0 auto;
+}
+.pdf-upload-page .x-factor-upload-controls .pdf-upload-actions .button {
+  flex: 0 1 auto;
+}
+
+@media (max-width: 767px) {
+  .app-header {
+    justify-content: space-between;
+  }
+  .app-header .header-actions {
+    display: contents;
+  }
+  .app-header .section-heading {
+    order: 1;
+    flex: 0 0 100%;
+    width: 100%;
+  }
+  .app-header .mobile-only {
+    order: 2;
+    width: auto;
+    max-width: max-content;
+    white-space: nowrap;
+  }
+  .app-header .user-area {
+    order: 3;
+    flex: 0 0 auto;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+  .app-header .secondary-button {
+    width: auto;
+    max-width: max-content;
+    white-space: nowrap;
+  }
+  .pdf-file-picker {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .pdf-file-button,
+  .pdf-file-name {
+    flex: 0 1 auto;
+  }
+  .pdf-upload-actions,
+  .pdf-upload-actions .button,
+  .pdf-upload-page .x-factor-upload-controls .pdf-upload-actions .button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 479px) {
+  .app-header .mobile-only,
+  .app-header .secondary-button,
+  .pdf-file-button {
+    width: auto;
+    max-width: max-content;
+  }
+}
